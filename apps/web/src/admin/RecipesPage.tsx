@@ -20,10 +20,11 @@ import {
   SaveError,
   Toggle,
 } from './ui';
+import { MenuImport } from './MenuImport';
 import { PageHeader } from '../shell/TabsLayout';
 import { segmentItem, segmentTrack } from '../components/segment';
 
-const TABS = ['ingredients', 'components', 'dishes'] as const;
+const TABS = ['ingredients', 'components', 'dishes', 'import'] as const;
 type Tab = (typeof TABS)[number];
 
 /** The recipe database: ingredients, the components made from them, and the dishes. */
@@ -49,6 +50,7 @@ export function RecipesPage() {
       {tab === 'ingredients' && <Ingredients />}
       {tab === 'components' && <Components />}
       {tab === 'dishes' && <Dishes />}
+      {tab === 'import' && <MenuImport />}
     </>
   );
 }

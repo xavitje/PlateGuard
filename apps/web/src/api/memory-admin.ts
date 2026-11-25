@@ -208,6 +208,31 @@ export function createMemoryAdmin(
       draft = [...new Set(dishIds)];
       return menu();
     },
+    // The demo has no AI: it answers with one example dish.
+    importMenu: async () => ({
+      dishes: [
+        {
+          name: 'Pasta pesto',
+          category: 'Hoofdgerechten',
+          priceCents: 1650,
+          description: 'Met basilicumpesto, pijnboompitten en Parmezaan',
+          components: [
+            {
+              name: 'Pasta',
+              ingredients: [{ name: 'Wheat pasta', contains: ['GLUTEN', 'EGGS'], mayContain: [] }],
+            },
+            {
+              name: 'Pesto',
+              ingredients: [
+                { name: 'Basil', contains: [], mayContain: [] },
+                { name: 'Pine nuts', contains: [], mayContain: ['NUTS'] },
+                { name: 'Parmesan', contains: ['MILK'], mayContain: [] },
+              ],
+            },
+          ],
+        },
+      ],
+    }),
     allergenCard: async () => new Blob(['%PDF-1.7'], { type: 'application/pdf' }),
     publishMenu: async () => {
       if (draft.length === 0) throw new ApiError(400, 'MENU_EMPTY');

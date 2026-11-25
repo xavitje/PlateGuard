@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module.js';
 
 /**
@@ -13,7 +14,9 @@ export async function createApp(): Promise<INestApplication> {
   if (process.env.AUTH_MODE === 'dev' && process.env.NODE_ENV === 'production')
     throw new Error('AUTH_MODE=dev is for development only.');
   // rawBody: webhook signatures are checked over the exact bytes received.
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
+  // Menu photos and PDFs for the menu import; Vercel stops bodies over 4.5 MB first.
+  app.useBodyParser('json', { limit: '6mb' });
   app.setGlobalPrefix('api', { exclude: ['hooks/{*path}'] });
   return app;
 }
