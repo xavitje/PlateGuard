@@ -1,0 +1,21 @@
+{
+  "demoData": "Voorbeeldgegevens",
+  "severity": {
+    "INTOLERANCE": "Intolerantie",
+    "ALLERGY": "Allergie",
+    "SEVERE": "Ernstig"
+  },
+  "severityHint": {
+    "INTOLERANCE": "Een beetje geeft klachten",
+    "ALLERGY": "Mag er niet in, een spoortje kan",
+    "SEVERE": "Ook geen spoortje: epipen of coeliakie"
+  },
+  "outcome": {
+    "CLEAR": "Niets gevonden",
+    "CLEAR_WITH_NOTE": "Niets gevonden, notitie",
+    "ADAPTABLE": "Aanpassen",
+    "CAUTION": "Vraag gast",
+    "UNKNOWN": "Onbekend",
+    "DO_NOT_SERVE": "Niet serveren"
+  }
+}

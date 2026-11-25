@@ -1,0 +1,8 @@
+{
+  "tab": "Alerts",
+  "title": "Alerts",
+  "open": "Open",
+  "done": "Done",
+  "empty": "Nothing needs attention",
+  "openCount": "{count, plural, =0 {No open alerts} one {# open alert} other {# open alerts}}"
+}

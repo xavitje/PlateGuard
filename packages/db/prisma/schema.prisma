@@ -1,0 +1,811 @@
+// PlateGuard data model, phase 1 and 2 plus the integration core.
+//
+// Tenant isolation: every operational table carries organization_id or location_id.
+// Row-level security (migration 0002) refuses rows outside the session's app.org_id and
+// app.location_ids, even if application code has a bug. See packages/db/src/tenant.ts.
+//
+// Incidents arrive in phase 4 and are not in this schema yet.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  MANAGER
+  CHEF
+  COOK
+  WAITER
+  RUNNER
+}
+
+enum Severity {
+  INTOLERANCE
+  ALLERGY
+  SEVERE
+}
+
+enum Outcome {
+  CLEAR
+  CLEAR_WITH_NOTE
+  ADAPTABLE
+  CAUTION
+  UNKNOWN
+  DO_NOT_SERVE
+}
+
+enum PlateStatus {
+  ASSESSED
+  IN_KITCHEN
+  CHECKED
+  PASS_CHECKED
+  SERVED
+  REJECTED
+}
+
+enum ServicePointKind {
+  TABLE
+  ROOM
+  BAR_SEAT
+}
+
+enum TableShape {
+  ROUND
+  SQUARE
+  RECT
+}
+
+enum VersionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LocationType {
+  RESTAURANT
+  ROOM_SERVICE
+  BAR
+}
+
+enum ServiceLevel {
+  BASIC
+  STANDARD
+  FULL
+}
+
+enum DishKind {
+  MENU
+  DAILY_SPECIAL
+  AMUSE
+  BREAD
+}
+
+enum ModificationAction {
+  OMIT
+  SUBSTITUTE
+}
+
+enum CheckKind {
+  KITCHEN
+  PASS
+}
+
+enum CheckMethod {
+  SCAN
+  TAP
+  KDS
+}
+
+enum IntegrationKind {
+  POS
+  KDS
+  PRINTER
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACTIVE
+  ERROR
+  DISABLED
+}
+
+enum QueueStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+  DEAD
+}
+
+// ─── Organization ──────────────────────────────────────────────────────────
+
+model Organization {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  plan      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  locations   Location[]
+  roles       RoleAssignment[]
+  allergens   Allergen[]
+  ingredients Ingredient[]
+  equipment   Equipment[]
+  components  Component[]
+
+  @@map("organization")
+}
+
+model Location {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  name           String
+  /// Public guest menu URL.
+  slug           String       @unique
+  type           LocationType @default(RESTAURANT)
+  level          ServiceLevel @default(BASIC)
+  /// Optional runner scan at the pass. Off by default: the cook scan is the check.
+  passCheck      Boolean      @default(false) @map("pass_check")
+  drinksInScope  Boolean      @default(false) @map("drinks_in_scope")
+  defaultLocale  String       @default("en") @map("default_locale")
+  kitchenLocale  String       @default("en") @map("kitchen_locale")
+  guestLocales   String[]     @default(["en", "nl"]) @map("guest_locales")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  organization  Organization     @relation(fields: [organizationId], references: [id])
+  roles         RoleAssignment[]
+  pins          StaffPin[]
+  floors        Floor[]
+  servicePoints ServicePoint[]
+  menus         Menu[]
+  dishes        Dish[]
+  visits        Visit[]
+
+  @@index([organizationId])
+  @@map("location")
+}
+
+/// One person, one account, even when working for several locations or organizations.
+/// Not tenant scoped: identity is resolved before a tenant is known. Read only through RoleAssignment.
+model User {
+  id           String  @id @default(uuid()) @db.Uuid
+  email        String? @unique
+  name         String
+  locale       String  @default("en")
+  passwordHash String? @map("password_hash")
+
+  roles RoleAssignment[]
+  pins  StaffPin[]
+
+  @@map("app_user")
+}
+
+/// locationId null = the role holds for every location of the organization, including future ones.
+model RoleAssignment {
+  id             String  @id @default(uuid()) @db.Uuid
+  userId         String  @map("user_id") @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  locationId     String? @map("location_id") @db.Uuid
+  role           Role
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+  location     Location?    @relation(fields: [locationId], references: [id])
+
+  @@unique([userId, organizationId, locationId, role])
+  @@index([organizationId, locationId])
+  @@map("role_assignment")
+}
+
+/// A PIN is unique per location (shared tablets). Argon2 hash, locked after 5 failed tries.
+model StaffPin {
+  userId      String @map("user_id") @db.Uuid
+  locationId  String @map("location_id") @db.Uuid
+  pinHash     String @map("pin_hash")
+  failedTries Int    @default(0) @map("failed_tries")
+
+  user     User     @relation(fields: [userId], references: [id])
+  location Location @relation(fields: [locationId], references: [id])
+
+  @@id([userId, locationId])
+  @@map("staff_pin")
+}
+
+// ─── Recipes ───────────────────────────────────────────────────────────────
+
+/// EU-14 and subtypes have organizationId null and are visible to everyone.
+model Allergen {
+  code           String  @id
+  parentCode     String? @map("parent_code")
+  organizationId String? @map("organization_id") @db.Uuid
+  isEu14         Boolean @default(false) @map("is_eu14")
+
+  parent       Allergen?             @relation("AllergenTree", fields: [parentCode], references: [code])
+  children     Allergen[]            @relation("AllergenTree")
+  organization Organization?         @relation(fields: [organizationId], references: [id])
+  translations AllergenTranslation[]
+
+  @@map("allergen")
+}
+
+model AllergenTranslation {
+  allergenCode   String  @map("allergen_code")
+  locale         String
+  organizationId String? @map("organization_id") @db.Uuid
+  name           String
+  description    String?
+
+  allergen Allergen @relation(fields: [allergenCode], references: [code])
+
+  @@id([allergenCode, locale])
+  @@map("allergen_translation")
+}
+
+/// Shared across the organization's locations (a chain manages the jus once).
+/// A different brand or article number resets verification.
+model Ingredient {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  name           String
+  supplier       String?
+  brand          String?
+  articleNumber  String?   @map("article_number")
+  contains       String[]
+  mayContain     String[]  @map("may_contain")
+  verifiedById   String?   @map("verified_by_id") @db.Uuid
+  verifiedAt     DateTime? @map("verified_at")
+  verifiedSource String?   @map("verified_source")
+
+  organization Organization          @relation(fields: [organizationId], references: [id])
+  components   ComponentIngredient[]
+
+  @@index([organizationId])
+  @@map("ingredient")
+}
+
+/// Shared preparation equipment (fryer 1, grill). Its allergens become traces.
+model Equipment {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  name           String
+  allergens      String[]
+
+  organization Organization         @relation(fields: [organizationId], references: [id])
+  components   ComponentEquipment[]
+
+  @@index([organizationId])
+  @@map("equipment")
+}
+
+model Component {
+  id                String  @id @default(uuid()) @db.Uuid
+  organizationId    String  @map("organization_id") @db.Uuid
+  name              String
+  omittable         Boolean @default(false)
+  premixed          Boolean @default(false)
+  suitableForSevere Boolean @default(false) @map("suitable_for_severe")
+
+  organization  Organization           @relation(fields: [organizationId], references: [id])
+  ingredients   ComponentIngredient[]
+  equipment     ComponentEquipment[]
+  children      ComponentChild[]       @relation("parent")
+  parents       ComponentChild[]       @relation("child")
+  substitutions Substitution[]         @relation("original")
+  substituteFor Substitution[]         @relation("replacement")
+  dishes        DishComponent[]
+  translations  ComponentTranslation[]
+
+  @@index([organizationId])
+  @@map("component")
+}
+
+model ComponentIngredient {
+  componentId    String @map("component_id") @db.Uuid
+  ingredientId   String @map("ingredient_id") @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+
+  component  Component  @relation(fields: [componentId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@id([componentId, ingredientId])
+  @@map("component_ingredient")
+}
+
+model ComponentEquipment {
+  componentId    String @map("component_id") @db.Uuid
+  equipmentId    String @map("equipment_id") @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+
+  component Component @relation(fields: [componentId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id])
+
+  @@id([componentId, equipmentId])
+  @@map("component_equipment")
+}
+
+/// Nesting: jus contains stock.
+model ComponentChild {
+  parentId       String @map("parent_id") @db.Uuid
+  childId        String @map("child_id") @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+
+  parent Component @relation("parent", fields: [parentId], references: [id], onDelete: Cascade)
+  child  Component @relation("child", fields: [childId], references: [id])
+
+  @@id([parentId, childId])
+  @@map("component_child")
+}
+
+/// The replacement goes through the engine itself, against every allergen of the guest.
+model Substitution {
+  id                String  @id @default(uuid()) @db.Uuid
+  organizationId    String  @map("organization_id") @db.Uuid
+  componentId       String  @map("component_id") @db.Uuid
+  replacementId     String  @map("replacement_id") @db.Uuid
+  suitableForSevere Boolean @default(false) @map("suitable_for_severe")
+
+  component   Component @relation("original", fields: [componentId], references: [id], onDelete: Cascade)
+  replacement Component @relation("replacement", fields: [replacementId], references: [id])
+
+  @@unique([componentId, replacementId])
+  @@map("substitution")
+}
+
+model ComponentTranslation {
+  componentId    String  @map("component_id") @db.Uuid
+  locale         String
+  organizationId String  @map("organization_id") @db.Uuid
+  name           String
+  description    String?
+
+  component Component @relation(fields: [componentId], references: [id], onDelete: Cascade)
+
+  @@id([componentId, locale])
+  @@map("component_translation")
+}
+
+/// Menus and daily specials belong to a location.
+model Dish {
+  id          String   @id @default(uuid()) @db.Uuid
+  locationId  String   @map("location_id") @db.Uuid
+  name        String
+  description String?
+  course      Int      @default(0)
+  priceCents  Int?     @map("price_cents")
+  kind        DishKind @default(MENU)
+
+  location     Location          @relation(fields: [locationId], references: [id])
+  components   DishComponent[]
+  translations DishTranslation[]
+
+  @@index([locationId])
+  @@map("dish")
+}
+
+model DishComponent {
+  dishId      String @map("dish_id") @db.Uuid
+  componentId String @map("component_id") @db.Uuid
+  locationId  String @map("location_id") @db.Uuid
+  sortOrder   Int    @default(0) @map("sort_order")
+
+  dish      Dish      @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  component Component @relation(fields: [componentId], references: [id])
+
+  @@id([dishId, componentId])
+  @@map("dish_component")
+}
+
+model DishTranslation {
+  dishId      String  @map("dish_id") @db.Uuid
+  locale      String
+  locationId  String  @map("location_id") @db.Uuid
+  name        String
+  description String?
+
+  dish Dish @relation(fields: [dishId], references: [id], onDelete: Cascade)
+
+  @@id([dishId, locale])
+  @@map("dish_translation")
+}
+
+model Menu {
+  id         String @id @default(uuid()) @db.Uuid
+  locationId String @map("location_id") @db.Uuid
+  name       String
+
+  location Location      @relation(fields: [locationId], references: [id])
+  versions MenuVersion[]
+
+  @@index([locationId])
+  @@map("menu")
+}
+
+/// Publishing freezes a snapshot of every recipe on the menu; assessments point at it.
+model MenuVersion {
+  id          String        @id @default(uuid()) @db.Uuid
+  menuId      String        @map("menu_id") @db.Uuid
+  locationId  String        @map("location_id") @db.Uuid
+  version     Int
+  status      VersionStatus @default(DRAFT)
+  snapshot    Json?
+  pdfUrl      String?       @map("pdf_url")
+  publishedAt DateTime?     @map("published_at")
+  publishedBy String?       @map("published_by") @db.Uuid
+
+  menu Menu @relation(fields: [menuId], references: [id])
+
+  @@unique([menuId, version])
+  @@map("menu_version")
+}
+
+// ─── Floor plan ────────────────────────────────────────────────────────────
+
+/// A floor or zone: ground floor, terrace, first floor, bar.
+model Floor {
+  id            String        @id @default(uuid()) @db.Uuid
+  locationId    String        @map("location_id") @db.Uuid
+  name          String
+  sortOrder     Int           @map("sort_order")
+  hidden        Boolean       @default(false)
+  versionStatus VersionStatus @default(DRAFT) @map("version_status")
+
+  location Location       @relation(fields: [locationId], references: [id])
+  points   ServicePoint[]
+  elements FloorElement[]
+
+  @@index([locationId])
+  @@map("floor")
+}
+
+/// Positions are percentages of the canvas so the plan fits any screen.
+model ServicePoint {
+  id          String           @id @default(uuid()) @db.Uuid
+  locationId  String           @map("location_id") @db.Uuid
+  /// null = a room or seat without a drawing.
+  floorId     String?          @map("floor_id") @db.Uuid
+  kind        ServicePointKind @default(TABLE)
+  label       String
+  seats       Int
+  shape       TableShape       @default(SQUARE)
+  x           Float            @default(0)
+  y           Float            @default(0)
+  w           Float            @default(10)
+  h           Float            @default(10)
+  rotation    Float            @default(0)
+  /// Table number in the POS.
+  externalRef String?          @map("external_ref")
+  qrToken     String           @unique @map("qr_token")
+  active      Boolean          @default(true)
+
+  location Location @relation(fields: [locationId], references: [id])
+  floor    Floor?   @relation(fields: [floorId], references: [id])
+  visits   Visit[]
+
+  @@index([locationId])
+  @@map("service_point")
+}
+
+model FloorElement {
+  id         String  @id @default(uuid()) @db.Uuid
+  floorId    String  @map("floor_id") @db.Uuid
+  locationId String  @map("location_id") @db.Uuid
+  /// BAR, WALL, DOOR, KITCHEN_PASS, LABEL. Orientation only.
+  kind       String
+  text       String?
+  x          Float
+  y          Float
+  w          Float
+  h          Float
+  rotation   Float   @default(0)
+
+  floor Floor @relation(fields: [floorId], references: [id], onDelete: Cascade)
+
+  @@map("floor_element")
+}
+
+// ─── Service ───────────────────────────────────────────────────────────────
+
+model Visit {
+  id              String    @id @default(uuid()) @db.Uuid
+  locationId      String    @map("location_id") @db.Uuid
+  servicePointId  String    @map("service_point_id") @db.Uuid
+  /// Tables joined for this visit only; the floor plan stays as it is.
+  joinedPointIds  String[]  @map("joined_point_ids") @db.Uuid
+  openedById      String    @map("opened_by_id") @db.Uuid
+  openedAt        DateTime  @default(now()) @map("opened_at")
+  closedAt        DateTime? @map("closed_at")
+  /// Set when an incident is attached: guest data is then kept past the 24 hour anonymization.
+  anonymizeFrozen Boolean   @default(false) @map("anonymize_frozen")
+
+  location     Location     @relation(fields: [locationId], references: [id])
+  servicePoint ServicePoint @relation(fields: [servicePointId], references: [id])
+  guests       Guest[]
+  plates       PlateOrder[]
+
+  @@index([locationId, openedAt])
+  @@map("visit")
+}
+
+/// Table and seat, never a name.
+model Guest {
+  id         String  @id @default(uuid()) @db.Uuid
+  visitId    String  @map("visit_id") @db.Uuid
+  locationId String  @map("location_id") @db.Uuid
+  seat       Int
+  /// "No allergy" is an answer too, logged as proof the question was asked.
+  noAllergy  Boolean @default(false) @map("no_allergy")
+
+  visit     Visit          @relation(fields: [visitId], references: [id])
+  allergies GuestAllergy[]
+  plates    PlateOrder[]
+
+  @@unique([visitId, seat])
+  @@map("guest")
+}
+
+/// One row per allergy, each with its own severity. A row is either a known allergen
+/// (allergenCode) or a custom label the waiter typed, such as "tomato" (customLabel).
+/// Exactly one of the two is set (check constraint in the init migration). Custom allergies
+/// always come out UNKNOWN in the engine and are checked by hand in the kitchen.
+model GuestAllergy {
+  id           String    @id @default(uuid()) @db.Uuid
+  guestId      String    @map("guest_id") @db.Uuid
+  locationId   String    @map("location_id") @db.Uuid
+  allergenCode String?   @map("allergen_code")
+  customLabel  String?   @map("custom_label")
+  /// Lower case, no accents (normalizeLabel in @plateguard/domain), so "Tomaat" and "tomaat" are one row.
+  customKey    String?   @map("custom_key")
+  severity     Severity  @default(SEVERE)
+  recordedById String    @map("recorded_by_id") @db.Uuid
+  changedById  String?   @map("changed_by_id") @db.Uuid
+  changedAt    DateTime? @map("changed_at")
+
+  guest Guest @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@unique([guestId, allergenCode])
+  @@unique([guestId, customKey])
+  @@map("guest_allergy")
+}
+
+/// Only flagged plates have a status in PlateGuard; normal plates stay in the POS.
+model PlateOrder {
+  id            String      @id @default(uuid()) @db.Uuid
+  locationId    String      @map("location_id") @db.Uuid
+  visitId       String      @map("visit_id") @db.Uuid
+  guestId       String      @map("guest_id") @db.Uuid
+  dishId        String?     @map("dish_id") @db.Uuid
+  menuVersionId String?     @map("menu_version_id") @db.Uuid
+  course        Int
+  status        PlateStatus
+  remakeOfId    String?     @map("remake_of_id") @db.Uuid
+  qrToken       String      @unique @map("qr_token")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  visit         Visit               @relation(fields: [visitId], references: [id])
+  guest         Guest               @relation(fields: [guestId], references: [id])
+  remakeOf      PlateOrder?         @relation("Remake", fields: [remakeOfId], references: [id])
+  remakes       PlateOrder[]        @relation("Remake")
+  assessment    Assessment?
+  checks        PlateCheck[]
+  modifications PlateModification[]
+  overrides     Override[]
+  externalRefs  ExternalRef[]
+
+  @@index([locationId, status])
+  @@map("plate_order")
+}
+
+/// Immutable: a trigger blocks UPDATE and DELETE.
+model Assessment {
+  id            String   @id @default(uuid()) @db.Uuid
+  plateId       String   @unique @map("plate_id") @db.Uuid
+  locationId    String   @map("location_id") @db.Uuid
+  outcome       Outcome
+  /// Language-neutral reason codes from the engine.
+  reasons       Json
+  /// The full engine input, so the decision can be replayed.
+  input         Json
+  engineVersion String   @map("engine_version")
+  menuVersionId String?  @map("menu_version_id") @db.Uuid
+  inputHash     String   @map("input_hash")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  plate PlateOrder @relation(fields: [plateId], references: [id])
+
+  @@map("assessment")
+}
+
+/// A line on the allergy ticket. Mandatory; the waiter cannot remove it.
+model PlateModification {
+  id              String             @id @default(uuid()) @db.Uuid
+  plateId         String             @map("plate_id") @db.Uuid
+  locationId      String             @map("location_id") @db.Uuid
+  componentId     String             @map("component_id") @db.Uuid
+  action          ModificationAction
+  substituteId    String?            @map("substitute_id") @db.Uuid
+  reasonAllergens String[]           @map("reason_allergens")
+
+  plate PlateOrder @relation(fields: [plateId], references: [id])
+
+  @@map("plate_modification")
+}
+
+model PlateCheck {
+  id         String      @id @default(uuid()) @db.Uuid
+  plateId    String      @map("plate_id") @db.Uuid
+  locationId String      @map("location_id") @db.Uuid
+  kind       CheckKind
+  byUserId   String      @map("by_user_id") @db.Uuid
+  method     CheckMethod
+  at         DateTime    @default(now())
+
+  plate PlateOrder @relation(fields: [plateId], references: [id])
+
+  @@map("plate_check")
+}
+
+/// Only for intolerance, by a manager, with the guest's consent and a reason.
+model Override {
+  id           String   @id @default(uuid()) @db.Uuid
+  plateId      String   @map("plate_id") @db.Uuid
+  locationId   String   @map("location_id") @db.Uuid
+  managerId    String   @map("manager_id") @db.Uuid
+  reason       String
+  guestConsent Boolean  @map("guest_consent")
+  at           DateTime @default(now())
+
+  plate PlateOrder @relation(fields: [plateId], references: [id])
+
+  @@map("override")
+}
+
+/// Append only: a trigger blocks UPDATE and DELETE.
+model AuditEvent {
+  id             BigInt   @id @default(autoincrement())
+  organizationId String   @map("organization_id") @db.Uuid
+  locationId     String?  @map("location_id") @db.Uuid
+  actorId        String?  @map("actor_id") @db.Uuid
+  type           String
+  entity         String
+  entityId       String   @map("entity_id")
+  payload        Json
+  at             DateTime @default(now())
+
+  @@index([locationId, at])
+  @@index([organizationId, at])
+  @@map("audit_event")
+}
+
+// ─── Integrations ──────────────────────────────────────────────────────────
+
+/// One POS, KDS or printer connection for a location. Secrets are encrypted at rest.
+model IntegrationConnection {
+  id               String           @id @default(uuid()) @db.Uuid
+  organizationId   String           @map("organization_id") @db.Uuid
+  locationId       String           @map("location_id") @db.Uuid
+  provider         String
+  kind             IntegrationKind
+  status           ConnectionStatus @default(PENDING)
+  capabilities     String[]
+  encryptedSecrets Bytes?           @map("encrypted_secrets")
+  config           Json             @default("{}")
+  lastHealthAt     DateTime?        @map("last_health_at")
+  lastHealthOk     Boolean?         @map("last_health_ok")
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  mappings      PosItemMapping[]
+  externalRefs  ExternalRef[]
+  inboundEvents InboundEvent[]
+
+  @@index([locationId])
+  @@map("integration_connection")
+}
+
+model PosItemMapping {
+  id             String    @id @default(uuid()) @db.Uuid
+  connectionId   String    @map("connection_id") @db.Uuid
+  locationId     String    @map("location_id") @db.Uuid
+  externalItemId String    @map("external_item_id")
+  dishId         String?   @map("dish_id") @db.Uuid
+  confirmedById  String?   @map("confirmed_by_id") @db.Uuid
+  confirmedAt    DateTime? @map("confirmed_at")
+
+  connection IntegrationConnection @relation(fields: [connectionId], references: [id])
+
+  @@unique([connectionId, externalItemId])
+  @@map("pos_item_mapping")
+}
+
+/// Recognize the same plate across systems: POS order line, KDS ticket.
+model ExternalRef {
+  id           String @id @default(uuid()) @db.Uuid
+  connectionId String @map("connection_id") @db.Uuid
+  locationId   String @map("location_id") @db.Uuid
+  externalType String @map("external_type")
+  externalId   String @map("external_id")
+  plateId      String @map("plate_id") @db.Uuid
+
+  connection IntegrationConnection @relation(fields: [connectionId], references: [id])
+  plate      PlateOrder            @relation(fields: [plateId], references: [id])
+
+  @@unique([connectionId, externalType, externalId])
+  @@map("external_ref")
+}
+
+/// Raw incoming webhook or polled message, stored before processing.
+model InboundEvent {
+  id             String      @id @default(uuid()) @db.Uuid
+  connectionId   String      @map("connection_id") @db.Uuid
+  locationId     String      @map("location_id") @db.Uuid
+  idempotencyKey String      @map("idempotency_key")
+  payload        Json
+  status         QueueStatus @default(PENDING)
+  attempts       Int         @default(0)
+  lastError      String?     @map("last_error")
+  receivedAt     DateTime    @default(now()) @map("received_at")
+  processedAt    DateTime?   @map("processed_at")
+
+  connection IntegrationConnection @relation(fields: [connectionId], references: [id])
+
+  @@unique([connectionId, idempotencyKey])
+  @@index([status, receivedAt])
+  @@map("inbound_event")
+}
+
+/// Written in the same transaction as the change it describes; a dispatcher delivers it.
+model OutboxEvent {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizationId String      @map("organization_id") @db.Uuid
+  locationId     String?     @map("location_id") @db.Uuid
+  /// For example plate.checked.v1.
+  type           String
+  payload        Json
+  status         QueueStatus @default(PENDING)
+  attempts       Int         @default(0)
+  nextAttemptAt  DateTime    @default(now()) @map("next_attempt_at")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  processedAt    DateTime?   @map("processed_at")
+
+  deliveries WebhookDelivery[]
+
+  @@index([status, nextAttemptAt])
+  @@map("outbox_event")
+}
+
+model WebhookSubscription {
+  id              String   @id @default(uuid()) @db.Uuid
+  organizationId  String   @map("organization_id") @db.Uuid
+  url             String
+  events          String[]
+  encryptedSecret Bytes    @map("encrypted_secret")
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  deliveries WebhookDelivery[]
+
+  @@index([organizationId])
+  @@map("webhook_subscription")
+}
+
+model WebhookDelivery {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizationId String      @map("organization_id") @db.Uuid
+  subscriptionId String      @map("subscription_id") @db.Uuid
+  outboxEventId  String      @map("outbox_event_id") @db.Uuid
+  status         QueueStatus @default(PENDING)
+  attempts       Int         @default(0)
+  lastStatusCode Int?        @map("last_status_code")
+  lastResponse   String?     @map("last_response")
+  nextAttemptAt  DateTime    @default(now()) @map("next_attempt_at")
+
+  subscription WebhookSubscription @relation(fields: [subscriptionId], references: [id])
+  outboxEvent  OutboxEvent         @relation(fields: [outboxEventId], references: [id])
+
+  @@unique([subscriptionId, outboxEventId])
+  @@index([status, nextAttemptAt])
+  @@map("webhook_delivery")
+}

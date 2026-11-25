@@ -1,0 +1,13 @@
+{
+  "title": "Beheer",
+  "nav": {
+    "recipes": "Receptuur",
+    "menus": "Kaarten",
+    "floorPlan": "Plattegrond",
+    "integrations": "Koppelingen",
+    "webhooks": "Webhooks",
+    "staff": "Personeel",
+    "dashboard": "Dashboard"
+  },
+  "comingSoon": "Dit onderdeel komt in een latere fase."
+}

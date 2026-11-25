@@ -1,0 +1,11 @@
+{
+  "title": "Kitchen",
+  "queue": "{count, plural, =0 {No allergy plates} one {# allergy plate} other {# allergy plates}}",
+  "seeAllergyTicket": "SEE ALLERGY TICKET",
+  "confirm": "Checked, plate is ready",
+  "confirmed": "Checked",
+  "reject": "Reject",
+  "remake": "Remake",
+  "exit": "Exit kitchen mode",
+  "manualCheck": "Check by hand: {label}"
+}

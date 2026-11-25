@@ -1,0 +1,18 @@
+{
+  "tab": "Tables",
+  "title": "Tables",
+  "free": "Free",
+  "guests": "{count, plural, one {# guest} other {# guests}}",
+  "table": "Table {label}",
+  "seat": {
+    "label": "Seat {seat}",
+    "allergyCount": "{count, plural, =0 {No allergy} one {# allergy} other {# allergies}}"
+  },
+  "askAllergies": "Ask: any allergies or dietary needs?",
+  "noAllergy": "No allergy",
+  "addAllergenHint": "New allergens start as Severe",
+  "menuForSeat": "Menu for seat {seat}",
+  "addCustom": "Other allergy",
+  "customPlaceholder": "For example tomato or sunflower oil",
+  "customHint": "Not in the recipe data: the kitchen checks it by hand"
+}

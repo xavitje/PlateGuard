@@ -1,0 +1,21 @@
+{
+  "demoData": "Demo data",
+  "severity": {
+    "INTOLERANCE": "Intolerance",
+    "ALLERGY": "Allergy",
+    "SEVERE": "Severe"
+  },
+  "severityHint": {
+    "INTOLERANCE": "A little causes symptoms",
+    "ALLERGY": "Must not be in it, traces are fine",
+    "SEVERE": "No traces at all: EpiPen or coeliac"
+  },
+  "outcome": {
+    "CLEAR": "None found",
+    "CLEAR_WITH_NOTE": "None found, note",
+    "ADAPTABLE": "Modify",
+    "CAUTION": "Ask guest",
+    "UNKNOWN": "Unknown",
+    "DO_NOT_SERVE": "Do not serve"
+  }
+}

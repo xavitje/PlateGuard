@@ -1,0 +1,32 @@
+{
+  "name": "@plateguard/i18n",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Translation files per locale and namespace (English is the source and fallback), plus the i18next setup.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "locales"
+  ],
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "build": "node scripts/generate.mjs && tsc -p tsconfig.build.json",
+    "typecheck": "node scripts/generate.mjs && tsc -p tsconfig.json --noEmit",
+    "check": "node scripts/check.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "i18next": "^27.2.0",
+    "i18next-icu": "^2.7.1",
+    "intl-messageformat": "^12.2.1"
+  },
+  "devDependencies": {
+    "@formatjs/icu-messageformat-parser": "^3.5.23"
+  }
+}
