@@ -7,7 +7,9 @@
 // Incidents arrive in phase 4 and are not in this schema yet.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // rhel-openssl-3.0.x: the Vercel function runtime (see vercel.json).
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
