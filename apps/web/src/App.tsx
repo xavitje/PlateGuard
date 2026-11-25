@@ -13,6 +13,7 @@ import { LoginPage } from './routes/LoginPage';
 import { ProfilePage } from './routes/ProfilePage';
 import { TableDetailPage } from './routes/TableDetailPage';
 import { TablesPage } from './routes/TablesPage';
+import { HomeRedirect } from './shell/HomeRedirect';
 import { TabsLayout } from './shell/TabsLayout';
 
 /**
@@ -26,7 +27,7 @@ export const router = createBrowserRouter([
   {
     element: <TabsLayout />,
     children: [
-      { index: true, element: <Navigate to="/tables" replace /> },
+      { index: true, element: <HomeRedirect /> },
       { path: 'tables', element: <TablesPage /> },
       { path: 'tables/:label', element: <TableDetailPage /> },
       { path: 'alerts', element: <AlertsPage /> },

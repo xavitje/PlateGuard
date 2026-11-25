@@ -49,5 +49,6 @@
     "testBody": "Deze printer print de allergiebonnen van {location}.",
     "again": "Opnieuw printen",
     "printed": "Naar de printer gestuurd"
-  }
+  },
+  "tab": "Keuken"
 }

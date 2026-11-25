@@ -131,14 +131,14 @@ export function useMenu() {
   });
 }
 
-export function useAlerts() {
+export function useAlerts(enabled = true) {
   const client = useClient();
   const loc = useLocationId();
   const locale = lang(useTranslation().i18n.language);
   return useQuery({
     queryKey: ['alerts', loc, locale],
     queryFn: () => client.alerts(loc!, locale),
-    enabled: !!loc,
+    enabled: enabled && !!loc,
     refetchInterval: 15_000,
   });
 }

@@ -11,6 +11,7 @@ import {
   kitchenChecklist,
   orderAlerts,
   ROLE_PERMISSIONS,
+  type Role,
   uncheckedItems,
   type ResolvedDish,
 } from '@plateguard/domain';
@@ -31,7 +32,7 @@ import { createMemoryPrinters } from './memory-printers';
 import { createMemorySetup } from './memory-setup';
 
 const LOCATION = 'demo';
-const ME = {
+const meFor = (role: Role) => ({
   user: { id: 'demo', name: 'Demo Waiter', locale: 'en' },
   locations: [
     {
@@ -39,10 +40,10 @@ const ME = {
       organizationId: 'demo',
       name: 'Demo',
       slug: 'demo',
-      permissions: [...ROLE_PERMISSIONS.OWNER],
+      permissions: [...ROLE_PERMISSIONS[role]],
     },
   ],
-};
+});
 
 /**
  * The same contract as the API, held in memory on the demo data. Used by the tests, so they
@@ -51,7 +52,10 @@ const ME = {
 export function createMemoryClient(
   seed: DemoService = DEMO_SERVICE,
   dishes: ResolvedDish[] = DEMO_DISHES,
+  /** Whose permissions the signed-in demo user has. The owner can do everything. */
+  role: Role = 'OWNER',
 ): ServiceClient {
+  const ME = meFor(role);
   const state: DemoService = structuredClone(seed);
   let nextId = 1;
   let passCheck = false;

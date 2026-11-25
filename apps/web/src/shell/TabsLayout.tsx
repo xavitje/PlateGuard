@@ -1,20 +1,45 @@
-import { Navigate, NavLink, Outlet } from 'react-router';
+import { Navigate, NavLink, Outlet, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { AlertsIcon, ProfileIcon, TablesIcon } from '../components/icons';
-import { useAlerts, useSession } from '../service/ServiceProvider';
+import { AdminIcon, AlertsIcon, KitchenIcon, ProfileIcon, TablesIcon } from '../components/icons';
+import { useAlerts, useMe, useSession } from '../service/ServiceProvider';
+import { homeFor, workspaces } from './home';
 
-/** The service app: three tabs at the bottom, nothing more is needed during service. */
+/**
+ * The service app: tabs at the bottom for what this user's roles allow. Tables and alerts for
+ * whoever serves; the kitchen and admin open full screen, so cooks and managers find them here
+ * without knowing their address.
+ */
 export function TabsLayout() {
   const { t } = useTranslation();
   const { signedIn } = useSession();
-  const openAlerts = useAlerts().data?.length ?? 0;
+  const { pathname } = useLocation();
+  const me = useMe().data;
+  const permissions = me?.locations[0]?.permissions ?? [];
+  const places = workspaces(permissions);
+  const serves = !me || places.includes('tables');
+  const openAlerts = useAlerts(serves).data?.length ?? 0;
   const tabs = [
-    { to: '/tables', label: t('tables:tab'), Icon: TablesIcon, badge: 0 },
-    { to: '/alerts', label: t('alerts:tab'), Icon: AlertsIcon, badge: openAlerts },
+    ...(serves
+      ? [
+          { to: '/tables', label: t('tables:tab'), Icon: TablesIcon, badge: 0 },
+          { to: '/alerts', label: t('alerts:tab'), Icon: AlertsIcon, badge: openAlerts },
+        ]
+      : []),
+    ...(places.includes('kitchen')
+      ? [{ to: '/kitchen', label: t('kitchen:tab'), Icon: KitchenIcon, badge: 0 }]
+      : []),
+    ...(places.includes('admin')
+      ? [{ to: '/admin', label: t('admin:tab'), Icon: AdminIcon, badge: 0 }]
+      : []),
     { to: '/profile', label: t('profile:tab'), Icon: ProfileIcon, badge: 0 },
   ];
 
   if (!signedIn) return <Navigate to="/login" replace />;
+  // A cook has no tables: send them to their own screen instead of an error.
+  if (me && !serves && pathname !== '/profile') {
+    const home = homeFor(permissions);
+    return <Navigate to={home === '/tables' ? '/profile' : home} replace />;
+  }
 
   return (
     <div className="mx-auto min-h-dvh max-w-3xl bg-mist">
@@ -25,7 +50,10 @@ export function TabsLayout() {
         aria-label="Main"
         className="fixed inset-x-0 bottom-0 z-10 border-t border-black/5 bg-[rgba(248,249,251,0.78)] pb-[max(env(safe-area-inset-bottom),12px)] backdrop-blur-xl backdrop-saturate-150 dark:bg-[rgba(21,23,28,0.78)]"
       >
-        <ul className="mx-auto grid max-w-3xl grid-cols-3 px-2 pt-2">
+        <ul
+          className="mx-auto grid max-w-3xl px-2 pt-2"
+          style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
+        >
           {tabs.map(({ to, label, Icon, badge }) => (
             <li key={to}>
               <NavLink
