@@ -124,7 +124,7 @@ export function createMemoryClient(
     const open = orderAlerts(
       seats.map((s) => ({
         ...s,
-        orders: s.orders.filter((o) => OPEN.includes(o.status) && !o.override),
+        orders: s.orders.filter((o) => OPEN.includes(o.status) && !o.approved),
       })),
       dishes,
     ).map((a) => ({
