@@ -26,7 +26,12 @@
     "UNKNOWN_EQUIPMENT": "One of the equipment items no longer exists. Reload and try again.",
     "UNKNOWN_COMPONENT": "One of the components no longer exists. Reload and try again.",
     "DISH_NOT_FOUND": "This dish no longer exists. Reload and try again.",
-    "MENU_EMPTY": "Put at least one dish on the menu before publishing."
+    "MENU_EMPTY": "Put at least one dish on the menu before publishing.",
+    "TABLE_LABEL_TAKEN": "Another table already has this number.",
+    "TABLE_IN_USE": "Guests are seated at this table. Try again after the visit is closed.",
+    "FLOOR_NOT_FOUND": "This floor no longer exists. Reload and try again.",
+    "STAFF_SELF": "You cannot change your own roles.",
+    "STAFF_ORG_ROLE": "This person has a role at every location. An owner changes that."
   },
   "fields": {
     "name": "Name",
@@ -97,5 +102,67 @@
     "version": "Version {version}",
     "live": "live",
     "dishCount": "{count, plural, one {# dish} other {# dishes}}"
+  },
+  "floors": {
+    "intro": "Floors appear in this order in the service app. A hidden floor, like a closed terrace, disappears from service and keeps its tables.",
+    "newFloor": "New floor",
+    "newFloorHint": "Terrace, first floor, bar…",
+    "name": "Floor name",
+    "hidden": "Hidden from service",
+    "hiddenHint": "Waiters do not see this floor now.",
+    "seats": "{count, plural, one {# seat} other {# seats}}",
+    "editTable": "Edit table {label}",
+    "addTable": "Add table",
+    "tableTitle": "Table {label}",
+    "inUse": "Guests are seated here: the label stays, and seats cannot drop below the highest seat in use.",
+    "label": "Table number",
+    "seatCount": "Seats",
+    "shape": "Shape",
+    "floor": "Floor",
+    "shapes": {
+      "ROUND": "Round",
+      "SQUARE": "Square",
+      "RECT": "Long"
+    },
+    "externalRef": "Number in the POS",
+    "externalRefHint": "Only when it differs from the table number.",
+    "removeTable": "Remove table",
+    "removed": "Removed tables:",
+    "restore": "Put back"
+  },
+  "staff": {
+    "intro": "Everyone who signs in on this location's devices, with their roles here and their PIN.",
+    "new": "New person",
+    "self": "This is you. Someone else changes your roles.",
+    "rolesHere": "Roles at this location",
+    "roles": {
+      "OWNER": "Owner",
+      "MANAGER": "Manager",
+      "CHEF": "Chef",
+      "COOK": "Cook",
+      "WAITER": "Waiter",
+      "RUNNER": "Runner"
+    },
+    "roleHints": {
+      "OWNER": "Everything, at every location.",
+      "MANAGER": "Floor plan, staff, publishing the menu, overrides.",
+      "CHEF": "Recipes and ingredients, verifying them, the kitchen.",
+      "COOK": "The kitchen display and plate checks.",
+      "WAITER": "Tables, allergies and orders.",
+      "RUNNER": "Checking and serving plates at the pass."
+    },
+    "orgRoles": "Also {roles} at every location. An owner changes that.",
+    "pin": "PIN",
+    "pinHint": "4 to 6 digits. Can also be set later.",
+    "newPin": "New PIN",
+    "hasPin": "Has a PIN for this location.",
+    "noPin": "No PIN yet: cannot sign in here.",
+    "locked": "Locked",
+    "lockedHint": "Locked after five wrong tries. Set a new PIN to unlock.",
+    "setPin": "Set PIN",
+    "unlock": "Set PIN and unlock",
+    "remove": "Remove from this location",
+    "removeConfirm": "Remove {name} from this location? Their roles here and their PIN go.",
+    "removeYes": "Yes, remove"
   }
 }

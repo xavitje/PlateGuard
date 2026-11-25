@@ -11,6 +11,7 @@ import {
 } from '../demo';
 import { ApiError, type ServiceClient } from './client';
 import { createMemoryAdmin } from './memory-admin';
+import { createMemorySetup } from './memory-setup';
 
 const LOCATION = 'demo';
 const ME = {
@@ -80,7 +81,7 @@ export function createMemoryClient(
     }));
 
   return {
-    admin: createMemoryAdmin(dishes),
+    admin: { ...createMemoryAdmin(dishes), ...createMemorySetup(ME.user.id) },
     staff: async () => ({
       location: { id: LOCATION, name: 'Demo' },
       staff: [{ id: 'demo', name: 'Demo Waiter' }],

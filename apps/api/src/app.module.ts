@@ -9,6 +9,7 @@ import { HealthController } from './modules/health/health.controller.js';
 import { SafetyModule } from './modules/safety/safety.module.js';
 import { RecipesModule } from './modules/recipes/recipes.module.js';
 import { ServiceModule } from './modules/service/service.module.js';
+import { SetupModule } from './modules/setup/setup.module.js';
 
 /**
  * Modules from the plan: recipes, menus, service, safety, integrations, incidents, audit, reports,
@@ -22,6 +23,7 @@ import { ServiceModule } from './modules/service/service.module.js';
     SafetyModule,
     ServiceModule,
     RecipesModule,
+    SetupModule,
     IntegrationsModule,
   ],
   controllers: [HealthController],

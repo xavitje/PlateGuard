@@ -9,9 +9,12 @@ import type {
 import type { Component, ResolvedDish } from '@plateguard/domain';
 import { ALLERGEN_NAMES } from '../allergens';
 import { ApiError, type AdminClient } from './client';
+import type { createMemorySetup } from './memory-setup';
+
+type Setup = ReturnType<typeof createMemorySetup>;
 
 /** The recipe database in memory, built from the demo dishes. For tests and offline demos. */
-export function createMemoryAdmin(dishes: ResolvedDish[]): AdminClient {
+export function createMemoryAdmin(dishes: ResolvedDish[]): Omit<AdminClient, keyof Setup> {
   const ingredients = new Map<string, IngredientResponse>();
   const equipment = new Map<string, EquipmentResponse>();
   const components = new Map<string, ComponentResponse>();

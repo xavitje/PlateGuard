@@ -89,6 +89,25 @@ seats with allergies and orders, and alerts.
   (`orderAlerts` in `packages/domain`), so the menu alone never raises one, and the Alerts tab, its
   badge and the table grid always agree.
 
+## Admin: recipes, menu, floor plan and staff
+
+`/admin` is the desktop environment. Each section shows only to roles that may use it; the API checks
+the same permissions.
+
+- **Recipes** (`menu.edit`): ingredients with their allergens and traces, components (nesting,
+  substitutes, equipment, "can be left off", "mixed in"), and dishes. Only a role with
+  `ingredient.verify` can mark an ingredient verified; changing its allergens needs a new check.
+- **Menus**: which dishes are on the menu and in which order. Publishing (`menu.publish`) freezes the
+  resolved recipes of every dish, in English and Dutch, as a new version. Service works from the
+  latest published version only, so recipe edits reach the floor by publishing. Before publishing,
+  unverified ingredients and empty components are listed. An order stores the version it was
+  placed from, and its alerts keep judging that recipe.
+- **Floor plan** (`floorplan.edit`): floors in the order waiters see them, hidden floors, and tables
+  (number, seats, shape, POS number). Tables are never deleted: removing one makes it inactive, and
+  a table with guests seated keeps its number and seats.
+- **Staff** (`staff.manage`): people, their roles at this location and their PIN. A new PIN also
+  unlocks a locked one. Only an owner makes someone an owner, and nobody changes their own roles.
+
 ## Signing in
 
 Service devices are shared, so staff sign in per shift: pick your name, type your PIN (4 to 6
@@ -154,6 +173,5 @@ never green ("no allergen found in the recipe", not "safe"), and unknown is alwa
 
 ## Not in this skeleton yet
 
-Authentication (JWT, PIN per person), the recipe and menu editors, publishing with the PDF allergen card,
-the floor plan editor, plate orders with the status machine, real-time updates (SSE), the inbox worker and
+The PDF allergen card on publishing, drawing the floor plan, plate orders with the status machine, real-time updates (SSE), the inbox worker and
 outbox dispatcher, real adapters, incidents and the dashboard. Each arrives in its phase of the plan.

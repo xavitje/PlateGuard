@@ -26,7 +26,12 @@
     "UNKNOWN_EQUIPMENT": "Een van de apparaten bestaat niet meer. Laad opnieuw en probeer het nog eens.",
     "UNKNOWN_COMPONENT": "Een van de componenten bestaat niet meer. Laad opnieuw en probeer het nog eens.",
     "DISH_NOT_FOUND": "Dit gerecht bestaat niet meer. Laad opnieuw en probeer het nog eens.",
-    "MENU_EMPTY": "Zet minstens één gerecht op de kaart voordat je publiceert."
+    "MENU_EMPTY": "Zet minstens één gerecht op de kaart voordat je publiceert.",
+    "TABLE_LABEL_TAKEN": "Een andere tafel heeft dit nummer al.",
+    "TABLE_IN_USE": "Aan deze tafel zitten gasten. Probeer het opnieuw als het bezoek is afgesloten.",
+    "FLOOR_NOT_FOUND": "Deze verdieping bestaat niet meer. Laad opnieuw en probeer het nog eens.",
+    "STAFF_SELF": "Je kunt je eigen rollen niet aanpassen.",
+    "STAFF_ORG_ROLE": "Deze persoon heeft een rol op elke locatie. Een eigenaar past dat aan."
   },
   "fields": {
     "name": "Naam",
@@ -97,5 +102,67 @@
     "version": "Versie {version}",
     "live": "live",
     "dishCount": "{count, plural, one {# gerecht} other {# gerechten}}"
+  },
+  "floors": {
+    "intro": "Verdiepingen staan in deze volgorde in de bedieningsapp. Een verborgen verdieping, zoals een gesloten terras, verdwijnt uit de bediening en houdt haar tafels.",
+    "newFloor": "Nieuwe verdieping",
+    "newFloorHint": "Terras, eerste verdieping, bar…",
+    "name": "Naam verdieping",
+    "hidden": "Verborgen voor de bediening",
+    "hiddenHint": "De bediening ziet deze verdieping nu niet.",
+    "seats": "{count, plural, one {# plaats} other {# plaatsen}}",
+    "editTable": "Tafel {label} bewerken",
+    "addTable": "Tafel toevoegen",
+    "tableTitle": "Tafel {label}",
+    "inUse": "Hier zitten gasten: het nummer blijft, en het aantal plaatsen kan niet lager dan de hoogste bezette plaats.",
+    "label": "Tafelnummer",
+    "seatCount": "Plaatsen",
+    "shape": "Vorm",
+    "floor": "Verdieping",
+    "shapes": {
+      "ROUND": "Rond",
+      "SQUARE": "Vierkant",
+      "RECT": "Lang"
+    },
+    "externalRef": "Nummer in de kassa",
+    "externalRefHint": "Alleen als het afwijkt van het tafelnummer.",
+    "removeTable": "Tafel verwijderen",
+    "removed": "Verwijderde tafels:",
+    "restore": "Terugzetten"
+  },
+  "staff": {
+    "intro": "Iedereen die inlogt op de apparaten van deze locatie, met hun rollen hier en hun pincode.",
+    "new": "Nieuwe persoon",
+    "self": "Dit ben jij. Iemand anders past jouw rollen aan.",
+    "rolesHere": "Rollen op deze locatie",
+    "roles": {
+      "OWNER": "Eigenaar",
+      "MANAGER": "Manager",
+      "CHEF": "Chef",
+      "COOK": "Kok",
+      "WAITER": "Bediening",
+      "RUNNER": "Runner"
+    },
+    "roleHints": {
+      "OWNER": "Alles, op elke locatie.",
+      "MANAGER": "Plattegrond, personeel, menu publiceren, overrides.",
+      "CHEF": "Recepten en ingrediënten, die controleren, de keuken.",
+      "COOK": "Het keukenscherm en bordcontroles.",
+      "WAITER": "Tafels, allergieën en bestellingen.",
+      "RUNNER": "Borden controleren en uitserveren bij de pass."
+    },
+    "orgRoles": "Ook {roles} op elke locatie. Een eigenaar past dat aan.",
+    "pin": "Pincode",
+    "pinHint": "4 tot 6 cijfers. Kan ook later.",
+    "newPin": "Nieuwe pincode",
+    "hasPin": "Heeft een pincode voor deze locatie.",
+    "noPin": "Nog geen pincode: kan hier niet inloggen.",
+    "locked": "Geblokkeerd",
+    "lockedHint": "Geblokkeerd na vijf foute pogingen. Stel een nieuwe pincode in om te deblokkeren.",
+    "setPin": "Pincode instellen",
+    "unlock": "Pincode instellen en deblokkeren",
+    "remove": "Verwijderen van deze locatie",
+    "removeConfirm": "{name} verwijderen van deze locatie? De rollen hier en de pincode vervallen.",
+    "removeYes": "Ja, verwijderen"
   }
 }

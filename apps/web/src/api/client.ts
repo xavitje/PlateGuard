@@ -1,4 +1,9 @@
 import type {
+  AdminFloor,
+  FloorDraft,
+  StaffDraft,
+  StaffMember,
+  TableDraft,
   AllergenResponse,
   ComponentDraft,
   ComponentResponse,
@@ -46,6 +51,15 @@ export interface AdminClient {
   menuDraft(location: string): Promise<MenuDraftResponse>;
   setMenuItems(location: string, dishIds: string[]): Promise<MenuDraftResponse>;
   publishMenu(location: string): Promise<MenuDraftResponse>;
+  floors(location: string): Promise<AdminFloor[]>;
+  saveFloor(location: string, id: string | null, body: FloorDraft): Promise<AdminFloor[]>;
+  orderFloors(location: string, floorIds: string[]): Promise<AdminFloor[]>;
+  saveTable(location: string, id: string | null, body: TableDraft): Promise<AdminFloor[]>;
+  staff(location: string): Promise<StaffMember[]>;
+  createStaff(location: string, body: StaffDraft): Promise<StaffMember[]>;
+  updateStaff(location: string, id: string, body: Omit<StaffDraft, 'pin'>): Promise<StaffMember[]>;
+  setStaffPin(location: string, id: string, pin: string): Promise<StaffMember[]>;
+  removeStaff(location: string, id: string): Promise<StaffMember[]>;
 }
 
 /** Everything the service app reads and writes. One implementation per source. */
@@ -126,6 +140,17 @@ export function createHttpClient(
       setMenuItems: (l, dishIds) =>
         call(adm(l, 'menu/items'), { method: 'PUT', body: { dishIds } }),
       publishMenu: (l) => call(adm(l, 'menu/publish'), { method: 'POST' }),
+      floors: (l) => call(adm(l, 'floors')),
+      saveFloor: (l, id, body) => save(l, 'floors', id, body),
+      orderFloors: (l, floorIds) =>
+        call(adm(l, 'floors/order'), { method: 'PUT', body: { floorIds } }),
+      saveTable: (l, id, body) => save(l, 'tables', id, body),
+      staff: (l) => call(adm(l, 'staff')),
+      createStaff: (l, body) => call(adm(l, 'staff'), { method: 'POST', body }),
+      updateStaff: (l, id, body) => call(adm(l, `staff/${id}`), { method: 'PUT', body }),
+      setStaffPin: (l, id, pin) =>
+        call(adm(l, `staff/${id}/pin`), { method: 'PUT', body: { pin } }),
+      removeStaff: (l, id) => call(adm(l, `staff/${id}`), { method: 'DELETE' }),
     },
     staff: (slug) => call(`/auth/locations/${encodeURIComponent(slug)}/staff`),
     loginPin: (body) => call('/auth/pin', { method: 'POST', body }),

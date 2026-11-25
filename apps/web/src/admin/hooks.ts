@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import type { AdminClient } from '../api/client';
 import { useClient, useLocationId, useMe } from '../service/ServiceProvider';
 
-type Reads = 'ingredients' | 'equipment' | 'components' | 'dishes' | 'menuDraft';
+type Reads =
+  'ingredients' | 'equipment' | 'components' | 'dishes' | 'menuDraft' | 'floors' | 'staff';
 
 /** What the signed-in user may do at this location. Only for hiding buttons: the API decides. */
 export function useCan(): (p: Permission) => boolean {
@@ -53,9 +54,11 @@ export function useAdminSave<A extends unknown[], R>(
     },
     onMutate: (args) => optimistic?.(qc, loc, args),
     onError: () => void qc.invalidateQueries({ queryKey: ['admin'] }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['admin'] });
-      void qc.invalidateQueries({ queryKey: ['menu', loc] });
-    },
+    // Waits for the fresh lists, so a form that opens the saved row finds it.
+    onSuccess: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: ['admin'] }),
+        qc.invalidateQueries({ queryKey: ['menu', loc] }),
+      ]),
   });
 }
