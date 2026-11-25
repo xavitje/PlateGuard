@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAdmin, useAdminSave } from './hooks';
 import { button, Field, input, primary, SaveError, Toggle } from './ui';
+import { placed } from '../api/layout';
 
 const SHAPES = ['ROUND', 'SQUARE', 'RECT'] as const;
 
@@ -99,7 +100,7 @@ function FloorCard({
     c.saveFloor(l, floor.id, body),
   );
   const active = floor.tables.filter((tb) => tb.active);
-  // The table stays where it was dropped while the save is on its way.
+  // The table stays where it was dropped, at its new size, while the save is on its way.
   const layout = useAdminSave(
     (c, l, body: FloorLayout) => c.layoutFloor(l, floor.id, body),
     (qc, l, [body]) =>
@@ -111,7 +112,7 @@ function FloorCard({
                 ...f,
                 tables: f.tables.map((tb) => {
                   const p = body.tables.find((x) => x.id === tb.id);
-                  return p ? { ...tb, position: { x: p.x, y: p.y } } : tb;
+                  return p ? placed(tb, p) : tb;
                 }),
               },
         ),

@@ -3,7 +3,7 @@ import { useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { useFloors } from '../service/ServiceProvider';
-import { PLAN_AREA, tableSize } from '../admin/FloorPlanCanvas';
+import { drawnSize, PLAN_AREA } from '../admin/FloorPlanCanvas';
 import { PageTitle } from '../shell/TabsLayout';
 
 /**
@@ -51,18 +51,20 @@ export function TablesPage() {
         >
           <div className={PLAN_AREA}>
             {floor.tables.map((tb) => {
-              const size = tableSize(tb);
+              const size = drawnSize(tb);
               return (
                 <TableTile
                   key={tb.id}
                   table={tb}
+                  rotation={tb.rotation}
                   style={{
                     left: `${tb.position!.x}%`,
                     top: `${tb.position!.y}%`,
                     width: `max(${size.w}%, 54px)`,
                     aspectRatio: `${size.w} / ${size.h}`,
+                    transform: `translate(-50%, -50%) rotate(${tb.rotation}deg)`,
                   }}
-                  className={`absolute -translate-x-1/2 -translate-y-1/2 place-content-center justify-items-center p-1 text-center ${
+                  className={`absolute place-content-center justify-items-center p-1 text-center ${
                     tb.shape === 'ROUND' ? 'rounded-full' : 'rounded-[12px]'
                   }`}
                   compact
@@ -91,12 +93,15 @@ function TableTile({
   className,
   style,
   compact,
+  rotation = 0,
 }: {
   table: TableSummary;
   className: string;
   style?: CSSProperties;
   /** On the drawing there is room for the number and the badges only. */
   compact?: boolean;
+  /** The table is turned on the drawing; its text stays upright. */
+  rotation?: number;
 }) {
   const { t } = useTranslation();
   const free = tb.guests === 0;
@@ -109,25 +114,30 @@ function TableTile({
         free ? 'bg-mist shadow-[inset_0_0_0_1.5px_var(--pg-line)]' : 'bg-card shadow-sm'
       } ${compact && !free ? 'shadow-[inset_0_0_0_2px_var(--pg-brand)]' : ''}`}
     >
-      <b
-        className={`font-semibold tracking-[-0.02em] ${compact ? 'text-lg leading-none' : 'text-xl'} ${free ? 'text-[#9aa1ad]' : ''}`}
+      <span
+        className="grid justify-items-center gap-0.5"
+        style={rotation ? { transform: `rotate(${-rotation}deg)` } : undefined}
       >
-        {tb.label}
-      </b>
-      {!compact && (
-        <span className="text-xs text-soft">
-          {free ? t('tables:free') : t('tables:guests', { count: tb.guests })}
-        </span>
-      )}
-      {tb.allergyGuests > 0 && (
-        <span
-          className={`font-medium text-brand-ink ${compact ? 'text-[10.5px] leading-tight' : 'text-xs'}`}
+        <b
+          className={`font-semibold tracking-[-0.02em] ${compact ? 'text-lg leading-none' : 'text-xl'} ${free ? 'text-[#9aa1ad]' : ''}`}
         >
-          {compact
-            ? t('tables:allergyShort', { count: tb.allergyGuests })
-            : t('tables:seat.allergyCount', { count: tb.allergyGuests })}
-        </span>
-      )}
+          {tb.label}
+        </b>
+        {!compact && (
+          <span className="text-xs text-soft">
+            {free ? t('tables:free') : t('tables:guests', { count: tb.guests })}
+          </span>
+        )}
+        {tb.allergyGuests > 0 && (
+          <span
+            className={`font-medium text-brand-ink ${compact ? 'text-[10.5px] leading-tight' : 'text-xs'}`}
+          >
+            {compact
+              ? t('tables:allergyShort', { count: tb.allergyGuests })
+              : t('tables:seat.allergyCount', { count: tb.allergyGuests })}
+          </span>
+        )}
+      </span>
       {tb.openAlerts > 0 && (
         <span
           className={`absolute grid h-5 min-w-5 place-items-center rounded-full bg-red px-1.5 text-[11.5px] font-bold text-white ${

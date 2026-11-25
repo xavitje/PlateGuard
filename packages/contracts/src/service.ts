@@ -50,6 +50,10 @@ export interface TableSummary {
   openAlerts: number;
   /** On the drawn floor plan, in percent. Null until the table is placed in admin. */
   position: { x: number; y: number } | null;
+  /** Size on the drawing in percent of its width. Null: sized from the seats and shape. */
+  size: { w: number; h: number } | null;
+  /** Degrees clockwise. */
+  rotation: number;
 }
 
 export interface FloorResponse {

@@ -10,6 +10,10 @@ const round = (n: number) => Math.round(n * 10) / 10;
 export const positionOf = (p: { x: number; y: number }) =>
   p.x === 0 && p.y === 0 ? null : { x: p.x, y: p.y };
 
+/** A size set by hand, or null when the table takes its size from the seats. */
+export const sizeOf = (p: { w: number | null; h: number | null }) =>
+  p.w === null || p.h === null ? null : { w: p.w, h: p.h };
+
 /**
  * Floors and the tables on them, with the rules that need the data in the same transaction. Tables are never deleted: past visits point at them, so a
  * removed table is only made inactive. Labels are unique among the active tables, because
@@ -47,6 +51,8 @@ export class FloorplanRepository {
             active: p.active,
             inUse: inUse.has(p.id),
             position: positionOf(p),
+            size: sizeOf(p),
+            rotation: p.rotation,
           })),
       }));
     });
@@ -82,7 +88,7 @@ export class FloorplanRepository {
     return this.floors(ctx, locationId);
   }
 
-  /** Moves tables on the drawing. Every table must stand on this floor of this location. */
+  /** Moves, sizes and turns tables on the drawing. Every table must stand on this floor. */
   async layout(ctx: TenantContext, locationId: string, floorId: string, input: FloorLayout) {
     await this.prisma.forTenant(ctx, async (tx) => {
       const ids = input.tables.map((t) => t.id);
@@ -94,7 +100,17 @@ export class FloorplanRepository {
       for (const t of input.tables)
         await tx.servicePoint.update({
           where: { id: t.id },
-          data: { x: round(t.x), y: round(t.y) },
+          data: {
+            x: round(t.x),
+            y: round(t.y),
+            // Width and height are set together: a size with one side missing is no size.
+            ...(t.w !== undefined || t.h !== undefined
+              ? t.w == null || t.h == null
+                ? { w: null, h: null }
+                : { w: round(t.w), h: round(t.h) }
+              : {}),
+            ...(t.rotation !== undefined ? { rotation: Math.round(t.rotation) % 360 } : {}),
+          },
         });
     });
     return this.floors(ctx, locationId);

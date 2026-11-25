@@ -1,6 +1,7 @@
 import type { AdminFloor, StaffMember } from '@plateguard/contracts';
 import { DEMO_FLOORS, DEMO_TABLES } from '../demo';
 import { ApiError, type AdminClient } from './client';
+import { placed } from './layout';
 
 type Setup = Pick<
   AdminClient,
@@ -32,6 +33,8 @@ export function createMemorySetup(me: string): Setup {
       active: true,
       inUse: false,
       position: null,
+      size: null,
+      rotation: 0,
     })),
   }));
   let staff: StaffMember[] = [
@@ -55,7 +58,7 @@ export function createMemorySetup(me: string): Setup {
       for (const p of body.tables) {
         const tb = floor?.tables.find((x) => x.id === p.id);
         if (!tb) throw new ApiError(400, 'TABLE_NOT_ON_FLOOR');
-        tb.position = { x: p.x, y: p.y };
+        Object.assign(tb, placed(tb, p));
       }
       return copy();
     },
@@ -93,6 +96,8 @@ export function createMemorySetup(me: string): Setup {
         active: body.active ?? true,
         inUse: before?.inUse ?? false,
         position: before?.position ?? null,
+        size: before?.size ?? null,
+        rotation: before?.rotation ?? 0,
       };
       floors = floors.map((f) => ({
         ...f,

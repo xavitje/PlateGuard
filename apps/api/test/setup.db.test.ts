@@ -87,6 +87,29 @@ describe.skipIf(!hasDb)('floor plan and staff', () => {
     ).rejects.toThrow();
   });
 
+  it('sizes and turns a table, and a null size goes back to the size from its seats', async () => {
+    const [, inside] = await floorplan.floors(ctx, loc);
+    const table = inside!.tables[0]!;
+    expect(table).toMatchObject({ size: null, rotation: 0 });
+    let floors = await floorplan.layout(ctx, loc, inside!.id, {
+      tables: [{ id: table.id, x: 40, y: 50, w: 12.34, h: 8, rotation: 45 }],
+    });
+    expect(floors[1]!.tables[0]).toMatchObject({
+      position: { x: 40, y: 50 },
+      size: { w: 12.3, h: 8 },
+      rotation: 45,
+    });
+    // Moving alone keeps the size and the turn.
+    floors = await floorplan.layout(ctx, loc, inside!.id, {
+      tables: [{ id: table.id, x: 41, y: 50 }],
+    });
+    expect(floors[1]!.tables[0]).toMatchObject({ size: { w: 12.3, h: 8 }, rotation: 45 });
+    floors = await floorplan.layout(ctx, loc, inside!.id, {
+      tables: [{ id: table.id, x: 41, y: 50, w: null, h: null, rotation: 0 }],
+    });
+    expect(floors[1]!.tables[0]).toMatchObject({ size: null, rotation: 0 });
+  });
+
   it('will not shrink or remove a table with guests seated', async () => {
     const [, inside] = await floorplan.floors(ctx, loc);
     const table = inside!.tables[0]!;

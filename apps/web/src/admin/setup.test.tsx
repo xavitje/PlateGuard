@@ -54,6 +54,42 @@ describe('Floor plan admin', () => {
     expect(Number(first.dataset.x)).toBe(x + 5);
   });
 
+  it('resizes and turns the selected table, and can give it its default size back', async () => {
+    const client = createMemoryClient();
+    render(
+      <I18nProvider locale="en">
+        <ServiceProvider client={client} signedIn>
+          <FloorPlanPage />
+        </ServiceProvider>
+      </I18nProvider>,
+    );
+    const terrace = await screen.findByRole('region', { name: 'Terrace' });
+    const first = within(terrace).getAllByRole('button', { name: /^Edit table/ })[0]!;
+    const w = Number(first.dataset.w);
+    const h = Number(first.dataset.h);
+    fireEvent.keyDown(first, { key: '+', shiftKey: true });
+    fireEvent.keyDown(first, { key: 'r' });
+    await waitFor(async () => {
+      const [, saved] = await client.admin.floors('demo');
+      expect(saved!.tables[0]!.size).toEqual({ w: w + 5, h: h + 5 });
+      expect(saved!.tables[0]!.rotation).toBe(15);
+    });
+    expect(Number(first.dataset.rotation)).toBe(15);
+
+    fireEvent.click(first);
+    const tools = within(terrace).getByRole('toolbar', { name: /Size and turn table/ });
+    fireEvent.click(within(tools).getByRole('button', { name: /Smaller/ }));
+    await waitFor(() => expect(Number(first.dataset.w)).toBe(w + 3));
+    fireEvent.click(within(tools).getByRole('button', { name: /Turn left/ }));
+    await waitFor(() => expect(Number(first.dataset.rotation)).toBe(0));
+    fireEvent.click(within(tools).getByRole('button', { name: 'Default size' }));
+    await waitFor(async () => {
+      const [, saved] = await client.admin.floors('demo');
+      expect(saved!.tables[0]).toMatchObject({ size: null, rotation: 0 });
+    });
+    expect(Number(first.dataset.w)).toBe(w);
+  });
+
   it('adds a floor', async () => {
     renderPage(<FloorPlanPage />);
     fireEvent.change(await screen.findByLabelText('New floor'), {

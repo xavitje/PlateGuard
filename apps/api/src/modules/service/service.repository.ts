@@ -8,6 +8,7 @@ import {
 } from '@plateguard/domain';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../common/prisma.service.js';
+import { positionOf, sizeOf } from '../setup/floorplan.repository.js';
 
 /** Plates on their way to the guest: these are judged for alerts and shown in the kitchen. */
 export const OPEN_PLATE_STATUSES = ['ASSESSED', 'IN_KITCHEN', 'CHECKED', 'PASS_CHECKED'] as const;
@@ -43,6 +44,8 @@ export interface TableRow {
   shape: 'ROUND' | 'SQUARE' | 'RECT';
   floorId: string | null;
   position: { x: number; y: number } | null;
+  size: { w: number; h: number } | null;
+  rotation: number;
   visitId: string | null;
   bySeat: SeatRow[];
 }
@@ -334,7 +337,9 @@ async function loadTables(tx: TenantTx, locationId: string, label?: string): Pro
         seats: p.seats,
         shape: p.shape,
         floorId: p.floorId,
-        position: p.x === 0 && p.y === 0 ? null : { x: p.x, y: p.y },
+        position: positionOf(p),
+        size: sizeOf(p),
+        rotation: p.rotation,
         visitId: visit?.id ?? null,
         bySeat: visit?.guests.map(toSeat) ?? [],
       };

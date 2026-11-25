@@ -140,7 +140,14 @@ export type FloorDraft = z.input<typeof FloorInputZ>;
 
 export const FloorOrderZ = z.strictObject({ floorIds: z.array(IdZ).max(50) });
 
-/** Table centres on the drawing, in percent. Sent for the tables that moved. */
+/** Smallest and largest table side on the drawing, in percent of its width. */
+export const TABLE_SIZE = { min: 4, max: 40 } as const;
+
+/**
+ * Tables on the drawing: centres in percent of its width and height, sizes in percent of its
+ * width, rotation in degrees clockwise. A size or rotation left out stays as it is; a null size
+ * goes back to the size from the seats.
+ */
 export const FloorLayoutZ = z.strictObject({
   tables: z
     .array(
@@ -148,6 +155,9 @@ export const FloorLayoutZ = z.strictObject({
         id: IdZ,
         x: z.number().min(0).max(100),
         y: z.number().min(0).max(100),
+        w: z.number().min(TABLE_SIZE.min).max(TABLE_SIZE.max).nullable().optional(),
+        h: z.number().min(TABLE_SIZE.min).max(TABLE_SIZE.max).nullable().optional(),
+        rotation: z.number().min(0).lt(360).optional(),
       }),
     )
     .min(1)
@@ -181,11 +191,20 @@ export interface AdminTable {
   inUse: boolean;
   /** Where the table stands on the drawing, in percent of its width and height. Null: not drawn yet. */
   position: TablePosition | null;
+  /** Set by hand on the drawing, in percent of its width. Null: sized from the seats and shape. */
+  size: TableSize | null;
+  /** Degrees clockwise. */
+  rotation: number;
 }
 
 export interface TablePosition {
   x: number;
   y: number;
+}
+
+export interface TableSize {
+  w: number;
+  h: number;
 }
 
 export interface AdminFloor {
