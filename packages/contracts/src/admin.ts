@@ -1,0 +1,129 @@
+import { z } from 'zod';
+import { AllergenCodeZ, IdZ } from './common.js';
+
+const Name = z.string().trim().min(1).max(120);
+const OptionalText = z.string().trim().max(120).optional().nullable();
+const Codes = z.array(AllergenCodeZ).max(40);
+
+/** An ingredient from a supplier. Changing its allergens without verifying again makes it unverified. */
+export const IngredientInputZ = z.strictObject({
+  name: Name,
+  synonyms: z.array(z.string().trim().min(1).max(60)).max(30).default([]),
+  contains: Codes.default([]),
+  mayContain: Codes.default([]),
+  supplier: OptionalText,
+  brand: OptionalText,
+  articleNumber: OptionalText,
+  /** Checked against the label or spec sheet just now. Unverified ingredients make dishes UNKNOWN. */
+  verified: z.boolean().default(false),
+});
+export type IngredientInput = z.infer<typeof IngredientInputZ>;
+/** What a client sends: defaults may be left out. */
+export type IngredientDraft = z.input<typeof IngredientInputZ>;
+
+export interface IngredientResponse {
+  id: string;
+  name: string;
+  synonyms: string[];
+  contains: string[];
+  mayContain: string[];
+  supplier: string | null;
+  brand: string | null;
+  articleNumber: string | null;
+  verifiedAt: string | null;
+  verifiedSource: string | null;
+  /** Components that use it. */
+  usedIn: number;
+}
+
+export const EquipmentInputZ = z.strictObject({ name: Name, allergens: Codes.default([]) });
+export type EquipmentInput = z.infer<typeof EquipmentInputZ>;
+/** What a client sends: defaults may be left out. */
+export type EquipmentDraft = z.input<typeof EquipmentInputZ>;
+
+export interface EquipmentResponse {
+  id: string;
+  name: string;
+  allergens: string[];
+}
+
+/** A component (jus, fries, dressing): its ingredients, nested components, substitutes and equipment. */
+export const ComponentInputZ = z.strictObject({
+  name: Name,
+  nameNl: OptionalText,
+  omittable: z.boolean().default(false),
+  premixed: z.boolean().default(false),
+  suitableForSevere: z.boolean().default(false),
+  ingredientIds: z.array(IdZ).max(100).default([]),
+  equipmentIds: z.array(IdZ).max(20).default([]),
+  childIds: z.array(IdZ).max(50).default([]),
+  substitutions: z
+    .array(z.strictObject({ replacementId: IdZ, suitableForSevere: z.boolean().default(false) }))
+    .max(20)
+    .default([]),
+});
+export type ComponentInput = z.infer<typeof ComponentInputZ>;
+/** What a client sends: defaults may be left out. */
+export type ComponentDraft = z.input<typeof ComponentInputZ>;
+
+export interface ComponentResponse extends Required<Omit<ComponentInput, 'nameNl'>> {
+  id: string;
+  nameNl: string | null;
+}
+
+export const DishInputZ = z.strictObject({
+  name: Name,
+  nameNl: OptionalText,
+  course: z.number().int().min(0).max(9).default(0),
+  priceCents: z.number().int().min(0).max(1_000_000).nullable().default(null),
+  /** In plate order. */
+  componentIds: z.array(IdZ).min(1).max(30),
+});
+export type DishInput = z.infer<typeof DishInputZ>;
+/** What a client sends: defaults may be left out. */
+export type DishDraft = z.input<typeof DishInputZ>;
+
+export interface DishResponse {
+  id: string;
+  name: string;
+  nameNl: string | null;
+  course: number;
+  priceCents: number | null;
+  componentIds: string[];
+}
+
+export const MenuItemsZ = z.strictObject({ dishIds: z.array(IdZ).max(200) });
+export type MenuItems = z.infer<typeof MenuItemsZ>;
+
+export interface MenuVersionSummary {
+  id: string;
+  version: number;
+  publishedAt: string;
+  dishCount: number;
+}
+
+/** A problem that publishing would put in front of guests and waiters. */
+export interface PublishWarning {
+  code: 'UNVERIFIED_INGREDIENT' | 'EMPTY_COMPONENT';
+  dishId: string;
+  dishName: string;
+  name: string;
+}
+
+export interface MenuDraftResponse {
+  menuId: string;
+  name: string;
+  /** The draft, in order. */
+  dishIds: string[];
+  /** True when the draft or any recipe on it differs from the published version. */
+  changed: boolean;
+  published: MenuVersionSummary | null;
+  versions: MenuVersionSummary[];
+  warnings: PublishWarning[];
+}
+
+export interface AllergenResponse {
+  code: string;
+  parent: string | null;
+  name: string;
+}

@@ -1,5 +1,5 @@
 import type { SeatResponse, TableResponse } from '@plateguard/contracts';
-import { assess, orderAlerts, type ResolvedDish } from '@plateguard/domain';
+import { assess, orderAlerts, ROLE_PERMISSIONS, type ResolvedDish } from '@plateguard/domain';
 import {
   DEMO_DISHES,
   DEMO_FLOORS,
@@ -10,8 +10,21 @@ import {
   type DemoService,
 } from '../demo';
 import { ApiError, type ServiceClient } from './client';
+import { createMemoryAdmin } from './memory-admin';
 
 const LOCATION = 'demo';
+const ME = {
+  user: { id: 'demo', name: 'Demo Waiter', locale: 'en' },
+  locations: [
+    {
+      id: LOCATION,
+      organizationId: 'demo',
+      name: 'Demo',
+      slug: 'demo',
+      permissions: [...ROLE_PERMISSIONS.OWNER],
+    },
+  ],
+};
 
 /**
  * The same contract as the API, held in memory on the demo data. Used by the tests, so they
@@ -67,6 +80,7 @@ export function createMemoryClient(
     }));
 
   return {
+    admin: createMemoryAdmin(dishes),
     staff: async () => ({
       location: { id: LOCATION, name: 'Demo' },
       staff: [{ id: 'demo', name: 'Demo Waiter' }],
@@ -76,16 +90,10 @@ export function createMemoryClient(
       return {
         token: 'memory',
         expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
-        me: {
-          user: { id: 'demo', name: 'Demo Waiter', locale: 'en' },
-          locations: [{ id: LOCATION, organizationId: 'demo', name: 'Demo', slug: 'demo' }],
-        },
+        me: ME,
       };
     },
-    me: async () => ({
-      user: { id: 'demo', name: 'Demo Waiter', locale: 'en' },
-      locations: [{ id: LOCATION, organizationId: 'demo', name: 'Demo', slug: 'demo' }],
-    }),
+    me: async () => ME,
     floors: async () => {
       const all = alerts();
       return DEMO_FLOORS.map((f) => ({

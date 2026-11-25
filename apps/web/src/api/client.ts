@@ -1,4 +1,14 @@
 import type {
+  AllergenResponse,
+  ComponentDraft,
+  ComponentResponse,
+  DishDraft,
+  DishResponse,
+  EquipmentDraft,
+  EquipmentResponse,
+  IngredientDraft,
+  IngredientResponse,
+  MenuDraftResponse,
   LoginResponse,
   PinLogin,
   StaffListResponse,
@@ -10,8 +20,37 @@ import type {
   TableResponse,
 } from '@plateguard/contracts';
 
+/** The recipe database and the menu, for admin. Saves return the stored row. */
+export interface AdminClient {
+  allergens(location: string, locale: string): Promise<AllergenResponse[]>;
+  ingredients(location: string): Promise<IngredientResponse[]>;
+  saveIngredient(
+    location: string,
+    id: string | null,
+    body: IngredientDraft,
+  ): Promise<IngredientResponse>;
+  equipment(location: string): Promise<EquipmentResponse[]>;
+  saveEquipment(
+    location: string,
+    id: string | null,
+    body: EquipmentDraft,
+  ): Promise<EquipmentResponse>;
+  components(location: string): Promise<ComponentResponse[]>;
+  saveComponent(
+    location: string,
+    id: string | null,
+    body: ComponentDraft,
+  ): Promise<ComponentResponse>;
+  dishes(location: string): Promise<DishResponse[]>;
+  saveDish(location: string, id: string | null, body: DishDraft): Promise<DishResponse>;
+  menuDraft(location: string): Promise<MenuDraftResponse>;
+  setMenuItems(location: string, dishIds: string[]): Promise<MenuDraftResponse>;
+  publishMenu(location: string): Promise<MenuDraftResponse>;
+}
+
 /** Everything the service app reads and writes. One implementation per source. */
 export interface ServiceClient {
+  admin: AdminClient;
   staff(slug: string): Promise<StaffListResponse>;
   loginPin(body: PinLogin): Promise<LoginResponse>;
   me(): Promise<MeResponse>;
@@ -69,7 +108,25 @@ export function createHttpClient(
   };
   const loc = (l: string) => `/locations/${encodeURIComponent(l)}`;
   const tbl = (l: string, label: string) => `${loc(l)}/tables/${encodeURIComponent(label)}`;
+  const adm = (l: string, path: string) => `${loc(l)}/admin/${path}`;
+  const save = <T>(l: string, kind: string, id: string | null, body: unknown) =>
+    call<T>(id ? adm(l, `${kind}/${id}`) : adm(l, kind), { method: id ? 'PUT' : 'POST', body });
   return {
+    admin: {
+      allergens: (l, locale) => call(adm(l, `allergens?locale=${locale}`)),
+      ingredients: (l) => call(adm(l, 'ingredients')),
+      saveIngredient: (l, id, body) => save(l, 'ingredients', id, body),
+      equipment: (l) => call(adm(l, 'equipment')),
+      saveEquipment: (l, id, body) => save(l, 'equipment', id, body),
+      components: (l) => call(adm(l, 'components')),
+      saveComponent: (l, id, body) => save(l, 'components', id, body),
+      dishes: (l) => call(adm(l, 'dishes')),
+      saveDish: (l, id, body) => save(l, 'dishes', id, body),
+      menuDraft: (l) => call(adm(l, 'menu')),
+      setMenuItems: (l, dishIds) =>
+        call(adm(l, 'menu/items'), { method: 'PUT', body: { dishIds } }),
+      publishMenu: (l) => call(adm(l, 'menu/publish'), { method: 'POST' }),
+    },
     staff: (slug) => call(`/auth/locations/${encodeURIComponent(slug)}/staff`),
     loginPin: (body) => call('/auth/pin', { method: 'POST', body }),
     me: () => call('/me'),

@@ -7,8 +7,11 @@ export interface SeatOrders {
   table: string;
   seat: number;
   allergies: GuestAllergy[];
-  /** Open orders only: not served, rejected or cancelled. */
-  orders: { id: string; dishId: string }[];
+  /**
+   * Open orders only: not served, rejected or cancelled. `dish` is the recipe as it was on the
+   * menu when ordered; without it the dish is looked up in the current menu.
+   */
+  orders: { id: string; dishId: string; dish?: ResolvedDish }[];
 }
 
 export interface OrderAlert {
@@ -41,7 +44,7 @@ export function orderAlerts(seats: SeatOrders[], dishes: ResolvedDish[]): OrderA
   for (const s of seats) {
     if (s.allergies.length === 0) continue;
     for (const order of s.orders) {
-      const dish = byId.get(order.dishId);
+      const dish = order.dish ?? byId.get(order.dishId);
       if (!dish) continue;
       const result = assess({ dish, guest: s.allergies });
       const kind = KIND[result.outcome];

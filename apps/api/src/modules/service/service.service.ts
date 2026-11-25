@@ -40,11 +40,8 @@ export class ServiceService {
   }
 
   async floors(ctx: TenantContext, locationId: string): Promise<FloorResponse[]> {
-    const [{ floors, tables }, dishes] = await Promise.all([
-      this.service.floors(ctx, locationId),
-      this.menu.dishes(ctx, locationId, 'en'),
-    ]);
-    const alerts = alertsFor(tables, dishes);
+    const { floors, tables } = await this.service.floors(ctx, locationId);
+    const alerts = await this.alertsOf(ctx, locationId, 'en', tables);
     return floors.map((f) => ({
       id: f.id,
       name: f.name,
@@ -69,16 +66,35 @@ export class ServiceService {
       label: t.label,
       seats: t.seats,
       visitId: t.visitId,
-      bySeat: t.bySeat.map(({ guestId: _, ...seat }) => seat),
+      bySeat: t.bySeat.map((s) => ({
+        seat: s.seat,
+        allergies: s.allergies,
+        noAllergy: s.noAllergy,
+        orders: s.orders.map((o) => ({ id: o.id, dishId: o.dishId, outcome: o.outcome })),
+      })),
     };
   }
 
   async alerts(ctx: TenantContext, locationId: string, locale: string): Promise<AlertResponse[]> {
-    const [{ tables }, dishes] = await Promise.all([
-      this.service.floors(ctx, locationId),
+    const { tables } = await this.service.floors(ctx, locationId);
+    return this.alertsOf(ctx, locationId, locale, tables);
+  }
+
+  /** Each order is judged with the recipe from the menu version it was ordered from. */
+  private async alertsOf(
+    ctx: TenantContext,
+    locationId: string,
+    locale: string,
+    tables: TableRow[],
+  ): Promise<AlertResponse[]> {
+    const versionIds = tables.flatMap((t) =>
+      t.bySeat.flatMap((s) => s.orders.flatMap((o) => (o.menuVersionId ? [o.menuVersionId] : []))),
+    );
+    const [dishes, versions] = await Promise.all([
       this.menu.dishes(ctx, locationId, locale),
+      this.menu.versions(ctx, versionIds, locale),
     ]);
-    return alertsFor(tables, dishes);
+    return alertsFor(tables, dishes, versions);
   }
 
   async saveSeat(
@@ -120,16 +136,27 @@ export class ServiceService {
   ): Promise<TableResponse> {
     const t = await this.requireTable(ctx, locationId, label);
     if (seat > t.seats) throw new BadRequestException({ code: 'SEAT_NOT_AT_TABLE' });
-    const [dishRow, dishes] = await Promise.all([
+    const [dishRow, menu] = await Promise.all([
       this.service.dishCourse(ctx, dishId),
-      this.menu.dishes(ctx, locationId, 'en'),
+      this.menu.current(ctx, locationId, 'en'),
     ]);
-    const dish = dishes.find((d) => d.id === dishId);
+    // Only dishes on the published menu can be ordered.
+    const dish = menu.dishes.find((d) => d.id === dishId);
     if (!dishRow || !dish) throw new NotFoundException({ code: 'DISH_NOT_FOUND' });
     const guest = t.bySeat.find((s) => s.seat === seat)?.allergies ?? [];
     const input = { dish, guest };
     const result = assess(input);
-    await this.service.createOrder(ctx, locationId, t.id, seat, dishRow, result, input, userId);
+    await this.service.createOrder(
+      ctx,
+      locationId,
+      t.id,
+      seat,
+      dishRow,
+      result,
+      input,
+      userId,
+      menu.versionId,
+    );
     return this.table(ctx, locationId, label);
   }
 
@@ -154,8 +181,23 @@ export class ServiceService {
 }
 
 /** The API shape of the domain's order alerts. */
-export function alertsFor(tables: TableRow[], dishes: ResolvedDish[]): AlertResponse[] {
-  const seats = tables.flatMap((t) => t.bySeat.map((s) => ({ ...s, table: t.label })));
+export function alertsFor(
+  tables: TableRow[],
+  dishes: ResolvedDish[],
+  versions: Map<string, ResolvedDish[]> = new Map(),
+): AlertResponse[] {
+  const seats = tables.flatMap((t) =>
+    t.bySeat.map((s) => ({
+      ...s,
+      table: t.label,
+      orders: s.orders.map((o) => ({
+        ...o,
+        dish: o.menuVersionId
+          ? versions.get(o.menuVersionId)?.find((d) => d.id === o.dishId)
+          : undefined,
+      })),
+    })),
+  );
   return orderAlerts(seats, dishes).map((a) => ({
     id: a.id,
     kind: a.kind,

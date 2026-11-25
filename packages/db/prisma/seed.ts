@@ -257,9 +257,34 @@ async function seedDemo() {
     });
   }
 
+  // Every dish on the menu, published as version 1: service works from the published menu.
+  const menu = await prisma.menu.create({ data: { locationId: DEMO_LOCATION, name: 'Menu' } });
+  const onMenu = [...dishIds.values()];
+  await prisma.menuItem.createMany({
+    data: onMenu.map((dishId, sortOrder) => ({
+      menuId: menu.id,
+      dishId,
+      locationId: DEMO_LOCATION,
+      sortOrder,
+    })),
+  });
+  const resolved = await loadDishes(prisma, DEMO_LOCATION, 'en', onMenu);
+  const published = await prisma.menuVersion.create({
+    data: {
+      menuId: menu.id,
+      locationId: DEMO_LOCATION,
+      version: 1,
+      status: 'PUBLISHED',
+      snapshot: {
+        dishes: { en: resolved, nl: await loadDishes(prisma, DEMO_LOCATION, 'nl', onMenu) },
+      } as unknown as Prisma.InputJsonValue,
+      publishedAt: new Date(),
+      publishedBy: DEMO_OWNER,
+    },
+  });
+
   // Two tables in service, with what the waiter recorded and ordered. The API derives the
   // alerts from these orders: table 12 seat 3 gets "modify", table 7 seat 2 "do not serve".
-  const resolved = await loadDishes(prisma, DEMO_LOCATION, 'en');
   const service: [string, number, GuestAllergy[], string[]][] = [
     ['12', 1, [], ['Steak, jus and fries']],
     ['12', 2, [], ['Tomato soup']],
@@ -320,6 +345,7 @@ async function seedDemo() {
           visitId,
           guestId: guest.id,
           dishId: dish.id,
+          menuVersionId: published.id,
           course: dishes.find((d) => d[0] === name)![2],
           status: 'ASSESSED',
           qrToken: `demo-${label}-${seat}-${dish.id.slice(0, 8)}`,
@@ -333,6 +359,7 @@ async function seedDemo() {
           reasons: result.reasons as unknown as Prisma.InputJsonValue,
           input: input as unknown as Prisma.InputJsonValue,
           engineVersion: result.engineVersion,
+          menuVersionId: published.id,
           inputHash: result.inputHash,
         },
       });
