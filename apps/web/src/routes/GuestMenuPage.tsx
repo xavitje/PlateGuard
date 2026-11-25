@@ -20,8 +20,8 @@ export function GuestMenuPage() {
   const dishes = DEMO_DISHES.filter((d) => d.id !== 'd-special');
 
   return (
-    <div className="mx-auto min-h-dvh max-w-2xl bg-bg px-4 py-6">
-      <header className="mb-5 flex items-center justify-between">
+    <div className="mx-auto min-h-dvh max-w-2xl bg-bg px-4 pt-[max(env(safe-area-inset-top),20px)] pb-[max(env(safe-area-inset-bottom),24px)]">
+      <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 text-lg font-semibold tracking-[-0.03em]">
           <Logo size={32} /> Brasserie De Haven
         </div>
@@ -38,7 +38,7 @@ export function GuestMenuPage() {
           ))}
         </div>
       </header>
-      <h1 className="mb-3 text-4xl font-semibold">{t('guest:title')}</h1>
+      <h1 className="mb-3 text-[clamp(30px,8vw,36px)] font-semibold">{t('guest:title')}</h1>
       <p className="mb-2 text-sm font-semibold text-soft">{t('guest:filter')}</p>
       <div className="mb-5 flex flex-wrap gap-1.5">
         {QUICK_ALLERGENS.map((code) => (

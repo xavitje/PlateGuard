@@ -56,9 +56,12 @@ export function KitchenPage() {
   );
 
   return (
-    <div data-theme="kitchen" className="min-h-dvh bg-[#0b0c0f] p-4 text-[#f2f3f5]">
-      <div className="mx-auto grid max-w-6xl gap-4 rounded-[22px] bg-[#111317] p-[18px] md:grid-cols-[minmax(0,1fr)_minmax(0,1.45fr)]">
-        <header className="flex items-center justify-between md:col-span-2">
+    <div
+      data-theme="kitchen"
+      className="min-h-dvh bg-[#0b0c0f] px-2 pt-[max(env(safe-area-inset-top),8px)] pb-[max(env(safe-area-inset-bottom),8px)] text-[#f2f3f5] sm:px-4 sm:pt-[max(env(safe-area-inset-top),16px)] sm:pb-[max(env(safe-area-inset-bottom),16px)]"
+    >
+      <div className="mx-auto grid max-w-6xl gap-3 rounded-[22px] bg-[#111317] p-3 sm:gap-4 sm:p-[18px] md:grid-cols-[minmax(0,1fr)_minmax(0,1.45fr)]">
+        <header className="flex flex-wrap items-center justify-between gap-2 md:col-span-2">
           <b className="text-[22px] font-semibold tracking-[-0.02em]">{t('kitchen:title')}</b>
           <div className="flex items-center gap-2">
             <span className="rounded-full bg-[#1d2026] px-3 py-1.5 text-[13px] text-[#9aa1ad]">
@@ -66,16 +69,16 @@ export function KitchenPage() {
             </span>
             <Link
               to="/profile"
-              className="rounded-full bg-[#1d2026] px-3 py-1.5 text-[13px] text-[#9aa1ad] no-underline"
+              className="inline-flex min-h-10 items-center rounded-full bg-[#1d2026] px-3.5 text-[13px] text-[#9aa1ad] no-underline"
             >
               {t('kitchen:exit')}
             </Link>
           </div>
         </header>
 
-        <ul className="grid content-start gap-2">
+        <ul className="scroll-x -mx-3 flex gap-2 px-3 sm:mx-0 sm:px-0 md:grid md:content-start md:overflow-visible">
           {TICKETS.map((tk) => (
-            <li key={tk.id}>
+            <li key={tk.id} className="shrink-0 max-md:min-w-[62%]">
               <button
                 onClick={() => setSelected(tk.id)}
                 className={`press grid w-full gap-0.5 rounded-2xl bg-[#1a1d23] px-3.5 py-3 text-left ${
@@ -94,7 +97,7 @@ export function KitchenPage() {
           ))}
         </ul>
 
-        <section className="grid content-start gap-3 rounded-[18px] bg-[#1a1d23] p-[18px]">
+        <section className="grid min-w-0 content-start gap-3 rounded-[18px] bg-[#1a1d23] p-3.5 sm:p-[18px]">
           <div className="flex items-start justify-between gap-3">
             <div className="text-[clamp(30px,3.6vw,40px)] leading-none font-bold tracking-[-0.035em]">
               {dish.name}
@@ -141,11 +144,11 @@ export function KitchenPage() {
               </li>
             ))}
           </ul>
-          <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
             <button
               onClick={() => setDone((d) => new Set(d).add(ticket.id))}
               disabled={blocked}
-              className={`press min-h-16 rounded-2xl text-[19px] font-semibold ${
+              className={`press col-span-2 min-h-16 rounded-2xl text-[19px] font-semibold sm:col-span-1 ${
                 done.has(ticket.id) ? 'bg-[#2a2e36] text-[#cfd3da]' : 'bg-brand text-white'
               } disabled:cursor-not-allowed disabled:bg-[#2a2e36] disabled:text-[#9aa1ad]`}
             >

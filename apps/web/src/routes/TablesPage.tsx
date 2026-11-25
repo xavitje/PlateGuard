@@ -19,7 +19,7 @@ export function TablesPage() {
       {floors.length > 1 && (
         <div
           role="tablist"
-          className="mb-3 flex gap-1.5 rounded-[14px] bg-[#e9ebef] p-1 dark:bg-card"
+          className="scroll-x mb-3 flex gap-1.5 rounded-[14px] bg-[#e9ebef] p-1 dark:bg-card"
         >
           {floors.map((f) => (
             <button
@@ -27,7 +27,7 @@ export function TablesPage() {
               role="tab"
               aria-selected={floor?.id === f.id}
               onClick={() => setFloor(f.id)}
-              className={`min-h-[40px] flex-1 rounded-[11px] text-sm font-semibold ${floor?.id === f.id ? 'bg-card shadow-sm' : 'text-soft'}`}
+              className={`min-h-[40px] flex-1 shrink-0 rounded-[11px] px-3 text-sm whitespace-nowrap font-semibold ${floor?.id === f.id ? 'bg-card shadow-sm' : 'text-soft'}`}
             >
               {f.name}
             </button>
