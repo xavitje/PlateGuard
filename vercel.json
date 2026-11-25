@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "sh scripts/vercel-build.sh",
+  "outputDirectory": "apps/web/dist",
+  "regions": ["fra1"],
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30,
+      "includeFiles": "node_modules/.pnpm/@prisma+client*/node_modules/.prisma/client/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api" },
+    { "source": "/hooks/:path*", "destination": "/api" },
+    { "source": "/((?!api/|hooks/).*)", "destination": "/index.html" }
+  ]
+}

@@ -46,6 +46,51 @@ its data, so never point it at a real one.
 Checks, as CI runs them: `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm i18n:check`, `pnpm test`
 (the database tests run when `DATABASE_URL` is set) and `pnpm build`.
 
+## Hosting: Vercel and Supabase
+
+The test environment runs without anything on your own machine: the app and the API on Vercel, the
+database on Supabase Postgres in Frankfurt (eu-central-1).
+
+- **One Vercel project** serves both. The PWA is a static build (`apps/web/dist`). The whole NestJS
+  API is one Vercel function, `api/index.js`, which loads `apps/api/dist/serverless.js`: the Nest app
+  is built once per function instance and reused. `vercel.json` sends `/api/*` and `/hooks/*` to that
+  function and every other path to the app, so the browser talks to the API on the same domain, as
+  with the Vite proxy in development. Functions run in Frankfurt (`fra1`), next to the database.
+- **The database** is owned by the login role `plateguard_owner`, not by Supabase's `postgres`, so
+  row-level security works exactly as described below: the API switches to `plateguard_app` per
+  transaction, and the owner only runs migrations, the seed and the few lookups before a tenant is
+  known. Migration `20261125000400_hosted_postgres_lockdown` takes every right away from Supabase's
+  Data API roles (`anon`, `authenticated`): PlateGuard data is only reachable through the PlateGuard API.
+- **Connections.** The function connects through the Supavisor transaction pooler (port 6543) with
+  `?pgbouncer=true&connection_limit=1`: one connection per instance, and the pooler shares them.
+  `withTenant()` only uses `SET LOCAL` and `set_config(..., true)` inside one transaction, which is
+  what a transaction pooler supports. Migrations and the seed need the session pooler (port 5432).
+
+Environment variables, set in Vercel (never in the repository):
+
+| Variable       | Value                                                                                                                                           |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL` | `postgresql://plateguard_owner.<project-ref>:<password>@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1` |
+| `JWT_SECRET`   | a long random value                                                                                                                             |
+| `NODE_ENV`     | `production`                                                                                                                                    |
+
+Migrations run on deploy: `scripts/vercel-build.sh` applies pending migrations when
+`MIGRATE_DATABASE_URL` is set, and runs the seed when `SEED_ON_DEPLOY=true` (it only fills an empty
+demo location). Both are set for Production only, so a preview of a branch never changes the shared
+database.
+
+| Variable (Production only) | Value                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------- |
+| `MIGRATE_DATABASE_URL`     | the session pooler: same user and password, port 5432, without `pgbouncer=true` |
+| `SEED_ON_DEPLOY`           | `true`                                                                          |
+
+To run migrations or the seed against the cloud database from your own machine, put the session
+pooler address in `.env` and run `pnpm db:migrate` or `pnpm db:seed` as usual. Never run
+`pnpm db:reset` against it.
+
+A Supabase project on the free plan pauses after a week without use; unpause it in the Supabase
+dashboard.
+
 ## The allergen engine
 
 `packages/domain` judges one dish for one guest: `assess({ dish, guest })`. The same code runs in the app
