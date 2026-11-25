@@ -13,6 +13,11 @@ function median(values: number[]): number | null {
   return Math.round(m * 10) / 10;
 }
 
+/** The spelling used most often; on a tie the first in code point order, so the result does not depend on row order. */
+function spelling(spellings: Map<string, number>): string {
+  return [...spellings].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0]![0];
+}
+
 const minutes = (from: Date, to: Date) => (to.getTime() - from.getTime()) / 60_000;
 
 /**
@@ -93,13 +98,14 @@ export class DashboardService {
     // Over the whole group, a pass check only counts where it is on.
     if (anyPass) total.noPassCheck = perLocation.reduce((n, l) => n + (l.noPassCheck ?? 0), 0);
 
-    const labels = new Map<string, { label: string; count: number }>();
+    const labels = new Map<string, { count: number; spellings: Map<string, number> }>();
     for (const p of plates)
       for (const g of p.guest)
         if (g.custom) {
           const key = normalizeLabel(g.custom);
-          const row = labels.get(key) ?? { label: g.custom, count: 0 };
+          const row = labels.get(key) ?? { count: 0, spellings: new Map<string, number>() };
           row.count++;
+          row.spellings.set(g.custom, (row.spellings.get(g.custom) ?? 0) + 1);
           labels.set(key, row);
         }
 
@@ -109,7 +115,10 @@ export class DashboardService {
       days,
       locations: perLocation,
       total,
-      unknownItems: [...labels.values()].sort((a, b) => b.count - a.count).slice(0, 10),
+      unknownItems: [...labels.values()]
+        .map((r) => ({ label: spelling(r.spellings), count: r.count }))
+        .sort((a, b) => b.count - a.count || (a.label < b.label ? -1 : 1))
+        .slice(0, 10),
     };
   }
 }
