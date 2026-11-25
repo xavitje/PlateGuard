@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import type { Prisma, TenantContext } from '@plateguard/db';
 import { PrismaService } from '../../common/prisma.service.js';
 
 export const MAX_INBOX_ATTEMPTS = 5;
+const REJECTED_PER_HOUR = 20;
 
 @Injectable()
 export class InboxRepository {
@@ -23,6 +25,67 @@ export class InboxRepository {
       }),
     );
     return result.count === 1;
+  }
+
+  /**
+   * Notes a message that was refused before it was stored, such as one with a wrong signature,
+   * so admin can see that the POS did send something. It is never handled. Capped per hour, as
+   * anyone who knows the address can send these.
+   */
+  async storeRejected(
+    ctx: TenantContext,
+    connectionId: string,
+    locationId: string,
+    code: string,
+  ): Promise<void> {
+    await this.prisma.forTenant(ctx, async (tx) => {
+      const recent = await tx.inboundEvent.count({
+        where: {
+          connectionId,
+          status: 'DEAD',
+          receivedAt: { gt: new Date(Date.now() - 3600_000) },
+        },
+      });
+      if (recent >= REJECTED_PER_HOUR) return;
+      await tx.inboundEvent.create({
+        data: {
+          connectionId,
+          locationId,
+          idempotencyKey: `rejected:${randomUUID()}`,
+          payload: { rejected: code },
+          status: 'DEAD',
+          lastError: code,
+          processedAt: new Date(),
+        },
+      });
+    });
+  }
+
+  /** Notes an order PlateGuard took in itself (a test order), so it shows in the same log. */
+  async storeHandled(
+    ctx: TenantContext,
+    connectionId: string,
+    locationId: string,
+    idempotencyKey: string,
+    payload: Prisma.InputJsonValue,
+    result: Prisma.InputJsonValue,
+  ): Promise<void> {
+    await this.prisma.forTenant(ctx, (tx) =>
+      tx.inboundEvent.createMany({
+        data: [
+          {
+            connectionId,
+            locationId,
+            idempotencyKey,
+            payload,
+            result,
+            status: 'DONE',
+            processedAt: new Date(),
+          },
+        ],
+        skipDuplicates: true,
+      }),
+    );
   }
 
   /**
@@ -70,7 +133,7 @@ export class InboxRepository {
   }
 
   /** The last messages of a connection, for admin to see what came in. */
-  recent(ctx: TenantContext, connectionId: string, take = 10) {
+  recent(ctx: TenantContext, connectionId: string, take = 20) {
     return this.prisma.forTenant(ctx, (tx) =>
       tx.inboundEvent.findMany({
         where: { connectionId },

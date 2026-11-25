@@ -13,6 +13,7 @@ import type {
   PosEventsResponse,
   PosItemsResponse,
   PosMappingInput,
+  PosOrderLog,
   PosResponse,
   PosSyncResult,
   PosTestOrderInput,
@@ -38,6 +39,11 @@ import { POS_PROVIDER, PosRepository, type PosRow } from './pos.repository.js';
 
 /** Pulling picks up the orders of the last hours: a service, not the whole day. */
 const PULL_WINDOW_MS = 12 * 3600_000;
+/**
+ * A till without open tickets makes the order when it is paid, so it arrives already closed.
+ * Those still go to the kitchen when they are this recent; older closed orders are left alone.
+ */
+const RECENT_CLOSED_MS = 2 * 3600_000;
 
 const empty = (): PosSyncResult => ({
   orders: 0,
@@ -47,6 +53,7 @@ const empty = (): PosSyncResult => ({
   noSeat: 0,
   noTable: 0,
   failed: 0,
+  withoutAllergy: 0,
 });
 
 function add(a: PosSyncResult, b: PosSyncResult): PosSyncResult {
@@ -235,7 +242,17 @@ export class PosService implements OnModuleInit {
     const adapter = this.sandbox();
     const orderId = await this.call(() => adapter.placeOrder(conn, { table: input.table, lines }));
     const order = await this.call(async () => (await adapter.getOrder?.(conn, orderId)) ?? null);
-    return order ? this.ingest(ctx, row, order) : empty();
+    if (!order) return empty();
+    const { result, log } = await this.ingest(ctx, row, order);
+    await this.inbox.storeHandled(
+      ctx,
+      row.id,
+      locationId,
+      `test:${orderId}`,
+      { externalOrderId: orderId, test: true },
+      JSON.parse(JSON.stringify({ ...result, order: log })),
+    );
+    return result;
   }
 
   /** Fetches the open orders of the last hours, for when webhooks are not set up or missed. */
@@ -245,7 +262,7 @@ export class PosService implements OnModuleInit {
       this.adapter().pullOrders(conn, new Date(Date.now() - PULL_WINDOW_MS)),
     );
     let total = empty();
-    for (const order of orders) total = add(total, await this.ingest(ctx, row, order));
+    for (const order of orders) total = add(total, (await this.ingest(ctx, row, order)).result);
     return total;
   }
 
@@ -259,10 +276,18 @@ export class PosService implements OnModuleInit {
         receivedAt: e.receivedAt.toISOString(),
         status: e.status,
         orderId: (e.payload as unknown as InboundEvent).externalOrderId ?? null,
-        result: (e.result as PosSyncResult | null) ?? null,
+        ...this.stored(e.result),
+        rejected: (e.payload as { rejected?: string }).rejected ?? null,
         error: e.lastError,
       })),
     };
+  }
+
+  /** The stored result: the counts, and since the order log the order line by line. */
+  private stored(raw: unknown): { result: PosSyncResult | null; order: PosOrderLog | null } {
+    if (!raw || typeof raw !== 'object') return { result: null, order: null };
+    const { order, ...counts } = raw as PosSyncResult & { order?: PosOrderLog };
+    return { result: { ...empty(), ...counts }, order: order ?? null };
   }
 
   // ─── Orders coming in ────────────────────────────────────────────────────
@@ -296,9 +321,14 @@ export class PosService implements OnModuleInit {
           (event.externalOrderId && adapter.getOrder
             ? await adapter.getOrder(conn, event.externalOrderId)
             : null);
-        const result = order ? await this.ingest(ctx, row, order) : empty();
+        const { result, log } = order
+          ? await this.ingest(ctx, row, order)
+          : { result: empty(), log: { table: null, skipped: 'NOT_FOUND' as const, lines: [] } };
         total = add(total, result);
-        await this.inbox.finish(id, { ok: true, result: { ...result } });
+        await this.inbox.finish(id, {
+          ok: true,
+          result: JSON.parse(JSON.stringify({ ...result, order: log })),
+        });
       } catch (e) {
         await this.inbox.finish(id, {
           ok: false,
@@ -309,33 +339,55 @@ export class PosService implements OnModuleInit {
     return total;
   }
 
-  /** An order's lines on the table's seats. Lines that cannot be placed are counted, not fatal. */
+  /**
+   * An order's lines on the table's seats. Lines that cannot be placed are counted and logged
+   * with the reason, not fatal, so admin can see per order what happened.
+   */
   private async ingest(
     ctx: TenantContext,
     row: Pick<PosRow, 'id' | 'config'>,
     order: CanonicalOrder,
-  ): Promise<PosSyncResult> {
+  ): Promise<{ result: PosSyncResult; log: PosOrderLog }> {
     const r = { ...empty(), orders: 1 };
-    if (order.status && order.status !== 'OPEN') return r;
+    const log: PosOrderLog = { table: order.externalTableRef ?? null, skipped: null, lines: [] };
+    const skip = (why: NonNullable<PosOrderLog['skipped']>, extra: Partial<PosSyncResult> = {}) => {
+      log.skipped = why;
+      return { result: { ...r, ...extra }, log };
+    };
+    if (order.status === 'CANCELLED') return skip('CANCELLED');
+    if (
+      order.status === 'CLOSED' &&
+      Date.now() - new Date(order.openedAt).getTime() > RECENT_CLOSED_MS
+    )
+      return skip('CLOSED');
     const locationId = ctx.locationIds[0]!;
     const userId = ctx.userId ?? (row.config.connectedById as string | undefined);
-    if (!order.externalTableRef || !userId) return { ...r, noTable: 1 };
+    if (!order.externalTableRef || !userId) return skip('NO_TABLE', { noTable: 1 });
     const table = order.externalTableRef;
-    if ((await this.service.table(ctx, locationId, table).catch(codeOf)) === 'TABLE_NOT_FOUND')
-      return { ...r, noTable: 1 };
+    const found = await this.service.table(ctx, locationId, table).catch(codeOf);
+    if (found === 'TABLE_NOT_FOUND') return skip('TABLE_NOT_FOUND', { noTable: 1 });
+    const allergic = new Set(
+      typeof found === 'object' && found
+        ? found.bySeat.filter((s) => s.allergies.length > 0).map((s) => s.seat)
+        : [],
+    );
     const mappings = await this.repo.mappings(ctx, row.id);
     for (const line of order.lines) {
+      const entry = { name: line.name, seat: line.seat ?? null, quantity: line.quantity };
       const dishId = mappings.get(line.externalItemId);
       if (!dishId) {
         r.unmapped += line.quantity;
+        log.lines.push({ ...entry, outcome: 'UNMAPPED' });
         continue;
       }
       if (!line.seat) {
         r.noSeat += line.quantity;
+        log.lines.push({ ...entry, outcome: 'NO_SEAT' });
         continue;
       }
       for (let n = 0; n < line.quantity; n++) {
         const externalId = `${order.externalOrderId}:${line.externalLineId}:${n}`;
+        const one = { ...entry, quantity: 1 };
         try {
           const plate = await this.service.place(
             ctx,
@@ -346,18 +398,31 @@ export class PosService implements OnModuleInit {
             userId,
             { connectionId: row.id, externalId },
           );
-          if (plate) r.plates++;
-          else r.duplicates++;
+          if (!plate) {
+            r.duplicates++;
+            log.lines.push({ ...one, outcome: 'DUPLICATE' });
+          } else if (allergic.has(line.seat)) {
+            r.plates++;
+            log.lines.push({ ...one, outcome: 'PLACED' });
+          } else {
+            r.plates++;
+            r.withoutAllergy++;
+            log.lines.push({ ...one, outcome: 'PLACED_NO_ALLERGY' });
+          }
         } catch (e) {
           const code = codeOf(e);
           // Two deliveries of the same line at once: the unique ref lets only one through.
-          if ((e as { code?: string }).code === 'P2002') r.duplicates++;
-          else if (code) r.failed++;
-          else throw e;
+          if ((e as { code?: string }).code === 'P2002') {
+            r.duplicates++;
+            log.lines.push({ ...one, outcome: 'DUPLICATE' });
+          } else if (code) {
+            r.failed++;
+            log.lines.push({ ...one, outcome: 'FAILED', reason: code });
+          } else throw e;
         }
       }
     }
-    return r;
+    return { result: r, log };
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────

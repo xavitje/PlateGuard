@@ -1,4 +1,4 @@
-import type { PosConnection, PosItem, PosSyncResult } from '@plateguard/contracts';
+import type { PosConnection, PosEvent, PosItem, PosSyncResult } from '@plateguard/contracts';
 import type { ResolvedDish } from '@plateguard/domain';
 import { ApiError, type AdminClient } from './client';
 
@@ -24,12 +24,15 @@ const none = (): PosSyncResult => ({
   noSeat: 0,
   noTable: 0,
   failed: 0,
+  withoutAllergy: 0,
 });
 
 /** A POS link for the demo and tests. Nothing leaves the browser; orders are not placed. */
 export function createMemoryPos(dishes: ResolvedDish[]): PosAdmin {
   let connection: PosConnection | null = null;
   let items: PosItem[] = [];
+  const events: PosEvent[] = [];
+  let next = 1;
   const status = async () => ({ connection: structuredClone(connection), secretsReady: true });
   const need = () => {
     if (!connection) throw new ApiError(404, 'POS_NOT_CONNECTED');
@@ -85,12 +88,32 @@ export function createMemoryPos(dishes: ResolvedDish[]): PosAdmin {
     },
     posTestOrder: async (_, body) => {
       need();
-      return { ...none(), orders: 1, plates: body.lines.length };
+      const result = { ...none(), orders: 1, plates: body.lines.length };
+      events.unshift({
+        id: `event-${next}`,
+        receivedAt: new Date().toISOString(),
+        status: 'DONE',
+        orderId: `order-${next++}`,
+        result,
+        order: {
+          table: body.table,
+          skipped: null,
+          lines: body.lines.map((l) => ({
+            name: dishes.find((d) => d.id === l.dishId)?.name ?? l.dishId,
+            seat: l.seat,
+            quantity: 1,
+            outcome: 'PLACED' as const,
+          })),
+        },
+        rejected: null,
+        error: null,
+      });
+      return result;
     },
     syncPos: async () => {
       need();
       return none();
     },
-    posEvents: async () => ({ events: [] }),
+    posEvents: async () => ({ events: structuredClone(events) }),
   };
 }
