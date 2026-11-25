@@ -74,9 +74,19 @@ Environment variables, set in Vercel (never in the repository):
 | `JWT_SECRET`   | a long random value                                                                                                                             |
 | `NODE_ENV`     | `production`                                                                                                                                    |
 
+Migrations run on deploy: `scripts/vercel-build.sh` applies pending migrations when
+`MIGRATE_DATABASE_URL` is set, and runs the seed when `SEED_ON_DEPLOY=true` (it only fills an empty
+demo location). Both are set for Production only, so a preview of a branch never changes the shared
+database.
+
+| Variable (Production only) | Value                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------- |
+| `MIGRATE_DATABASE_URL`     | the session pooler: same user and password, port 5432, without `pgbouncer=true` |
+| `SEED_ON_DEPLOY`           | `true`                                                                          |
+
 To run migrations or the seed against the cloud database from your own machine, put the session
-pooler address in `.env` (same user and password, port 5432, without `pgbouncer=true`) and run
-`pnpm db:migrate` or `pnpm db:seed` as usual. Never run `pnpm db:reset` against it.
+pooler address in `.env` and run `pnpm db:migrate` or `pnpm db:seed` as usual. Never run
+`pnpm db:reset` against it.
 
 A Supabase project on the free plan pauses after a week without use; unpause it in the Supabase
 dashboard.
