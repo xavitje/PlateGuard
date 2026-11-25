@@ -16,6 +16,8 @@ const ticket: KitchenTicketResponse = {
   checklist: [],
   qrToken: 'abcdefghijkl',
   waiterNote: null,
+  overridable: true,
+  override: null,
 };
 const text = {
   t: (key: string, values?: Record<string, unknown>) =>
