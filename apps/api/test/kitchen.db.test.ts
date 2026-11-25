@@ -138,9 +138,14 @@ describe.skipIf(!hasDb)('kitchen flow', () => {
       { allergies: [{ allergen: 'GLUTEN', severity: 'SEVERE' }], noAllergy: false },
       user,
     );
-    await service.order(ctx, loc, '7', 3, toast, user);
+    await service.order(ctx, loc, '7', 3, toast, user, 'Guest asked for it');
     const [ticket] = (await kitchen.tickets(ctx, loc, 'en')).queue;
-    expect(ticket).toMatchObject({ dishName: 'Toast', block: 'DO_NOT_SERVE', checklist: [] });
+    expect(ticket).toMatchObject({
+      dishName: 'Toast',
+      block: 'DO_NOT_SERVE',
+      checklist: [],
+      waiterNote: 'Guest asked for it',
+    });
     expect(await code(kitchen.check(ctx, loc, ticket!.plateId, [], 'en'))).toBe('PLATE_BLOCKED');
 
     await kitchen.reject(ctx, loc, ticket!.plateId, 'Bread is wheat');

@@ -177,7 +177,7 @@ describe.skipIf(!hasDb)('recipes and publishing', () => {
     const alerts = await service.alerts(ctx, loc, 'en', userId);
     expect(alerts.map((a) => a.kind)).toEqual(['unknown']);
     // A new order uses version 2, with bread: do not serve.
-    await service.order(ctx, loc, '1', 1, soupId, userId);
+    await service.order(ctx, loc, '1', 1, soupId, userId, 'Checked with the chef');
     expect((await service.alerts(ctx, loc, 'en', userId)).map((a) => a.kind)).toEqual([
       'stop',
       'unknown',

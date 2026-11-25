@@ -25,6 +25,7 @@ export interface OrderRow {
   menuVersionId: string | null;
   status: PlateStatus;
   rejectReason: string | null;
+  waiterNote: string | null;
   course: number;
   createdAt: Date;
   qrToken: string;
@@ -89,6 +90,7 @@ function toSeat(g: GuestWithData): SeatRow {
               menuVersionId: p.menuVersionId ?? p.assessment?.menuVersionId ?? null,
               status: p.status,
               rejectReason: p.rejectReason,
+              waiterNote: p.waiterNote,
               course: p.course,
               createdAt: p.createdAt,
               qrToken: p.qrToken,
@@ -203,6 +205,7 @@ export class ServiceRepository {
     userId: string,
     menuVersionId: string | null = null,
     ref?: PosLineRef,
+    note?: string,
   ): Promise<string | null> {
     return this.prisma.forTenant(ctx, async (tx) => {
       if (ref) {
@@ -229,6 +232,7 @@ export class ServiceRepository {
           course: dish.course,
           status: 'ASSESSED',
           qrToken: randomBytes(12).toString('base64url'),
+          waiterNote: note || null,
         },
       });
       await tx.assessment.create({
@@ -276,6 +280,7 @@ export class ServiceRepository {
           dishId: dish.id,
           outcome: assessment.outcome,
           inputHash: assessment.inputHash,
+          ...(note ? { note } : {}),
           ...(ref ? { source: 'pos', externalId: ref.externalId } : {}),
         },
       });

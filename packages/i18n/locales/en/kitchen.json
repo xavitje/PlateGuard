@@ -51,5 +51,6 @@
     "printed": "Sent to the printer"
   },
   "tab": "Kitchen",
-  "checkAll": "Tick all {count, plural, one {# point} other {# points}}"
+  "checkAll": "Tick all {count, plural, one {# point} other {# points}}",
+  "waiterNote": "Waiter: {note}"
 }

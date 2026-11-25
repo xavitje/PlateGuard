@@ -217,6 +217,7 @@ export class KitchenService {
         })),
         checklist: block ? [] : kitchenChecklist(result),
         qrToken: order.qrToken,
+        waiterNote: order.waiterNote,
       };
     };
   }

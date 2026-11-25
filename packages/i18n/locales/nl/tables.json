@@ -53,5 +53,14 @@
       "3": "Nagerechten",
       "other": "Gang {course}"
     }
+  },
+  "confirmStop": {
+    "title": "{dish} toch bestellen?",
+    "body": "Dit gerecht is niet veilig voor deze gast. De keuken krijgt het binnen als ‘niet serveren’, met jouw uitleg erbij. Je bestelling en uitleg worden vastgelegd.",
+    "note": "Waarom bestel je het toch? (verplicht)",
+    "placeholder": "Bijvoorbeeld: overlegd met de chef, gerecht wordt zonder noten bereid",
+    "cancel": "Annuleren",
+    "confirm": "Toch bestellen",
+    "shown": "Jouw uitleg: {note}"
   }
 }

@@ -20,7 +20,11 @@ export type SeatUpdate = z.infer<typeof SeatUpdateZ>;
 export type SeatUpdateInput = z.input<typeof SeatUpdateZ>;
 
 /** POST /locations/:locationId/tables/:label/seats/:seat/orders */
-export const OrderCreateZ = z.strictObject({ dishId: IdZ });
+export const OrderCreateZ = z.strictObject({
+  dishId: IdZ,
+  /** Required when the dish is "do not serve" for this guest: why the waiter orders it anyway. */
+  note: z.string().trim().max(300).optional(),
+});
 export type OrderCreate = z.infer<typeof OrderCreateZ>;
 
 export const SeatParamZ = z.coerce.number().int().min(1).max(99);
@@ -86,6 +90,8 @@ export interface OrderLineResponse {
   status: PlateStatusName;
   /** Why the kitchen sent it back. Only with status REJECTED. */
   rejectReason?: string;
+  /** Why the waiter ordered it although it was "do not serve". */
+  note?: string;
 }
 
 export type PlateStatusName =

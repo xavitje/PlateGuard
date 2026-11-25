@@ -149,7 +149,13 @@ export const DEMO_DISHES: ResolvedDish[] = [
 export interface DemoSeat {
   allergies: GuestAllergy[];
   noAllergy: boolean;
-  orders: { id: string; dishId: string; status?: PlateStatusName; rejectReason?: string }[];
+  orders: {
+    id: string;
+    dishId: string;
+    status?: PlateStatusName;
+    rejectReason?: string;
+    note?: string;
+  }[];
 }
 
 /** Table label → seat number → what was recorded and ordered. */

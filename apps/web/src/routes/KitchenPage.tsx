@@ -218,6 +218,12 @@ function TicketCard({
         ))}
       </div>
 
+      {ticket.waiterNote && (
+        <p className="rounded-xl bg-[#2a2e36] px-3.5 py-3 text-[17px]">
+          {t('kitchen:waiterNote', { note: ticket.waiterNote })}
+        </p>
+      )}
+
       {ticket.block && (
         <p role="alert" className="rounded-xl bg-[rgba(229,72,77,0.18)] px-3.5 py-3 text-[17px]">
           {t(`kitchen:blocked.${ticket.block}`)}

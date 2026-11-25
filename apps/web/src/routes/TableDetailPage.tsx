@@ -325,6 +325,11 @@ export function TableDetailPage() {
                 {current.length > 0 && line.status !== 'SERVED' && (
                   <AssessmentDetails result={result} />
                 )}
+                {line.note && (
+                  <p className="col-span-3 text-[13px] text-soft">
+                    {t('tables:confirmStop.shown', { note: line.note })}
+                  </p>
+                )}
               </div>
             ))}
           </section>
@@ -334,7 +339,7 @@ export function TableDetailPage() {
             dishes={dishes}
             judged={current.length > 0}
             verdictOf={(id) => verdicts.find((v) => v.dish.id === id)!.result}
-            onOrder={(dish) => write.mutate({ kind: 'order', seat, dishId: dish.id })}
+            onOrder={(dish, note) => write.mutate({ kind: 'order', seat, dishId: dish.id, note })}
           />
           <p className="mx-1.5 mt-2 text-[12.5px] text-soft">{t('tables:menuGuidance')}</p>
           <IncidentReport

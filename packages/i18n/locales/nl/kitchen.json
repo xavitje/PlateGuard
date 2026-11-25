@@ -51,5 +51,6 @@
     "printed": "Naar de printer gestuurd"
   },
   "tab": "Keuken",
-  "checkAll": "Alle {count, plural, one {# punt} other {# punten}} afvinken"
+  "checkAll": "Alle {count, plural, one {# punt} other {# punten}} afvinken",
+  "waiterNote": "Ober: {note}"
 }

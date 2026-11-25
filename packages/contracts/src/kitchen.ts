@@ -18,6 +18,8 @@ export interface KitchenTicketResponse {
   /** Every point to tick before confirming. Empty when blocked. */
   checklist: ChecklistItem[];
   qrToken: string;
+  /** Why the waiter ordered a "do not serve" dish anyway. */
+  waiterNote: string | null;
 }
 
 export interface KitchenResponse {

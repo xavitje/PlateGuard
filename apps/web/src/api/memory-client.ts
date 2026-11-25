@@ -157,6 +157,7 @@ export function createMemoryClient(
                 allergies: result.perAllergy,
                 checklist: block ? [] : kitchenChecklist(result),
                 qrToken: o.id,
+                waiterNote: o.note ?? null,
               };
             }),
       ),
@@ -332,9 +333,17 @@ export function createMemoryClient(
       s.noAllergy = body.allergies.length === 0 && !!body.noAllergy;
       return table(label);
     },
-    order: async (_, label, n, dishId) => {
+    order: async (_, label, n, dishId, note) => {
       table(label);
-      seat(label, n).orders.push({ id: `new-${nextId++}`, dishId });
+      const s = seat(label, n);
+      const dish = dishes.find((d) => d.id === dishId)!;
+      if (assess({ dish, guest: s.allergies }).outcome === 'DO_NOT_SERVE' && !note?.trim())
+        throw new ApiError(400, 'NOTE_REQUIRED');
+      s.orders.push({
+        id: `new-${nextId++}`,
+        dishId,
+        ...(note?.trim() ? { note: note.trim() } : {}),
+      });
       return table(label);
     },
     reportIncident: async (_, label, body) => {
