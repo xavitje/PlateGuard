@@ -10,6 +10,11 @@ const SHAPES = ['ROUND', 'SQUARE', 'RECT'] as const;
 export function FloorPlanPage() {
   const { t } = useTranslation();
   const floors = useAdmin('floors').data;
+  const settings = useAdmin('settings').data;
+  const saveSettings = useAdminSave(
+    (c, l, body: { passCheck: boolean }) => c.saveSettings(l, body),
+    (qc, l, [body]) => qc.setQueryData(['admin', 'settings', l], body),
+  );
   const addFloor = useAdminSave((c, l, name: string) => c.saveFloor(l, null, { name }));
   const order = useAdminSave((c, l, ids: string[]) => c.orderFloors(l, ids));
   const [newFloor, setNewFloor] = useState('');
@@ -25,6 +30,18 @@ export function FloorPlanPage() {
         <h1 className="mb-1 text-3xl font-semibold">{t('admin:nav.floorPlan')}</h1>
         <p className="text-soft">{t('admin:floors.intro')}</p>
       </div>
+      {settings && (
+        <section className="rounded-2xl bg-card p-4">
+          <Toggle
+            label={t('admin:floors.passCheck')}
+            hint={t('admin:floors.passCheckHint')}
+            checked={settings.passCheck}
+            disabled={saveSettings.isPending}
+            onChange={(passCheck) => saveSettings.mutate([{ passCheck }])}
+          />
+          <SaveError error={saveSettings.error} />
+        </section>
+      )}
       {floors.map((f, i) => (
         <FloorCard
           key={f.id}

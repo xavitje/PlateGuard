@@ -4,5 +4,6 @@
   "empty": "Niets vraagt aandacht",
   "openCount": "{count, plural, =0 {Geen open meldingen} one {# open melding} other {# open meldingen}}",
   "ordered": "Stoel {seat} bestelde {dish}",
-  "fromOrders": "Meldingen komen uit bestellingen, niet uit de menukaart"
+  "fromOrders": "Meldingen komen uit bestellingen, niet uit de menukaart",
+  "rejected": "Keuken stuurde het terug: {reason}"
 }

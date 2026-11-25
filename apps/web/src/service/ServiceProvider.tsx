@@ -194,3 +194,46 @@ export function useTableWrite(label: string) {
     },
   });
 }
+
+/** The kitchen display: refreshes often, so new plates and allergy changes show quickly. */
+export function useKitchen() {
+  const client = useClient();
+  const loc = useLocationId();
+  const locale = lang(useTranslation().i18n.language);
+  return useQuery({
+    queryKey: ['kitchen', loc, locale],
+    queryFn: () => client.kitchen.tickets(loc!, locale),
+    enabled: !!loc,
+    refetchInterval: 5_000,
+  });
+}
+
+export type KitchenAction =
+  | { kind: 'check'; plateId: string; checked: string[] }
+  | { kind: 'reject'; plateId: string; reason: string }
+  | { kind: 'passCheck'; plateId: string }
+  | { kind: 'serve'; plateId: string };
+
+/** A step on a plate. The tickets, tables and alerts reload after, also when it fails. */
+export function useKitchenAction() {
+  const client = useClient();
+  const loc = useLocationId();
+  const locale = lang(useTranslation().i18n.language);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (a: KitchenAction) => {
+      if (!loc) throw new Error('No location');
+      const k = client.kitchen;
+      if (a.kind === 'check') return k.check(loc, a.plateId, a.checked, locale);
+      if (a.kind === 'reject') return k.reject(loc, a.plateId, a.reason);
+      if (a.kind === 'passCheck') return k.passCheck(loc, a.plateId);
+      return k.serve(loc, a.plateId);
+    },
+    onSettled: () =>
+      Promise.all(
+        ['kitchen', 'table', 'alerts', 'floors'].map((key) =>
+          qc.invalidateQueries({ queryKey: [key, loc] }),
+        ),
+      ),
+  });
+}

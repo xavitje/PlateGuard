@@ -25,5 +25,12 @@
   "order": "Order",
   "orderDish": "Order {dish}",
   "cancelOrder": "Remove {dish} from the order",
-  "menuGuidance": "Colours are guidance while ordering. Only ordered dishes raise an alert."
+  "menuGuidance": "Colours are guidance while ordering. Only ordered dishes raise an alert.",
+  "rejected": "Sent back by the kitchen: {reason}. Talk to the guest, then remove it or order something else.",
+  "status": {
+    "IN_KITCHEN": "In the kitchen",
+    "CHECKED": "Checked by the kitchen",
+    "PASS_CHECKED": "Checked at the pass",
+    "SERVED": "Served"
+  }
 }

@@ -129,10 +129,31 @@ seats with allergies and orders, and alerts.
 
 - Recording an allergy opens the table's visit and the seat's guest on first use.
 - Ordering a dish runs the engine and stores the plate with its assessment (append-only) and the
-  changes for the ticket, in one transaction. Taking a dish off the order marks it cancelled.
+  changes for the ticket, in one transaction. Taking a dish off the order marks it cancelled; that
+  works until the kitchen checked it, or after the kitchen sent it back.
 - Alerts are not stored. They follow from the open orders and each seat's current allergies
   (`orderAlerts` in `packages/domain`), so the menu alone never raises one, and the Alerts tab, its
   badge and the table grid always agree.
+
+## Kitchen: allergy tickets, the checklist and the pass
+
+`/kitchen` is the full-screen kitchen display (`kitchen.view`), from `apps/api/src/modules/kitchen`.
+
+- Every plate ordered for a seat with an allergy becomes a ticket. It is judged when shown, with the
+  guest's current allergies and the recipe of the menu version it was ordered from, so a late allergy
+  change reaches the kitchen.
+- The ticket lists every risk point (`kitchenChecklist` in `packages/domain`): each allergy, each
+  change to the plate, each check by hand, and each possible trace. The cook confirms
+  (`plate.check`) only with all of them ticked; the API checks the ticked ids again.
+- A plate that must not go out, or that has an unverified ingredient, cannot be confirmed. The cook
+  sends it back (`plate.reject`) with a reason: the waiter sees it on the table and as a stop alert
+  until they take it off the order.
+- With "Check allergy plates at the pass" on (Floor plan, per location), a runner checks the plate
+  again (`plate.pass_check`) before it can be marked served (`plate.serve`). Waiters may serve too.
+- Each step moves the plate only from the status it expects, so two devices cannot both act on it,
+  and writes an audit event in the same transaction: `guest.allergies_recorded`, `order.created`,
+  `order.cancelled`, `plate.checked`, `plate.rejected`, `plate.pass_checked`, `plate.served` and
+  `location.pass_check_set`. Kitchen and pass checks are also stored as `PlateCheck` rows.
 
 ## Admin: recipes, menu, floor plan and staff
 
@@ -218,5 +239,5 @@ never green ("no allergen found in the recipe", not "safe"), and unknown is alwa
 
 ## Not in this skeleton yet
 
-The PDF allergen card on publishing, drawing the floor plan, plate orders with the status machine, real-time updates (SSE), the inbox worker and
+The PDF allergen card on publishing, drawing the floor plan, remaking a plate, real-time updates (SSE; the kitchen polls every 5 seconds for now), the inbox worker and
 outbox dispatcher, real adapters, incidents and the dashboard. Each arrives in its phase of the plan.

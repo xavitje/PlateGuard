@@ -1,6 +1,6 @@
+import type { PlateStatusName } from '@plateguard/contracts';
 /**
- * Demo data for the tests (through the in-memory client) and the kitchen view, which does not
- * read from the API yet. The app itself reads the seeded database through the API. Invented: Brasserie De Haven does not exist.
+ * Demo data for the tests, through the in-memory client. The app itself reads the seeded database through the API. Invented: Brasserie De Haven does not exist.
  * Allergen names come from the database per locale in production (AllergenTranslation).
  */
 import type {
@@ -149,11 +149,19 @@ export const DEMO_DISHES: ResolvedDish[] = [
 export interface DemoSeat {
   allergies: GuestAllergy[];
   noAllergy: boolean;
-  orders: { id: string; dishId: string }[];
+  orders: { id: string; dishId: string; status?: PlateStatusName; rejectReason?: string }[];
 }
 
 /** Table label → seat number → what was recorded and ordered. */
 export type DemoService = Record<string, Record<number, DemoSeat>>;
+
+/** Plate ids unique across the restaurant, as the database has them. */
+function withPlateIds(service: DemoService): DemoService {
+  for (const [table, seats] of Object.entries(service))
+    for (const [n, s] of Object.entries(seats))
+      s.orders.forEach((o, i) => (o.id = `p-${table}-${n}-${i}`));
+  return service;
+}
 
 const seat = (orders: string[], allergies: GuestAllergy[] = []): DemoSeat => ({
   allergies,
@@ -165,7 +173,7 @@ const seat = (orders: string[], allergies: GuestAllergy[] = []): DemoSeat => ({
  * What the waiters have entered so far. Alerts follow from these orders only: a seat with an
  * allergy gets an alert when a dish it ordered needs a change or cannot be served.
  */
-export const DEMO_SERVICE: DemoService = {
+export const DEMO_SERVICE: DemoService = withPlateIds({
   '12': {
     1: seat(['d-steak']),
     2: seat(['d-soup']),
@@ -184,7 +192,7 @@ export const DEMO_SERVICE: DemoService = {
     3: seat(['d-salad']),
     4: seat(['d-risotto']),
   },
-};
+});
 
 const SYNONYMS: Record<string, string[]> = {
   'i-tomato': ['tomaat', 'tomaten', 'tomatoes'],

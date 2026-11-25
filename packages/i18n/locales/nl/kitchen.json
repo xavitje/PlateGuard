@@ -1,11 +1,40 @@
 {
   "title": "Keuken",
   "queue": "{count, plural, =0 {Geen allergieborden} one {# allergiebord} other {# allergieborden}}",
-  "seeAllergyTicket": "ZIE ALLERGIEBON",
+  "empty": "Geen allergieborden in de wacht",
+  "atPass": "Aan de pass",
+  "passCheckOn": "Passcontrole aan",
+  "tickAll": "Vink elk punt af voordat het bord de keuken uit gaat",
+  "pointsLeft": "{count, plural, one {Nog # punt} other {Nog # punten}}",
   "confirm": "Gecontroleerd, bord is klaar",
-  "confirmed": "Gecontroleerd",
-  "reject": "Afkeuren",
-  "remake": "Opnieuw maken",
+  "passChecked": "Gecontroleerd aan de pass",
+  "served": "Uitgeserveerd",
+  "reject": "Terugsturen",
+  "rejectWhy": "Waarom gaat het terug naar de bediening?",
+  "rejectOther": "Andere reden",
+  "rejectSend": "Terugsturen",
+  "rejectCancel": "Terug",
+  "reasons": {
+    "unsafe": "Kan niet veilig gemaakt worden",
+    "missing": "Ingrediënt of vervanger is op",
+    "wrong": "Allergiegegevens kloppen niet"
+  },
+  "mustReject": "moet terug",
+  "blocked": {
+    "DO_NOT_SERVE": "Dit bord mag niet naar deze gast. Stuur het terug: de bediening praat met de gast.",
+    "UNKNOWN_DATA": "Het recept heeft een niet-geverifieerd ingrediënt, dus het is niet te beoordelen voor deze gast. Stuur het terug."
+  },
+  "status": {
+    "CHECKED": "gecontroleerd",
+    "PASS_CHECKED": "gecontroleerd aan de pass"
+  },
+  "item": {
+    "allergy": "{name}: {severity}",
+    "omit": "Zonder {name}",
+    "substitute": "{from} → {to}",
+    "traces": "{name} kan als spoor aanwezig zijn: de gast is ingelicht"
+  },
+  "actionError": "Dat lukte niet. Het bord is misschien veranderd: de lijst is weer bijgewerkt.",
   "exit": "Keukenmodus verlaten",
   "manualCheck": "Met de hand controleren: {label}",
   "manualCheckTraces": "Met de hand controleren op sporen van {label}"

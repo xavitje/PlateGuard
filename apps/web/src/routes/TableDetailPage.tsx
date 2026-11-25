@@ -293,15 +293,30 @@ export function TableDetailPage() {
               >
                 <b className="text-[15px] font-semibold">{dish.name}</b>
                 {current.length > 0 ? <OutcomeBadge outcome={result.outcome} /> : <span />}
-                <button
-                  type="button"
-                  onClick={() => write.mutate({ kind: 'cancel', plateId: line.id })}
-                  aria-label={t('tables:cancelOrder', { dish: dish.name })}
-                  className="relative grid size-7 place-items-center rounded-full bg-mist text-soft after:absolute after:-inset-2 after:content-['']"
-                >
-                  ×
-                </button>
-                {current.length > 0 && <Details result={result} />}
+                {line.status === 'ASSESSED' || line.status === 'REJECTED' ? (
+                  <button
+                    type="button"
+                    onClick={() => write.mutate({ kind: 'cancel', plateId: line.id })}
+                    aria-label={t('tables:cancelOrder', { dish: dish.name })}
+                    className="relative grid size-7 place-items-center rounded-full bg-mist text-soft after:absolute after:-inset-2 after:content-['']"
+                  >
+                    ×
+                  </button>
+                ) : (
+                  <span />
+                )}
+                {line.status === 'REJECTED' ? (
+                  <p role="alert" className="col-span-3 text-[13px] font-semibold text-red">
+                    {t('tables:rejected', { reason: line.rejectReason ?? '' })}
+                  </p>
+                ) : (
+                  line.status !== 'ASSESSED' && (
+                    <p className="col-span-3 text-[13px] text-soft">
+                      {t(`tables:status.${line.status}`)}
+                    </p>
+                  )
+                )}
+                {current.length > 0 && line.status !== 'SERVED' && <Details result={result} />}
               </div>
             ))}
           </section>

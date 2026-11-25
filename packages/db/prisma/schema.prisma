@@ -611,6 +611,9 @@ model PlateOrder {
   status        PlateStatus
   remakeOfId    String?     @map("remake_of_id") @db.Uuid
   qrToken       String      @unique @map("qr_token")
+  /// Why the kitchen sent it back to the waiter. Set with status REJECTED.
+  rejectReason  String?     @map("reject_reason")
+  rejectedAt    DateTime?   @map("rejected_at")
   createdAt     DateTime    @default(now()) @map("created_at")
 
   visit         Visit               @relation(fields: [visitId], references: [id])

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma, TenantContext, TenantTx } from '@plateguard/db';
+import { audit, type Prisma, type TenantContext, type TenantTx } from '@plateguard/db';
 import {
   normalizeLabel,
   type Assessment,
@@ -9,20 +9,31 @@ import {
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../common/prisma.service.js';
 
-/** Plates that still matter for alerts: not served, rejected or cancelled. */
+/** Plates on their way to the guest: these are judged for alerts and shown in the kitchen. */
 export const OPEN_PLATE_STATUSES = ['ASSESSED', 'IN_KITCHEN', 'CHECKED', 'PASS_CHECKED'] as const;
+/** Plates a seat shows: everything except what was taken off the order. */
+const SHOWN_PLATE_STATUSES = [...OPEN_PLATE_STATUSES, 'SERVED', 'REJECTED'] as const;
+
+export type PlateStatus = (typeof SHOWN_PLATE_STATUSES)[number] | 'CANCELLED';
+
+export interface OrderRow {
+  id: string;
+  dishId: string;
+  outcome: Assessment['outcome'];
+  menuVersionId: string | null;
+  status: PlateStatus;
+  rejectReason: string | null;
+  course: number;
+  createdAt: Date;
+  qrToken: string;
+}
 
 export interface SeatRow {
   guestId: string;
   seat: number;
   noAllergy: boolean;
   allergies: GuestAllergy[];
-  orders: {
-    id: string;
-    dishId: string;
-    outcome: Assessment['outcome'];
-    menuVersionId: string | null;
-  }[];
+  orders: OrderRow[];
 }
 
 export interface TableRow {
@@ -38,7 +49,7 @@ export interface TableRow {
 const guestInclude = {
   allergies: { include: { ingredient: { select: { id: true, name: true } } } },
   plates: {
-    where: { status: { in: [...OPEN_PLATE_STATUSES] } },
+    where: { status: { in: [...SHOWN_PLATE_STATUSES] } },
     include: { assessment: { select: { outcome: true, menuVersionId: true } } },
     orderBy: { createdAt: 'asc' },
   },
@@ -65,6 +76,11 @@ function toSeat(g: GuestWithData): SeatRow {
               dishId: p.dishId,
               outcome: p.assessment?.outcome ?? 'UNKNOWN',
               menuVersionId: p.menuVersionId ?? p.assessment?.menuVersionId ?? null,
+              status: p.status,
+              rejectReason: p.rejectReason,
+              course: p.course,
+              createdAt: p.createdAt,
+              qrToken: p.qrToken,
             },
           ]
         : [],
@@ -128,6 +144,13 @@ export class ServiceRepository {
         where: { id: guestId },
         data: { noAllergy: input.allergies.length === 0 && input.noAllergy },
       });
+      await audit(tx, ctx, {
+        locationId,
+        type: 'guest.allergies_recorded',
+        entity: 'guest',
+        entityId: guestId,
+        payload: { allergies: input.allergies, noAllergy: input.noAllergy },
+      });
     });
   }
 
@@ -182,18 +205,91 @@ export class ServiceRepository {
           })),
         });
       }
+      await audit(tx, ctx, {
+        locationId,
+        type: 'order.created',
+        entity: 'plate',
+        entityId: plate.id,
+        payload: { dishId: dish.id, outcome: assessment.outcome, inputHash: assessment.inputHash },
+      });
       return plate.id;
     });
   }
 
-  /** Takes a plate off the order. Only before the kitchen has started on it. */
-  cancelOrder(ctx: TenantContext, plateId: string): Promise<boolean> {
+  /** Takes a plate off the order: before the kitchen checked it, or after it sent it back. */
+  cancelOrder(ctx: TenantContext, locationId: string, plateId: string): Promise<boolean> {
+    return this.transition(ctx, locationId, plateId, ['ASSESSED', 'REJECTED'], 'CANCELLED', {
+      type: 'order.cancelled',
+    });
+  }
+
+  /**
+   * Moves a plate from one of the expected statuses to the next, with its audit event and, for
+   * a check, the check record. False when the plate is not (or no longer) in an expected status,
+   * so two devices acting at once cannot both win.
+   */
+  transition(
+    ctx: TenantContext,
+    locationId: string,
+    plateId: string,
+    from: PlateStatus[],
+    to: PlateStatus,
+    e: {
+      type: string;
+      payload?: Record<string, unknown>;
+      check?: 'KITCHEN' | 'PASS';
+      rejectReason?: string;
+    },
+  ): Promise<boolean> {
     return this.prisma.forTenant(ctx, async (tx) => {
       const { count } = await tx.plateOrder.updateMany({
-        where: { id: plateId, status: 'ASSESSED' },
-        data: { status: 'CANCELLED' },
+        where: { id: plateId, locationId, status: { in: from } },
+        data: {
+          status: to,
+          ...(e.rejectReason !== undefined
+            ? { rejectReason: e.rejectReason, rejectedAt: new Date() }
+            : {}),
+        },
       });
-      return count === 1;
+      if (count !== 1) return false;
+      if (e.check)
+        await tx.plateCheck.create({
+          data: {
+            plateId,
+            locationId,
+            kind: e.check,
+            byUserId: ctx.userId!,
+            method: 'TAP',
+          },
+        });
+      await audit(tx, ctx, {
+        locationId,
+        type: e.type,
+        entity: 'plate',
+        entityId: plateId,
+        payload: { from, to, ...e.payload },
+      });
+      return true;
+    });
+  }
+
+  passCheck(ctx: TenantContext, locationId: string): Promise<boolean> {
+    return this.prisma.forTenant(ctx, async (tx) => {
+      const l = await tx.location.findUnique({ where: { id: locationId } });
+      return l?.passCheck ?? false;
+    });
+  }
+
+  setPassCheck(ctx: TenantContext, locationId: string, passCheck: boolean): Promise<void> {
+    return this.prisma.forTenant(ctx, async (tx) => {
+      await tx.location.update({ where: { id: locationId }, data: { passCheck } });
+      await audit(tx, ctx, {
+        locationId,
+        type: 'location.pass_check_set',
+        entity: 'location',
+        entityId: locationId,
+        payload: { passCheck },
+      });
     });
   }
 

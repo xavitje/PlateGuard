@@ -1,11 +1,40 @@
 {
   "title": "Kitchen",
   "queue": "{count, plural, =0 {No allergy plates} one {# allergy plate} other {# allergy plates}}",
-  "seeAllergyTicket": "SEE ALLERGY TICKET",
+  "empty": "No allergy plates waiting",
+  "atPass": "At the pass",
+  "passCheckOn": "Pass check on",
+  "tickAll": "Tick every point before the plate goes out",
+  "pointsLeft": "{count, plural, one {# point left} other {# points left}}",
   "confirm": "Checked, plate is ready",
-  "confirmed": "Checked",
-  "reject": "Reject",
-  "remake": "Remake",
+  "passChecked": "Checked at the pass",
+  "served": "Served",
+  "reject": "Send back",
+  "rejectWhy": "Why does it go back to the waiter?",
+  "rejectOther": "Other reason",
+  "rejectSend": "Send back",
+  "rejectCancel": "Back",
+  "reasons": {
+    "unsafe": "Cannot be made safely",
+    "missing": "Ingredient or substitute is out",
+    "wrong": "Allergy data looks wrong"
+  },
+  "mustReject": "must go back",
+  "blocked": {
+    "DO_NOT_SERVE": "This plate must not go out for this guest. Send it back: the waiter talks to the guest.",
+    "UNKNOWN_DATA": "The recipe has an unverified ingredient, so it cannot be judged for this guest. Send it back."
+  },
+  "status": {
+    "CHECKED": "checked",
+    "PASS_CHECKED": "checked at the pass"
+  },
+  "item": {
+    "allergy": "{name}: {severity}",
+    "omit": "Leave off {name}",
+    "substitute": "{from} → {to}",
+    "traces": "{name} may be present as a trace: the guest has been told"
+  },
+  "actionError": "That did not work. The plate may have changed: the list is up to date again.",
   "exit": "Exit kitchen mode",
   "manualCheck": "Check by hand: {label}",
   "manualCheckTraces": "Check for traces of {label} by hand"

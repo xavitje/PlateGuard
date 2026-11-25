@@ -51,6 +51,8 @@ const WAITER: Permission[] = [
   'guest.severity.adjust',
   'order.create',
   'incident.report',
+  // Waiters carry plates too, so they can mark them served.
+  'plate.serve',
 ];
 const RUNNER: Permission[] = ['table.view', 'plate.pass_check', 'plate.serve'];
 const MANAGER: Permission[] = [

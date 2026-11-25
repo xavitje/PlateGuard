@@ -130,7 +130,9 @@
     "externalRefHint": "Alleen als het afwijkt van het tafelnummer.",
     "removeTable": "Tafel verwijderen",
     "removed": "Verwijderde tafels:",
-    "restore": "Terugzetten"
+    "restore": "Terugzetten",
+    "passCheck": "Allergieborden aan de pass controleren",
+    "passCheckHint": "Een runner controleert elk allergiebord nog een keer voordat het naar tafel gaat."
   },
   "staff": {
     "intro": "Iedereen die inlogt op de apparaten van deze locatie, met hun rollen hier en hun pincode.",

@@ -130,7 +130,9 @@
     "externalRefHint": "Only when it differs from the table number.",
     "removeTable": "Remove table",
     "removed": "Removed tables:",
-    "restore": "Put back"
+    "restore": "Put back",
+    "passCheck": "Check allergy plates at the pass",
+    "passCheckHint": "A runner checks each allergy plate again before it goes to the table."
   },
   "staff": {
     "intro": "Everyone who signs in on this location's devices, with their roles here and their PIN.",
