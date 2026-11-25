@@ -75,6 +75,9 @@ export const DishInputZ = z.strictObject({
   name: Name,
   nameNl: OptionalText,
   course: z.number().int().min(0).max(9).default(0),
+  /** Where waiters find the dish: a category, optionally a subcategory under it. */
+  category: OptionalText,
+  subcategory: OptionalText,
   priceCents: z.number().int().min(0).max(1_000_000).nullable().default(null),
   /** In plate order. */
   componentIds: z.array(IdZ).min(1).max(30),
@@ -88,6 +91,8 @@ export interface DishResponse {
   name: string;
   nameNl: string | null;
   course: number;
+  category: string | null;
+  subcategory: string | null;
   priceCents: number | null;
   componentIds: string[];
 }

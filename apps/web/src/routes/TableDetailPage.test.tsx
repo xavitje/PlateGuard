@@ -62,4 +62,36 @@ describe('TableDetailPage', () => {
     expect(screen.getAllByText(/Check by hand: Sunflower oil/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Check by hand: Lupin flour mix/).length).toBeGreaterThan(0);
   });
+
+  it('finds a dish in the list by search and by category', async () => {
+    renderTable('5');
+    const search = await screen.findByRole('searchbox', { name: 'Search a dish' });
+    fireEvent.change(search, { target: { value: 'soep' } });
+    expect(screen.getByText('No dish matches.')).toBeTruthy();
+    fireEvent.change(search, { target: { value: 'sóup' } });
+    expect(
+      screen.getAllByRole('button', { name: /^Order / }).map((b) => b.textContent),
+    ).toHaveLength(1);
+    fireEvent.change(search, { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Starters' }));
+    expect(
+      screen.getAllByRole('button', { name: /^Order / }).map((b) => b.getAttribute('aria-label')),
+    ).toEqual(['Order Tomato soup', 'Order Caesar salad']);
+  });
+
+  it('orders from the grid: category, subcategory, dish, and stays there', async () => {
+    renderTable('5');
+    fireEvent.click(await screen.findByRole('button', { name: 'Grid' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Mains/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Fish/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Order Special: sea bass' }));
+    expect(
+      await screen.findByRole('button', { name: 'Remove Special: sea bass from the order' }),
+    ).toBeTruthy();
+    // Still in Fish for the next one; back goes up one level.
+    expect(screen.getByRole('button', { name: 'Order Special: sea bass' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Mains' }));
+    expect(screen.getByRole('button', { name: /^Meat/ })).toBeTruthy();
+    localStorage.removeItem('pg.dishPicker');
+  });
 });

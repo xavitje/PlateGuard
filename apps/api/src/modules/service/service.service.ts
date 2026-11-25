@@ -48,7 +48,19 @@ export class ServiceService {
       this.menu.dishes(ctx, locationId, locale),
       this.menu.ingredients(ctx),
     ]);
-    return { dishes, ingredients };
+    const placement = await this.menu.placement(
+      ctx,
+      dishes.map((d) => d.id),
+    );
+    return {
+      dishes: dishes.map((d) => ({
+        ...d,
+        course: placement.get(d.id)?.course ?? 0,
+        category: placement.get(d.id)?.category ?? null,
+        subcategory: placement.get(d.id)?.subcategory ?? null,
+      })),
+      ingredients,
+    };
   }
 
   async floors(ctx: TenantContext, locationId: string): Promise<FloorResponse[]> {

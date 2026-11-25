@@ -221,3 +221,15 @@ export const DEMO_INGREDIENTS: SearchableIngredient[] = (() => {
   DEMO_DISHES.forEach((d) => d.components.forEach(walk));
   return [...seen.values()];
 })();
+
+/** Where the demo dishes sit on the order screen. */
+export const DEMO_PLACEMENT: Record<
+  string,
+  { course: number; category: string | null; subcategory: string | null }
+> = {
+  'd-steak': { course: 2, category: 'Mains', subcategory: 'Meat' },
+  'd-risotto': { course: 2, category: 'Mains', subcategory: 'Vegetarian' },
+  'd-soup': { course: 1, category: 'Starters', subcategory: null },
+  'd-salad': { course: 1, category: 'Starters', subcategory: null },
+  'd-special': { course: 2, category: 'Mains', subcategory: 'Fish' },
+};

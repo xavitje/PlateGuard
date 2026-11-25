@@ -33,5 +33,25 @@
     "PASS_CHECKED": "Gecontroleerd aan de pass",
     "SERVED": "Uitgeserveerd"
   },
-  "allergyShort": "{count, plural, one {# allergie} other {# allergieën}}"
+  "allergyShort": "{count, plural, one {# allergie} other {# allergieën}}",
+  "pick": {
+    "view": "Toon de kaart als",
+    "list": "Lijst",
+    "grid": "Raster",
+    "search": "Zoek een gerecht",
+    "filter": "Gerechten filteren",
+    "all": "Alle",
+    "hideStop": "Verberg \"niet serveren\"",
+    "none": "Geen gerecht gevonden.",
+    "categories": "Categorieën",
+    "path": "Waar je bent in de kaart",
+    "dishCount": "{count, plural, one {# gerecht} other {# gerechten}}",
+    "added": "{dish} toegevoegd",
+    "course": {
+      "1": "Voorgerechten",
+      "2": "Hoofdgerechten",
+      "3": "Nagerechten",
+      "other": "Gang {course}"
+    }
+  }
 }

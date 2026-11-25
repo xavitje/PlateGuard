@@ -62,9 +62,17 @@ export interface FloorResponse {
   tables: TableSummary[];
 }
 
+/** A dish as the waiter orders it, with where it sits on the menu. */
+export type MenuDish = ResolvedDish & {
+  course: number;
+  /** Null when the restaurant has not set one; the app then groups by course. */
+  category: string | null;
+  subcategory: string | null;
+};
+
 export interface MenuResponse {
   /** Dish and component names in the requested locale, when translated. */
-  dishes: ResolvedDish[];
+  dishes: MenuDish[];
   /** Every ingredient the organization uses, for the "Other allergy" search. */
   ingredients: SearchableIngredient[];
 }

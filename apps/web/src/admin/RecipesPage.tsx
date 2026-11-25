@@ -398,6 +398,16 @@ function DishForm({ row, onSaved }: { row?: DishResponse; onSaved: (r: DishRespo
   const [name, setName] = useState(row?.name ?? '');
   const [nameNl, setNameNl] = useState(row?.nameNl ?? '');
   const [course, setCourse] = useState(row?.course ?? 1);
+  const [category, setCategory] = useState(row?.category ?? '');
+  const [subcategory, setSubcategory] = useState(row?.subcategory ?? '');
+  // Earlier choices, so the same category is not typed two ways.
+  const known = useAdmin('dishes').data ?? [];
+  const categories = [...new Set(known.flatMap((d) => (d.category ? [d.category] : [])))];
+  const subcategories = [
+    ...new Set(
+      known.flatMap((d) => (d.category === category && d.subcategory ? [d.subcategory] : [])),
+    ),
+  ];
   const [price, setPrice] = useState(
     row?.priceCents != null ? (row.priceCents / 100).toFixed(2) : '',
   );
@@ -423,6 +433,8 @@ function DishForm({ row, onSaved }: { row?: DishResponse; onSaved: (r: DishRespo
               name,
               nameNl: nameNl || null,
               course,
+              category: category.trim() || null,
+              subcategory: subcategory.trim() || null,
               priceCents: Number.isFinite(cents) ? cents : null,
               componentIds: parts,
             },
@@ -453,6 +465,35 @@ function DishForm({ row, onSaved }: { row?: DishResponse; onSaved: (r: DishRespo
             value={course}
             onChange={(e) => setCourse(Number(e.target.value))}
           />
+        </Field>
+        <Field label={t('admin:dishes.category')}>
+          <input
+            className={input}
+            list="dish-categories"
+            placeholder={t('admin:dishes.categoryHint')}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          />
+          <datalist id="dish-categories">
+            {categories.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+        </Field>
+        <Field label={t('admin:dishes.subcategory')}>
+          <input
+            className={input}
+            list="dish-subcategories"
+            placeholder={t('admin:dishes.subcategoryHint')}
+            disabled={!category.trim()}
+            value={subcategory}
+            onChange={(e) => setSubcategory(e.target.value)}
+          />
+          <datalist id="dish-subcategories">
+            {subcategories.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
         </Field>
         <Field label={t('admin:dishes.price')}>
           <input

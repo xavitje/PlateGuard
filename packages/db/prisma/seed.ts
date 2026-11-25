@@ -229,16 +229,37 @@ async function seedDemo() {
   });
 
   const dishes = [
-    ['Steak, jus and fries', 'Biefstuk met jus en friet', 2, 2650, [steakC, jus, fries]],
-    ['Mushroom risotto', 'Paddenstoelenrisotto', 2, 2150, [risotto]],
-    ['Tomato soup', 'Tomatensoep', 1, 850, [soup]],
-    ['Caesar salad', 'Caesarsalade', 1, 1250, [lettuceC, croutons, dressing]],
-    ['Special: sea bass', 'Special: zeebaars', 2, 2800, [bassC]],
+    [
+      'Steak, jus and fries',
+      'Biefstuk met jus en friet',
+      2,
+      2650,
+      [steakC, jus, fries],
+      ['Hoofdgerechten', 'Vlees'],
+    ],
+    [
+      'Mushroom risotto',
+      'Paddenstoelenrisotto',
+      2,
+      2150,
+      [risotto],
+      ['Hoofdgerechten', 'Vegetarisch'],
+    ],
+    ['Tomato soup', 'Tomatensoep', 1, 850, [soup], ['Voorgerechten', null]],
+    [
+      'Caesar salad',
+      'Caesarsalade',
+      1,
+      1250,
+      [lettuceC, croutons, dressing],
+      ['Voorgerechten', null],
+    ],
+    ['Special: sea bass', 'Special: zeebaars', 2, 2800, [bassC], ['Hoofdgerechten', 'Vis']],
   ] as const;
   const dishIds = new Map<string, string>();
-  for (const [name, nl, course, priceCents, parts] of dishes) {
+  for (const [name, nl, course, priceCents, parts, [category, subcategory]] of dishes) {
     const d = await prisma.dish.create({
-      data: { locationId: DEMO_LOCATION, name, course, priceCents },
+      data: { locationId: DEMO_LOCATION, name, course, priceCents, category, subcategory },
     });
     dishIds.set(name, d.id);
     await prisma.dishComponent.createMany({

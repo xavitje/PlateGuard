@@ -250,7 +250,13 @@ export class RecipesRepository {
     input: DishInput,
   ): Promise<DishResponse | null> {
     return this.tx(ctx, async (tx) => {
-      const data = { name: input.name, course: input.course, priceCents: input.priceCents };
+      const data = {
+        name: input.name,
+        course: input.course,
+        category: input.category?.trim() || null,
+        subcategory: (input.category?.trim() && input.subcategory?.trim()) || null,
+        priceCents: input.priceCents,
+      };
       let dishId: string;
       if (id) {
         if (!(await tx.dish.findFirst({ where: { id, locationId } }))) return null;
@@ -408,6 +414,8 @@ function toDish(d: Prisma.DishGetPayload<{ include: typeof dishInclude }>): Dish
     name: d.name,
     nameNl: d.translations[0]?.name ?? null,
     course: d.course,
+    category: d.category,
+    subcategory: d.subcategory,
     priceCents: d.priceCents,
     componentIds: d.components.map((c) => c.componentId),
   };
