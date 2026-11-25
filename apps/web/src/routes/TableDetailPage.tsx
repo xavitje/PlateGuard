@@ -109,7 +109,7 @@ export function TableDetailPage() {
         <ChevronLeft width={20} height={20} />
         {t('tables:title')}
       </Link>
-      <h1 className="mx-1 mt-1 mb-3 text-[32px] font-bold tracking-[-0.035em]">
+      <h1 className="mx-1 mt-1 mb-3 text-[28px] font-semibold tracking-[-0.03em] lg:text-[30px]">
         {t('tables:table', { label })}
       </h1>
       {(tableQuery.isError || menu.isError) && (
@@ -127,25 +127,22 @@ export function TableDetailPage() {
       )}
       {table && menu.data && (
         <>
-          <div
-            role="tablist"
-            className="scroll-x mb-3 flex gap-1.5 rounded-[14px] bg-[#e9ebef] p-1 dark:bg-card"
-          >
+          <div role="tablist" className="scroll-x mb-4 flex gap-1 rounded-[13px] bg-line/60 p-1">
             {Array.from({ length: seats }, (_, i) => i + 1).map((s) => (
               <button
                 key={s}
                 role="tab"
                 aria-selected={seat === s}
                 onClick={() => setSeat(s)}
-                className={`grid min-h-12 min-w-11 flex-1 shrink-0 rounded-[11px] py-1 text-xs ${seat === s ? 'bg-brand text-white shadow-sm' : 'text-soft'}`}
+                className={`grid min-h-12 min-w-11 flex-1 shrink-0 rounded-[11px] py-1 text-xs transition-colors duration-150 ${seat === s ? 'bg-raised shadow-sm' : 'text-soft'}`}
               >
-                <b className={`text-base font-semibold ${seat === s ? 'text-white' : 'text-ink'}`}>
+                <b
+                  className={`text-base font-semibold ${seat === s ? 'text-brand-ink' : 'text-ink'}`}
+                >
                   {s}
                 </b>
                 {(seatOf(s)?.allergies.length ?? 0) > 0 && (
-                  <i
-                    className={`mx-auto mt-0.5 block size-1.5 rounded-full ${seat === s ? 'bg-white' : 'bg-brand'}`}
-                  />
+                  <i className={`mx-auto mt-0.5 block size-1.5 rounded-full bg-brand`} />
                 )}
               </button>
             ))}
@@ -165,7 +162,7 @@ export function TableDetailPage() {
                       body: { allergies: current, noAllergy: !seatState.noAllergy },
                     })
                   }
-                  className={`press min-h-9 shrink-0 rounded-full px-3 text-[13px] font-semibold ${seatState.noAllergy ? 'bg-brand text-white' : 'bg-mist'}`}
+                  className={`press min-h-9 shrink-0 rounded-full px-3 text-[13px] font-semibold ${seatState.noAllergy ? 'bg-brand-soft text-brand-ink' : 'bg-mist'}`}
                 >
                   {t('tables:noAllergy')}
                 </button>

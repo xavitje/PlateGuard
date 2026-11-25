@@ -8,6 +8,9 @@ export const input =
   'min-h-11 w-full min-w-0 rounded-[10px] border border-line bg-card px-3 text-base text-ink';
 export const button =
   'press min-h-11 min-w-11 rounded-[10px] border border-line bg-card px-3.5 text-[14.5px] font-medium text-ink disabled:opacity-50';
+/** A secondary action that adds something: visible, but quieter than the one primary action. */
+export const primarySoft =
+  'press min-h-11 rounded-[10px] bg-brand-soft px-4 text-[14.5px] font-semibold text-brand-ink disabled:opacity-50';
 export const primary =
   'press min-h-11 rounded-[10px] bg-brand px-4 text-[14.5px] font-semibold text-white disabled:opacity-50';
 
@@ -169,27 +172,47 @@ export function MasterDetail({
   detail: ReactNode;
 }) {
   const { t } = useTranslation();
+  const [q, setQ] = useState('');
   // Opening an item on a phone replaces the list, so start the editor at the top.
   useEffect(() => {
     if (selected && window.matchMedia?.('(max-width: 1023px)').matches) window.scrollTo(0, 0);
   }, [selected]);
+  const query = q.trim().toLowerCase();
+  const shown = query ? items.filter((i) => i.name.toLowerCase().includes(query)) : items;
   return (
-    <div className="grid items-start gap-5 lg:grid-cols-[minmax(240px,320px)_minmax(0,1fr)]">
-      <div className={`grid gap-2 ${selected ? 'max-lg:hidden' : ''}`}>
+    <div className="grid items-start gap-5 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)] lg:gap-6">
+      <div
+        className={`flex flex-col gap-2.5 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-48px)] ${selected ? 'max-lg:hidden' : ''}`}
+      >
         {onNew && (
-          <button type="button" className={button} onClick={onNew}>
+          <button type="button" className={primarySoft} onClick={onNew}>
             + {newLabel}
           </button>
         )}
-        <ul className="overflow-hidden rounded-[14px] bg-card">
-          {items.map((i) => (
+        {items.length > 10 && (
+          <input
+            type="search"
+            className={input}
+            placeholder={t('admin:filter')}
+            aria-label={t('admin:filter')}
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        )}
+        <ul className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[14px] bg-card shadow-card">
+          {shown.length === 0 && (
+            <li className="px-3.5 py-3 text-[14px] text-soft">{t('admin:none')}</li>
+          )}
+          {shown.map((i) => (
             <li key={i.id} className="border-b border-line last:border-b-0">
               <button
                 type="button"
                 aria-current={selected === i.id}
                 onClick={() => onSelect(i.id)}
-                className={`flex min-h-12 w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left text-[15px] active:bg-mist ${
-                  selected === i.id ? 'bg-brand-soft font-semibold text-brand-ink' : ''
+                className={`flex min-h-12 w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left text-[15px] transition-colors duration-150 ${
+                  selected === i.id
+                    ? 'bg-brand-soft font-semibold text-brand-ink'
+                    : 'hover:bg-mist/70 active:bg-mist'
                 }`}
               >
                 <span className="min-w-0">{i.name}</span>
@@ -200,7 +223,7 @@ export function MasterDetail({
         </ul>
       </div>
       <section
-        className={`min-w-0 rounded-[18px] bg-card p-4 shadow-card sm:p-5 ${selected ? '' : 'max-lg:hidden'}`}
+        className={`min-w-0 rounded-[18px] bg-card p-4 shadow-card sm:p-6 ${selected ? '' : 'max-lg:hidden'}`}
       >
         {selected && (
           <button

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useClient, useLocationId } from '../service/ServiceProvider';
 import { useAdmin, useAdminSave, useCan } from './hooks';
 import { button, primary, SaveError, Toggle } from './ui';
+import { PageHeader } from '../shell/TabsLayout';
 
 /**
  * Which dishes are on the menu, and publishing. Service works from the published version, so
@@ -59,10 +60,7 @@ export function MenuPage() {
 
   return (
     <div className="grid max-w-3xl gap-5">
-      <div>
-        <h1 className="mb-1 text-3xl font-semibold">{t('admin:nav.menus')}</h1>
-        <p className="text-soft">{t('admin:menu.intro')}</p>
-      </div>
+      <PageHeader title={t('admin:nav.menus')} description={t('admin:menu.intro')} />
 
       <section className="grid gap-3 rounded-[18px] bg-card p-4 shadow-card sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">

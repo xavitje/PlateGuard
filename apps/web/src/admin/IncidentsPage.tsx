@@ -7,6 +7,7 @@ import { ALLERGEN_NAMES } from '../allergens';
 import { useClient, useLocationId } from '../service/ServiceProvider';
 import { useAdminSave } from './hooks';
 import { button, Field, input, MasterDetail, primary, SaveError } from './ui';
+import { PageHeader } from '../shell/TabsLayout';
 
 const when = (iso: string, locale: string) =>
   new Date(iso).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
@@ -29,8 +30,7 @@ export function IncidentsPage() {
   const rows = list.data?.incidents ?? [];
   return (
     <>
-      <h1 className="mb-1 text-3xl font-semibold">{t('admin:incidents.title')}</h1>
-      <p className="mb-4 max-w-2xl text-soft">{t('admin:incidents.intro')}</p>
+      <PageHeader title={t('admin:incidents.title')} description={t('admin:incidents.intro')} />
       {list.isSuccess && rows.length === 0 ? (
         <p className="text-soft">{t('admin:incidents.none')}</p>
       ) : (
@@ -296,7 +296,7 @@ function FollowUp({ incident }: { incident: IncidentDetail }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="grid gap-2 border-t border-line pt-4 first:border-t-0 first:pt-0">
-      <h3 className="text-[13px] font-semibold tracking-normal text-soft uppercase">{title}</h3>
+      <h3 className="text-[13px] font-semibold tracking-normal text-soft">{title}</h3>
       {children}
     </section>
   );

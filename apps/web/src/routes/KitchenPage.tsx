@@ -2,7 +2,7 @@ import type { KitchenTicketResponse } from '@plateguard/contracts';
 import type { AllergySubject, ChecklistItem } from '@plateguard/domain';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, Navigate } from 'react-router';
+import { Navigate, useLocation, useNavigate } from 'react-router';
 import { useCan } from '../admin/hooks';
 import { ALLERGEN_NAMES } from '../allergens';
 import { OutcomeBadge } from '../components/OutcomeBadge';
@@ -20,6 +20,10 @@ export function KitchenPage() {
   const { signedIn } = useSession();
   const kitchen = useKitchen();
   const [selected, setSelected] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  // Back to where you came from in the app; opened directly (a kitchen tablet), to your home.
+  const exit = () => (location.key === 'default' ? navigate('/') : navigate(-1));
   if (!signedIn) return <Navigate to="/login" replace />;
 
   const data = kitchen.data;
@@ -43,12 +47,13 @@ export function KitchenPage() {
                 {t('kitchen:passCheckOn')}
               </span>
             )}
-            <Link
-              to="/profile"
-              className="inline-flex min-h-10 items-center rounded-full bg-[#1d2026] px-3.5 text-[13px] text-[#9aa1ad] no-underline"
+            <button
+              type="button"
+              onClick={exit}
+              className="inline-flex min-h-10 items-center rounded-full bg-[#1d2026] px-3.5 text-[13px] text-[#9aa1ad]"
             >
               {t('kitchen:exit')}
-            </Link>
+            </button>
           </div>
         </header>
 

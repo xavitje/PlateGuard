@@ -9,6 +9,7 @@
   --color-bg: var(--pg-bg);
   --color-mist: var(--pg-mist);
   --color-card: var(--pg-card);
+  --color-raised: var(--pg-raised);
   --color-ink: var(--pg-ink);
   --color-soft: var(--pg-soft);
   --color-line: var(--pg-line);
@@ -18,6 +19,7 @@
   --radius-md: var(--pg-radius-md);
   --radius-lg: var(--pg-radius-lg);
   --shadow-card: var(--pg-shadow);
+  --shadow-float: var(--pg-shadow-float);
   --ease-out-pg: var(--pg-ease-out);
 }
 

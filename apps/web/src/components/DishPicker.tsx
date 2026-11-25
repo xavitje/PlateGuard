@@ -73,7 +73,7 @@ export function DishPicker({ title, dishes, judged, verdictOf, onOrder }: Props)
               type="button"
               aria-pressed={mode === m}
               onClick={() => choose(m)}
-              className={`min-h-8 rounded-full px-3 ${mode === m ? 'bg-card text-ink shadow-sm' : 'text-soft'}`}
+              className={`min-h-8 rounded-full px-3 ${mode === m ? 'bg-raised text-ink shadow-sm' : 'text-soft'}`}
             >
               {t(`tables:pick.${m}`)}
             </button>
@@ -140,7 +140,7 @@ function DishList({ dishes, judged, verdictOf, groupOf, onOrder }: Inner) {
     .filter(([, list]) => list.length > 0);
   const chip = (active: boolean) =>
     `min-h-9 shrink-0 rounded-full px-3.5 text-[14px] font-medium whitespace-nowrap ${
-      active ? 'bg-ink text-bg' : 'bg-card text-ink'
+      active ? 'bg-brand-soft font-semibold text-brand-ink' : 'bg-card text-ink'
     }`;
 
   return (
@@ -188,9 +188,7 @@ function DishList({ dishes, judged, verdictOf, groupOf, onOrder }: Inner) {
         {shown.length === 0 && <p className="py-3 text-sm text-soft">{t('tables:pick.none')}</p>}
         {shown.map(([g, list]) => (
           <div key={g}>
-            <h3 className="pt-3 text-[12px] font-semibold tracking-wide text-soft uppercase">
-              {g}
-            </h3>
+            <h3 className="pt-3 text-[13px] font-semibold tracking-normal text-soft">{g}</h3>
             {list.map((dish) => {
               const result = verdictOf(dish.id);
               return (
@@ -211,7 +209,7 @@ function DishList({ dishes, judged, verdictOf, groupOf, onOrder }: Inner) {
                     type="button"
                     onClick={() => onOrder(dish)}
                     aria-label={t('tables:orderDish', { dish: dish.name })}
-                    className="press inline-flex min-h-9 items-center gap-1 rounded-full bg-brand px-3 text-[13px] font-semibold text-white"
+                    className="press inline-flex min-h-9 items-center gap-1 rounded-full bg-brand-soft px-3 text-[13px] font-semibold text-brand-ink"
                   >
                     <Plus width={14} height={14} />
                     {t('tables:order')}

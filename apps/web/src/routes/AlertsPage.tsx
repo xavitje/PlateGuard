@@ -58,7 +58,7 @@ export function AlertsPage() {
             aria-pressed={filter === f}
             onClick={() => setFilter(f)}
             className={`min-h-9 shrink-0 rounded-full px-3.5 text-[14px] font-medium whitespace-nowrap ${
-              filter === f ? 'bg-ink text-bg' : 'bg-card text-ink'
+              filter === f ? 'bg-brand-soft font-semibold text-brand-ink' : 'bg-card text-ink'
             }`}
           >
             {t(`alerts:filters.${f}`, {
