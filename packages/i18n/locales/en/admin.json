@@ -421,5 +421,43 @@
       "closed": "Closed"
     }
   },
-  "tab": "Admin"
+  "tab": "Admin",
+  "dashboard": {
+    "intro": "How allergy plates went at this location. Only plates for guests with allergies count.",
+    "introGroup": "How allergy plates went per location and for the whole group. Only plates for guests with allergies count.",
+    "period": "Period",
+    "days": "{count, plural, one {# day} other {# days}}",
+    "minutes": "{value} min",
+    "total": "Group total",
+    "tile": {
+      "flagged": "Allergy plates",
+      "rejected": "Sent back by the kitchen",
+      "skipped": "Skipped checks",
+      "unknown": "Could not be judged",
+      "checkTime": "Order to kitchen check (median)",
+      "serveTime": "Order to served (median)",
+      "incidents": "Incidents"
+    },
+    "skippedKitchen": "{count, plural, =0 {Every plate was checked by the kitchen} one {# without kitchen check} other {# without kitchen check}}",
+    "skippedBoth": "{kitchen} without kitchen check · {pass} without pass check",
+    "customNote": "{count, plural, =0 {No allergies typed as free text} one {# plate with a free-text allergy} other {# plates with a free-text allergy}}",
+    "openNote": "{count, plural, =0 {All followed up} one {# still open} other {# still open}}",
+    "outcomesTitle": "How the plates were judged",
+    "outcomesHow": "The outcome when the plate was ordered, against the guest's allergies.",
+    "unknownTitle": "Unknown items",
+    "unknownHow": "Allergies typed as free text because they are not in the recipe data. Asked often? Add them as an ingredient.",
+    "unknownNone": "None in this period.",
+    "perLocation": "Per location",
+    "col": {
+      "location": "Location",
+      "flagged": "Allergy plates",
+      "rejected": "Sent back",
+      "noKitchenCheck": "No kitchen check",
+      "noPassCheck": "No pass check",
+      "unknown": "Unknown",
+      "checkMinutes": "To check",
+      "serveMinutes": "To served",
+      "openIncidents": "Open incidents"
+    }
+  }
 }

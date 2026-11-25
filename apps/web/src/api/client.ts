@@ -29,6 +29,7 @@ import type {
   IncidentFollowUp,
   IncidentReport,
   IncidentsResponse,
+  DashboardResponse,
   PosConnectInput,
   PosEventsResponse,
   PosItemsResponse,
@@ -104,6 +105,8 @@ export interface AdminClient {
   posTestOrder(location: string, body: PosTestOrderInput): Promise<PosSyncResult>;
   syncPos(location: string): Promise<PosSyncResult>;
   posEvents(location: string): Promise<PosEventsResponse>;
+  /** The management figures over the last days, per location the user may see. */
+  dashboard(location: string, days: number): Promise<DashboardResponse>;
   incidents(location: string): Promise<IncidentsResponse>;
   incident(location: string, id: string): Promise<IncidentDetail>;
   followUpIncident(location: string, id: string, body: IncidentFollowUp): Promise<IncidentDetail>;
@@ -240,6 +243,7 @@ export function createHttpClient(
       posTestOrder: (l, body) => call(adm(l, 'pos/test-order'), { method: 'POST', body }),
       syncPos: (l) => call(adm(l, 'pos/sync'), { method: 'POST' }),
       posEvents: (l) => call(adm(l, 'pos/events')),
+      dashboard: (l, days) => call(`${loc(l)}/dashboard?days=${days}`),
       incidents: (l) => call(`${loc(l)}/incidents`),
       incident: (l, id) => call(`${loc(l)}/incidents/${id}`),
       followUpIncident: (l, id, body) => call(`${loc(l)}/incidents/${id}`, { method: 'PUT', body }),

@@ -421,5 +421,43 @@
       "closed": "Afgesloten"
     }
   },
-  "tab": "Beheer"
+  "tab": "Beheer",
+  "dashboard": {
+    "intro": "Hoe de allergieborden op deze locatie gingen. Alleen borden voor gasten met een allergie tellen mee.",
+    "introGroup": "Hoe de allergieborden gingen per locatie en voor de hele groep. Alleen borden voor gasten met een allergie tellen mee.",
+    "period": "Periode",
+    "days": "{count, plural, one {# dag} other {# dagen}}",
+    "minutes": "{value} min",
+    "total": "Hele groep",
+    "tile": {
+      "flagged": "Allergieborden",
+      "rejected": "Teruggestuurd door de keuken",
+      "skipped": "Overgeslagen controles",
+      "unknown": "Niet te beoordelen",
+      "checkTime": "Bestelling tot keukencontrole (mediaan)",
+      "serveTime": "Bestelling tot uitgeserveerd (mediaan)",
+      "incidents": "Incidenten"
+    },
+    "skippedKitchen": "{count, plural, =0 {Elk bord is door de keuken gecontroleerd} one {# zonder keukencontrole} other {# zonder keukencontrole}}",
+    "skippedBoth": "{kitchen} zonder keukencontrole · {pass} zonder passcontrole",
+    "customNote": "{count, plural, =0 {Geen allergieën als vrije tekst} one {# bord met een allergie in vrije tekst} other {# borden met een allergie in vrije tekst}}",
+    "openNote": "{count, plural, =0 {Alles opgevolgd} one {# staat nog open} other {# staan nog open}}",
+    "outcomesTitle": "Hoe de borden zijn beoordeeld",
+    "outcomesHow": "De uitkomst bij het bestellen, tegen de allergieën van de gast.",
+    "unknownTitle": "Onbekende items",
+    "unknownHow": "Allergieën die als vrije tekst zijn ingevuld omdat ze niet in de receptuur staan. Komen ze vaak voor? Voeg ze toe als ingrediënt.",
+    "unknownNone": "Geen in deze periode.",
+    "perLocation": "Per locatie",
+    "col": {
+      "location": "Locatie",
+      "flagged": "Allergieborden",
+      "rejected": "Teruggestuurd",
+      "noKitchenCheck": "Geen keukencontrole",
+      "noPassCheck": "Geen passcontrole",
+      "unknown": "Onbekend",
+      "checkMinutes": "Tot controle",
+      "serveMinutes": "Tot uitgeserveerd",
+      "openIncidents": "Open incidenten"
+    }
+  }
 }

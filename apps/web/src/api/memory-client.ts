@@ -195,6 +195,36 @@ export function createMemoryClient(
       ...printerAdmin,
       ...createMemoryPos(dishes),
       ...incidents.admin,
+      dashboard: async (_, days) => {
+        // The demo has no history: today's allergy plates stand for the period.
+        const all = tickets();
+        const outcomes: Record<string, number> = {};
+        for (const tk of all) outcomes[tk.outcome] = (outcomes[tk.outcome] ?? 0) + 1;
+        const open = (await incidents.admin.incidents(LOCATION)).incidents;
+        const figures = {
+          flagged: all.length,
+          outcomes,
+          rejected: all.filter((tk) => tk.status === 'REJECTED').length,
+          served: all.filter((tk) => tk.status === 'SERVED').length,
+          noKitchenCheck: 0,
+          noPassCheck: passCheck ? 0 : null,
+          unknown: outcomes.UNKNOWN ?? 0,
+          customAllergies: 0,
+          checkMinutes: null,
+          serveMinutes: null,
+          incidents: open.length,
+          openIncidents: open.filter((i) => i.status === 'OPEN').length,
+        };
+        const now = new Date();
+        return {
+          from: new Date(now.getTime() - days * 86_400_000).toISOString(),
+          to: now.toISOString(),
+          days,
+          locations: [{ id: LOCATION, name: 'Demo', ...figures }],
+          total: figures,
+          unknownItems: [],
+        };
+      },
     },
     kitchen: {
       tickets: async () => {
