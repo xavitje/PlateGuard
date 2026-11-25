@@ -1,12 +1,13 @@
 import { NavLink, Outlet } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { AlertsIcon, ProfileIcon, TablesIcon } from '../components/icons';
-import { DEMO_ALERTS } from '../demo';
+import { DEMO_KITCHEN_EVENTS } from '../demo';
+import { useService } from '../service/ServiceProvider';
 
 /** The service app: three tabs at the bottom, nothing more is needed during service. */
 export function TabsLayout() {
   const { t } = useTranslation();
-  const openAlerts = DEMO_ALERTS.length;
+  const openAlerts = useService().alerts.length + DEMO_KITCHEN_EVENTS.length;
   const tabs = [
     { to: '/tables', label: t('tables:tab'), Icon: TablesIcon, badge: 0 },
     { to: '/alerts', label: t('alerts:tab'), Icon: AlertsIcon, badge: openAlerts },

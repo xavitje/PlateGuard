@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { DEMO_FLOORS, DEMO_TABLES } from '../demo';
+import { DEMO_FLOORS, DEMO_KITCHEN_EVENTS, DEMO_TABLES } from '../demo';
+import { useService } from '../service/ServiceProvider';
 import { PageTitle } from '../shell/TabsLayout';
 
 /**
@@ -10,7 +11,15 @@ import { PageTitle } from '../shell/TabsLayout';
 export function TablesPage() {
   const { t } = useTranslation();
   const [floor, setFloor] = useState<string>(DEMO_FLOORS[0]);
-  const tables = DEMO_TABLES.filter((tb) => tb.floor === floor);
+  const { state, alerts } = useService();
+  const tables = DEMO_TABLES.filter((tb) => tb.floor === floor).map((tb) => ({
+    ...tb,
+    allergyGuests: Object.values(state[tb.label] ?? {}).filter((s) => s.allergies.length > 0)
+      .length,
+    openAlerts:
+      alerts.filter((a) => a.table === tb.label).length +
+      DEMO_KITCHEN_EVENTS.filter((e) => e.table === tb.label).length,
+  }));
 
   return (
     <>

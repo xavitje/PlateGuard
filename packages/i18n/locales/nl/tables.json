@@ -19,5 +19,11 @@
   "inRecipes": "In de receptuur",
   "useTyped": "Gebruik “{text}” zoals getypt (handmatige controle)",
   "ingredientHint": "Gecontroleerd tegen de receptuur, net als de allergenen",
-  "ingredientHintSevere": "Gecontroleerd tegen de receptuur; bij ernstig controleert de keuken sporen ook met de hand"
+  "ingredientHintSevere": "Gecontroleerd tegen de receptuur; bij ernstig controleert de keuken sporen ook met de hand",
+  "orderedForSeat": "Besteld voor stoel {seat}",
+  "nothingOrdered": "Nog niets besteld",
+  "order": "Bestel",
+  "orderDish": "Bestel {dish}",
+  "cancelOrder": "{dish} uit de bestelling halen",
+  "menuGuidance": "De kleuren helpen bij het opnemen. Alleen bestelde gerechten geven een melding."
 }

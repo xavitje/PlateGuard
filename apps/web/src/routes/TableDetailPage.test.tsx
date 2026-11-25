@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { I18nProvider } from '../i18n';
+import { ServiceProvider } from '../service/ServiceProvider';
 import { TableDetailPage } from './TableDetailPage';
 
 function renderTable(label: string) {
@@ -10,7 +11,9 @@ function renderTable(label: string) {
   });
   return render(
     <I18nProvider locale="en">
-      <RouterProvider router={router} />
+      <ServiceProvider>
+        <RouterProvider router={router} />
+      </ServiceProvider>
     </I18nProvider>,
   );
 }
@@ -21,7 +24,7 @@ describe('TableDetailPage', () => {
   it('judges the menu live with the shared engine', async () => {
     renderTable('12');
     fireEvent.click(await screen.findByRole('tab', { name: /3/ }));
-    expect(await screen.findByText('Jus → GF jus')).toBeTruthy();
+    expect((await screen.findAllByText('Jus → GF jus')).length).toBeGreaterThan(0);
   });
 
   it("suggests the restaurant's ingredients, synonyms included, and checks a pick against the recipes", async () => {
