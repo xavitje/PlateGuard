@@ -1,8 +1,9 @@
 {
   "tab": "Alerts",
   "title": "Alerts",
-  "open": "Open",
-  "done": "Done",
   "empty": "Nothing needs attention",
-  "openCount": "{count, plural, =0 {No open alerts} one {# open alert} other {# open alerts}}"
+  "openCount": "{count, plural, =0 {No open alerts} one {# open alert} other {# open alerts}}",
+  "ordered": "Seat {seat} ordered {dish}",
+  "missedPlate": "Plate {plate} left the kitchen without a check",
+  "fromOrders": "Alerts come from orders, not from the menu"
 }

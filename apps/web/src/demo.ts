@@ -8,31 +8,30 @@ import type {
   ResolvedDish,
   SearchableIngredient,
 } from '@plateguard/domain';
+import type { SeatState, ServiceState } from './service/state';
 
 export interface DemoTable {
   label: string;
   floor: string;
   seats: number;
   guests: number;
-  allergyGuests: number;
-  openAlerts: number;
 }
 
 export const DEMO_FLOORS = ['Inside', 'Terrace'] as const;
 
 export const DEMO_TABLES: DemoTable[] = [
-  { label: '1', floor: 'Inside', seats: 2, guests: 2, allergyGuests: 0, openAlerts: 0 },
-  { label: '2', floor: 'Inside', seats: 4, guests: 0, allergyGuests: 0, openAlerts: 0 },
-  { label: '3', floor: 'Inside', seats: 4, guests: 3, allergyGuests: 0, openAlerts: 0 },
-  { label: '4', floor: 'Inside', seats: 2, guests: 2, allergyGuests: 0, openAlerts: 0 },
-  { label: '5', floor: 'Inside', seats: 4, guests: 0, allergyGuests: 0, openAlerts: 0 },
-  { label: '6', floor: 'Inside', seats: 6, guests: 5, allergyGuests: 0, openAlerts: 0 },
-  { label: '7', floor: 'Inside', seats: 4, guests: 4, allergyGuests: 1, openAlerts: 1 },
-  { label: '8', floor: 'Inside', seats: 2, guests: 0, allergyGuests: 0, openAlerts: 0 },
-  { label: '9', floor: 'Inside', seats: 4, guests: 2, allergyGuests: 0, openAlerts: 0 },
-  { label: '10', floor: 'Terrace', seats: 4, guests: 2, allergyGuests: 0, openAlerts: 0 },
-  { label: '11', floor: 'Terrace', seats: 2, guests: 0, allergyGuests: 0, openAlerts: 0 },
-  { label: '12', floor: 'Terrace', seats: 4, guests: 4, allergyGuests: 1, openAlerts: 2 },
+  { label: '1', floor: 'Inside', seats: 2, guests: 2 },
+  { label: '2', floor: 'Inside', seats: 4, guests: 0 },
+  { label: '3', floor: 'Inside', seats: 4, guests: 3 },
+  { label: '4', floor: 'Inside', seats: 2, guests: 2 },
+  { label: '5', floor: 'Inside', seats: 4, guests: 0 },
+  { label: '6', floor: 'Inside', seats: 6, guests: 5 },
+  { label: '7', floor: 'Inside', seats: 4, guests: 4 },
+  { label: '8', floor: 'Inside', seats: 2, guests: 0 },
+  { label: '9', floor: 'Inside', seats: 4, guests: 2 },
+  { label: '10', floor: 'Terrace', seats: 4, guests: 2 },
+  { label: '11', floor: 'Terrace', seats: 2, guests: 0 },
+  { label: '12', floor: 'Terrace', seats: 4, guests: 4 },
 ];
 
 export const DEMO_ALLERGEN_NAMES: Record<string, { en: string; nl: string }> = {
@@ -165,55 +164,48 @@ export const DEMO_DISHES: ResolvedDish[] = [
   },
 ];
 
-export const DEMO_SEAT_ALLERGIES: Record<string, Record<number, GuestAllergy[]>> = {
+const seat = (orders: string[], allergies: GuestAllergy[] = []): SeatState => ({
+  allergies,
+  noAllergy: allergies.length === 0,
+  orders: orders.map((dishId, i) => ({ id: `${dishId}-${i}`, dishId })),
+});
+
+/**
+ * What the waiters have entered so far. Alerts follow from these orders only: a seat with an
+ * allergy gets an alert when a dish it ordered needs a change or cannot be served.
+ */
+export const DEMO_SERVICE: ServiceState = {
   '12': {
-    3: [
-      { allergen: 'GLUTEN', severity: 'SEVERE' },
-      { allergen: 'MILK', severity: 'INTOLERANCE' },
-    ],
+    1: seat(['d-steak']),
+    2: seat(['d-soup']),
+    3: seat(
+      ['d-steak'],
+      [
+        { allergen: 'GLUTEN', severity: 'SEVERE' },
+        { allergen: 'MILK', severity: 'INTOLERANCE' },
+      ],
+    ),
+    4: seat(['d-risotto']),
   },
-  '7': { 2: [{ ingredient: { id: 'i-tomato', name: 'Tomato' }, severity: 'ALLERGY' }] },
+  '7': {
+    1: seat(['d-steak']),
+    2: seat(['d-soup'], [{ ingredient: { id: 'i-tomato', name: 'Tomato' }, severity: 'ALLERGY' }]),
+    3: seat(['d-salad']),
+    4: seat(['d-risotto']),
+  },
 };
 
-export interface DemoAlert {
+/** Events from the kitchen, not from the menu: a plate that skipped its check. */
+export interface KitchenEvent {
   id: string;
-  kind: 'stop' | 'warn' | 'unknown' | 'missed';
+  kind: 'missed';
   table: string;
-  text: { en: string; nl: string };
+  plate: string;
   minutesAgo: number;
 }
 
-export const DEMO_ALERTS: DemoAlert[] = [
-  {
-    id: 'a1',
-    kind: 'stop',
-    table: '12',
-    text: {
-      en: 'Seat 3 ordered mushroom risotto: do not serve',
-      nl: 'Stoel 3 bestelde paddenstoelenrisotto: niet serveren',
-    },
-    minutesAgo: 2,
-  },
-  {
-    id: 'a2',
-    kind: 'warn',
-    table: '12',
-    text: {
-      en: 'Seat 3: tomato soup may contain celery',
-      nl: 'Stoel 3: tomatensoep kan selderij bevatten',
-    },
-    minutesAgo: 2,
-  },
-  {
-    id: 'a3',
-    kind: 'missed',
-    table: '7',
-    text: {
-      en: 'Plate 4810 left the kitchen without a check',
-      nl: 'Bord 4810 ging zonder check de keuken uit',
-    },
-    minutesAgo: 31,
-  },
+export const DEMO_KITCHEN_EVENTS: KitchenEvent[] = [
+  { id: 'k1', kind: 'missed', table: '7', plate: '4810', minutesAgo: 31 },
 ];
 
 const SYNONYMS: Record<string, string[]> = {
