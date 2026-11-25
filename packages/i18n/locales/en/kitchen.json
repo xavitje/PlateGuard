@@ -49,5 +49,6 @@
     "testBody": "This printer prints the allergy tickets of {location}.",
     "again": "Print again",
     "printed": "Sent to the printer"
-  }
+  },
+  "tab": "Kitchen"
 }

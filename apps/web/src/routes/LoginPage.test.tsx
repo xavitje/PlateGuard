@@ -6,18 +6,21 @@ import { I18nProvider } from '../i18n';
 import { ServiceProvider } from '../service/ServiceProvider';
 import { TabsLayout } from '../shell/TabsLayout';
 import { LoginPage } from './LoginPage';
+import type { Role } from '@plateguard/domain';
 
-function renderApp() {
+function renderApp(role: Role = 'WAITER') {
   const router = createMemoryRouter(
     [
       { path: '/login', element: <LoginPage /> },
       { element: <TabsLayout />, children: [{ path: '/tables', element: <p>Tables screen</p> }] },
+      { path: '/kitchen', element: <p>Kitchen screen</p> },
+      { path: '/admin', element: <p>Admin screen</p> },
     ],
     { initialEntries: ['/tables'] },
   );
   render(
     <I18nProvider locale="en">
-      <ServiceProvider client={createMemoryClient()} signedIn={false}>
+      <ServiceProvider client={createMemoryClient(undefined, undefined, role)} signedIn={false}>
         <RouterProvider router={router} />
       </ServiceProvider>
     </I18nProvider>,
@@ -39,5 +42,17 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText('Tables screen')).toBeTruthy();
     expect(router.state.location.pathname).toBe('/tables');
+  });
+
+  it.each([
+    ['COOK', 'Kitchen screen'],
+    ['RUNNER', 'Kitchen screen'],
+    ['MANAGER', 'Admin screen'],
+  ] as const)('one sign-in: a %s starts on their own screen', async (role, screenText) => {
+    renderApp(role);
+    fireEvent.click(await screen.findByRole('button', { name: 'Demo Waiter' }));
+    fireEvent.change(screen.getByLabelText('PIN for Demo Waiter'), { target: { value: '1234' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(await screen.findByText(screenText)).toBeTruthy();
   });
 });

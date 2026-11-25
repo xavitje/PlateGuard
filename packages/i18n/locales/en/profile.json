@@ -4,8 +4,21 @@
   "language": "Language",
   "languageNote": "English is the default. Your admin can add more languages.",
   "switchUser": "Switch user",
-  "kitchenMode": "Use this device as kitchen display",
-  "admin": "Open admin",
   "signOut": "Sign out",
-  "signedInAs": "Signed in as {name}"
+  "signedInAs": "Signed in as {name}",
+  "workplace": "Where you work",
+  "places": {
+    "tables": {
+      "name": "Tables",
+      "hint": "Allergies per seat and ordering"
+    },
+    "kitchen": {
+      "name": "Kitchen and pass",
+      "hint": "Allergy tickets, full screen"
+    },
+    "admin": {
+      "name": "Admin",
+      "hint": "Recipes, menu, staff, incidents"
+    }
+  }
 }

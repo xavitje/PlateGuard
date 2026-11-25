@@ -35,6 +35,22 @@ export const ProfileIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+export const KitchenIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...p}>
+    <path d="M7.5 10.5a4 4 0 0 1 1.2-7.8A4.5 4.5 0 0 1 12 1.5h0a4.5 4.5 0 0 1 3.3 1.2 4 4 0 0 1 1.2 7.8V16h-9Z" />
+    <path d="M7.5 19.5h9" />
+  </svg>
+);
+
+export const AdminIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...p}>
+    <path d="M4.5 6.5h9M17.5 6.5h2M4.5 12h3M11.5 12h8M4.5 17.5h9M17.5 17.5h2" />
+    <circle cx="15.5" cy="6.5" r="2" />
+    <circle cx="9.5" cy="12" r="2" />
+    <circle cx="15.5" cy="17.5" r="2" />
+  </svg>
+);
+
 export const ChevronLeft = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base} {...p}>
     <path d="m14.5 5.5-6.5 6.5 6.5 6.5" />

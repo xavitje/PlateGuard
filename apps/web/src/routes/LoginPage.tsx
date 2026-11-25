@@ -1,10 +1,11 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate, useLocation } from 'react-router';
+import { useLocation } from 'react-router';
 import { ApiError } from '../api/client';
 import { useClient, useSession } from '../service/ServiceProvider';
 import { deviceLocation } from '../session';
+import { HomeRedirect } from '../shell/HomeRedirect';
 
 /**
  * Shared devices: pick your name, type your PIN. The session is bound to this location and
@@ -26,7 +27,8 @@ export function LoginPage() {
     onError: () => setPin(''),
   });
 
-  if (session.signedIn) return <Navigate to="/tables" replace />;
+  // One sign-in for everyone: the roles decide where you start.
+  if (session.signedIn) return <HomeRedirect />;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
