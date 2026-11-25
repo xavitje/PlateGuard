@@ -436,6 +436,103 @@ describe('audit input', () => {
   });
 });
 
+describe("the waiter's picks", () => {
+  const burger = () => {
+    const gfBun = simple('GF bun', {}, { suitableForSevere: true });
+    return dish('Burger', [
+      simple('Patty', {}),
+      component('Bun', {
+        ingredients: [ingredient('Brioche', { contains: ['GLUTEN_WHEAT'] })],
+        substitutions: [substitute(gfBun), substitute(simple('Rye bun', { contains: ['GLUTEN'] }))],
+      }),
+      simple('Cheddar', { contains: ['MILK'] }, { omittable: true }),
+    ]);
+  };
+  const ids = (d: ReturnType<typeof burger>) => ({
+    bun: d.components[1]!,
+    cheddar: d.components[2]!,
+  });
+
+  it('takes a safe pick and judges the plate with it', () => {
+    const d = burger();
+    const { cheddar } = ids(d);
+    const a = assess({
+      dish: d,
+      guest: guest('MILK', 'ALLERGY'),
+      choices: [{ componentId: cheddar.id, action: 'OMIT' }],
+    });
+    expect(a.outcome).toBe('ADAPTABLE');
+    expect(a.modifications).toMatchObject([{ componentName: 'Cheddar', action: 'OMIT' }]);
+  });
+
+  it('keeps a pick for taste on the ticket, without an allergy reason', () => {
+    const d = burger();
+    const a = assess({
+      dish: d,
+      guest: guest('EGGS'),
+      choices: [{ componentId: ids(d).cheddar.id, action: 'OMIT' }],
+    });
+    expect(a.outcome).toBe('CLEAR');
+    expect(a.modifications).toMatchObject([{ action: 'OMIT', reasonAllergens: [] }]);
+  });
+
+  it('does not accept an unsafe pick, and does not pick something else instead', () => {
+    const d = burger();
+    const { bun } = ids(d);
+    const rye = bun.substitutions[1]!.replacement;
+    const a = assess({
+      dish: d,
+      guest: guest('GLUTEN'),
+      choices: [{ componentId: bun.id, action: 'SUBSTITUTE', substituteId: rye.id }],
+    });
+    expect(a.outcome).toBe('DO_NOT_SERVE');
+    // Leaving off cheese is not enough for a severe milk allergy unless it is made separately.
+    const b = assess({
+      dish: d,
+      guest: guest('MILK', 'SEVERE'),
+      choices: [{ componentId: ids(d).cheddar.id, action: 'OMIT' }],
+    });
+    expect(b.outcome).toBe('DO_NOT_SERVE');
+  });
+
+  it('a substitute picked for taste is still checked on the plate', () => {
+    const d = burger();
+    const { bun } = ids(d);
+    const rye = bun.substitutions[1]!.replacement;
+    const a = assess({
+      dish: d,
+      guest: guest('GLUTEN', 'ALLERGY'),
+      choices: [
+        {
+          componentId: bun.id,
+          action: 'SUBSTITUTE',
+          substituteId: bun.substitutions[0]!.replacement.id,
+        },
+      ],
+    });
+    expect(a.outcome).toBe('ADAPTABLE');
+    const sesame = assess({
+      dish: d,
+      guest: guest('SESAME'),
+      choices: [{ componentId: bun.id, action: 'SUBSTITUTE', substituteId: rye.id }],
+    });
+    expect(sesame.outcome).toBe('CLEAR');
+    expect(sesame.modifications).toMatchObject([{ substitute: { name: 'Rye bun' } }]);
+  });
+
+  it('changes the input hash only when there are picks', () => {
+    const d = burger();
+    const plain = assess({ dish: d, guest: guest('MILK') }).inputHash;
+    expect(assess({ dish: d, guest: guest('MILK'), choices: [] }).inputHash).toBe(plain);
+    const picked = assess({
+      dish: d,
+      guest: guest('MILK'),
+      choices: [{ componentId: ids(d).cheddar.id, action: 'OMIT' }],
+    });
+    expect(picked.inputHash).not.toBe(plain);
+  });
+});
+
 describe('custom allergies typed by the waiter', () => {
   const pasta = () =>
     dish('Pasta', [

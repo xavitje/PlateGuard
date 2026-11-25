@@ -63,5 +63,15 @@
     "confirm": "Order anyway",
     "shown": "Your explanation: {note}"
   },
-  "approvedByKitchen": "Approved by the kitchen: {reason}"
+  "approvedByKitchen": "Approved by the kitchen: {reason}",
+  "adjust": {
+    "button": "Adjust",
+    "open": "Adjust {dish}",
+    "title": "Adjust {dish}",
+    "asMenu": "As on the menu",
+    "without": "Without",
+    "verdict": "For this guest",
+    "instead": "Adjust the dish",
+    "omitNotEnough": "Leaving it off is not enough for a severe allergy, unless that part is made separately (set in Recipes)."
+  }
 }

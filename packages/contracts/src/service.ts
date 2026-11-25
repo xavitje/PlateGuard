@@ -1,6 +1,7 @@
 import type {
   AlertKind,
   Assessment,
+  Choice,
   GuestAllergy,
   Outcome,
   Permission,
@@ -19,9 +20,21 @@ export type SeatUpdate = z.infer<typeof SeatUpdateZ>;
 /** What a client sends: severity and noAllergy may be left out. */
 export type SeatUpdateInput = z.input<typeof SeatUpdateZ>;
 
+/** A change the waiter picks when ordering: leave a component off, or swap it. */
+export const ChoiceZ = z.discriminatedUnion('action', [
+  z.strictObject({ componentId: IdZ, action: z.literal('OMIT') }),
+  z.strictObject({ componentId: IdZ, action: z.literal('SUBSTITUTE'), substituteId: IdZ }),
+]);
+
 /** POST /locations/:locationId/tables/:label/seats/:seat/orders */
 export const OrderCreateZ = z.strictObject({
   dishId: IdZ,
+  /** One per component at most; the engine judges the plate with them. */
+  choices: z
+    .array(ChoiceZ)
+    .max(20)
+    .refine((c) => new Set(c.map((x) => x.componentId)).size === c.length)
+    .optional(),
   /** Required when the dish is "do not serve" for this guest: why the waiter orders it anyway. */
   note: z.string().trim().max(300).optional(),
 });
@@ -94,6 +107,8 @@ export interface OrderLineResponse {
   note?: string;
   /** Why the kitchen approved it although it was blocked. */
   approved?: string;
+  /** What the waiter picked when ordering. */
+  choices?: Choice[];
 }
 
 export type PlateStatusName =

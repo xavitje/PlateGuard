@@ -63,5 +63,15 @@
     "confirm": "Toch bestellen",
     "shown": "Jouw uitleg: {note}"
   },
-  "approvedByKitchen": "Goedgekeurd door de keuken: {reason}"
+  "approvedByKitchen": "Goedgekeurd door de keuken: {reason}",
+  "adjust": {
+    "button": "Aanpassen",
+    "open": "{dish} aanpassen",
+    "title": "{dish} aanpassen",
+    "asMenu": "Standaard",
+    "without": "Zonder",
+    "verdict": "Zo voor deze gast",
+    "instead": "Gerecht aanpassen",
+    "omitNotEnough": "Weglaten is niet genoeg bij een ernstige allergie, tenzij het onderdeel apart wordt bereid (in te stellen bij Receptuur)."
+  }
 }

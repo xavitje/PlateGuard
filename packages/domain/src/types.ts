@@ -179,8 +179,18 @@ export interface Assessment {
   inputHash: string;
 }
 
+/** A change the waiter picked when ordering, for a component of the dish itself. */
+export interface Choice {
+  componentId: string;
+  action: ModificationAction;
+  /** The replacement component, with SUBSTITUTE. */
+  substituteId?: string;
+}
+
 export interface AssessInput {
   dish: ResolvedDish | UnmappedItem;
   guest: GuestAllergy[];
+  /** The waiter's picks. The engine takes them before its own, if they are safe. */
+  choices?: Choice[];
   engineVersion?: string;
 }

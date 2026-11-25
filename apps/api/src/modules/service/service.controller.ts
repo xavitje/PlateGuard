@@ -98,7 +98,16 @@ export class ServiceController {
     @Param('seat', new ZodPipe(SeatParamZ)) seat: number,
     @Body(new ZodPipe(OrderCreateZ)) body: OrderCreate,
   ) {
-    return this.service.order(ctx, locationId, label, seat, body.dishId, user.userId, body.note);
+    return this.service.order(
+      ctx,
+      locationId,
+      label,
+      seat,
+      body.dishId,
+      user.userId,
+      body.note,
+      body.choices,
+    );
   }
 
   @Delete('tables/:label/orders/:plateId')

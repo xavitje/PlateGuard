@@ -220,7 +220,7 @@ export class KitchenService {
     return ({ table, seat, order }) => {
       const dish = dishOf(order);
       if (!dish) return null;
-      const result = assess({ dish, guest: seat.allergies });
+      const result = assess({ dish, guest: seat.allergies, choices: order.choices });
       // An approved plate is no longer blocked; the approval shows on the ticket instead.
       const block = order.override ? null : kitchenBlock(result);
       return {

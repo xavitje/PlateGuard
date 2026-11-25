@@ -4,6 +4,7 @@ import type { PlateStatusName } from '@plateguard/contracts';
  * Allergen names come from the database per locale in production (AllergenTranslation).
  */
 import type {
+  Choice,
   Component,
   GuestAllergy,
   ResolvedDish,
@@ -157,6 +158,7 @@ export interface DemoSeat {
     note?: string;
     /** Why a chef approved it although it was blocked. */
     override?: string;
+    choices?: Choice[];
   }[];
 }
 

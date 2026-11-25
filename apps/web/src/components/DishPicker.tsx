@@ -1,10 +1,18 @@
 import type { MenuDish } from '@plateguard/contracts';
-import { normalizeLabel, type Assessment } from '@plateguard/domain';
+import {
+  assess,
+  normalizeLabel,
+  type Assessment,
+  type Choice,
+  type Component,
+  type GuestAllergy,
+} from '@plateguard/domain';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AssessmentDetails } from './AssessmentDetails';
 import { ChevronLeft, Plus } from './icons';
 import { OutcomeBadge } from './OutcomeBadge';
+import { segmentItem, segmentTrack } from './segment';
 
 type Mode = 'grid' | 'list';
 const MODE_KEY = 'pg.dishPicker';
@@ -30,8 +38,15 @@ interface Props {
   /** The seat has allergies: show each dish's outcome. */
   judged: boolean;
   verdictOf: (dishId: string) => Assessment;
-  /** With a note when the waiter confirmed a "do not serve" dish. */
-  onOrder: (dish: MenuDish, note?: string) => void;
+  /** The seat's allergies, to judge the waiter's changes live. */
+  guest: GuestAllergy[];
+  /** With a note when the waiter confirmed a "do not serve" dish, and the changes they picked. */
+  onOrder: (dish: MenuDish, note?: string, choices?: Choice[]) => void;
+}
+
+/** The parts of a dish the waiter can leave off or swap, as set in Recipes. */
+export function adjustable(dish: MenuDish): Component[] {
+  return dish.components.filter((c) => !c.premixed && (c.omittable || c.substitutions.length > 0));
 }
 
 /**
@@ -40,25 +55,28 @@ interface Props {
  * - a till-style grid: categories, then subcategories when there are any, then the dishes. A
  *   tap on a dish orders it and the grid stays in that category for the next one.
  * Without categories set in Recipes, dishes are grouped by course. A dish that must not be
- * served to this guest is only ordered after the waiter confirms it and says why.
+ * served to this guest is only ordered after the waiter confirms it and says why, or changes it
+ * (leave a part off, swap it) until it is safe.
  */
-export function DishPicker({ title, dishes, judged, verdictOf, onOrder }: Props) {
+export function DishPicker({ title, dishes, judged, verdictOf, guest, onOrder }: Props) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<Mode>(readMode);
   const [added, setAdded] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState<MenuDish | null>(null);
+  const [confirming, setConfirming] = useState<{ dish: MenuDish; choices?: Choice[] } | null>(null);
+  const [adjusting, setAdjusting] = useState<MenuDish | null>(null);
   const groupOf = (d: MenuDish) =>
     d.category ??
     (d.course >= 1 && d.course <= 3
       ? t(`tables:pick.course.${d.course}`)
       : t('tables:pick.course.other', { course: d.course }));
-  const place = (d: MenuDish, note?: string) => {
-    onOrder(d, note);
+  const place = (d: MenuDish, note?: string, choices?: Choice[]) => {
+    onOrder(d, note, choices?.length ? choices : undefined);
     setAdded(d.name);
   };
-  const order = (d: MenuDish) => {
-    if (judged && verdictOf(d.id).outcome === 'DO_NOT_SERVE') setConfirming(d);
-    else place(d);
+  const order = (d: MenuDish, choices?: Choice[]) => {
+    const outcome = choices ? assess({ dish: d, guest, choices }).outcome : verdictOf(d.id).outcome;
+    if (judged && outcome === 'DO_NOT_SERVE') setConfirming({ dish: d, choices });
+    else place(d, undefined, choices);
   };
   const choose = (m: Mode) => {
     setMode(m);
@@ -97,6 +115,8 @@ export function DishPicker({ title, dishes, judged, verdictOf, onOrder }: Props)
           verdictOf={verdictOf}
           groupOf={groupOf}
           onOrder={order}
+          // Only for a guest with allergies: the change goes to the kitchen on the allergy ticket.
+          onAdjust={judged ? setAdjusting : undefined}
         />
       ) : (
         <DishGrid
@@ -110,11 +130,30 @@ export function DishPicker({ title, dishes, judged, verdictOf, onOrder }: Props)
       )}
       {confirming && (
         <ConfirmDoNotServe
-          dish={confirming}
+          dish={confirming.dish}
           onCancel={() => setConfirming(null)}
+          onAdjust={
+            adjustable(confirming.dish).length > 0
+              ? () => {
+                  setAdjusting(confirming.dish);
+                  setConfirming(null);
+                }
+              : undefined
+          }
           onConfirm={(note) => {
-            place(confirming, note);
+            place(confirming.dish, note, confirming.choices);
             setConfirming(null);
+          }}
+        />
+      )}
+      {adjusting && (
+        <AdjustDish
+          dish={adjusting}
+          guest={guest}
+          onCancel={() => setAdjusting(null)}
+          onOrder={(choices) => {
+            setAdjusting(null);
+            order(adjusting, choices);
           }}
         />
       )}
@@ -129,10 +168,13 @@ export function DishPicker({ title, dishes, judged, verdictOf, onOrder }: Props)
 function ConfirmDoNotServe({
   dish,
   onCancel,
+  onAdjust,
   onConfirm,
 }: {
   dish: MenuDish;
   onCancel: () => void;
+  /** Offered when the dish has parts the waiter can leave off or swap. */
+  onAdjust?: () => void;
   onConfirm: (note: string) => void;
 }) {
   const { t } = useTranslation();
@@ -164,6 +206,15 @@ function ConfirmDoNotServe({
         <p id="dns-body" className="text-[14.5px] text-soft">
           {t('tables:confirmStop.body')}
         </p>
+        {onAdjust && (
+          <button
+            type="button"
+            onClick={onAdjust}
+            className="press min-h-11 rounded-full bg-brand px-4 text-[15px] font-semibold text-white"
+          >
+            {t('tables:adjust.instead')}
+          </button>
+        )}
         <label className="grid gap-1.5 text-[14px] font-semibold">
           {t('tables:confirmStop.note')}
           <textarea
@@ -198,7 +249,140 @@ function ConfirmDoNotServe({
   );
 }
 
-type Inner = Omit<Props, 'title'> & { groupOf: (d: MenuDish) => string };
+/**
+ * The waiter changes the dish while ordering: per part "as on the menu", "without", or a swap set
+ * in Recipes. The engine judges the plate again with every tap, so the waiter sees right away
+ * whether it is safe now. Untouched parts are still changed by the engine where it must.
+ */
+function AdjustDish({
+  dish,
+  guest,
+  onCancel,
+  onOrder,
+}: {
+  dish: MenuDish;
+  guest: GuestAllergy[];
+  onCancel: () => void;
+  onOrder: (choices: Choice[]) => void;
+}) {
+  const { t } = useTranslation();
+  const [choices, setChoices] = useState<Choice[]>([]);
+  const result = assess({ dish, guest, choices });
+  // Leaving a part off that is not made separately is not enough for a severe allergy.
+  const omitRefused = result.reasons.some(
+    (r) =>
+      r.code === 'CONTAINS_UNRESOLVED' &&
+      choices.some((c) => c.action === 'OMIT' && c.componentId === r.componentId),
+  );
+  const pick = (componentId: string, choice: Choice | null) =>
+    setChoices((all) => [
+      ...all.filter((c) => c.componentId !== componentId),
+      ...(choice ? [choice] : []),
+    ]);
+  return (
+    <div
+      className="fixed inset-0 z-50 grid items-end bg-black/40 p-3 sm:place-items-center"
+      onClick={(e) => e.target === e.currentTarget && onCancel()}
+      onKeyDown={(e) => e.key === 'Escape' && onCancel()}
+    >
+      <form
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="adjust-title"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onOrder(choices);
+        }}
+        className="grid max-h-[90dvh] w-full max-w-md gap-3 overflow-y-auto rounded-[22px] bg-card p-5 shadow-xl"
+      >
+        <h2 id="adjust-title" className="text-[20px] leading-tight font-bold">
+          {t('tables:adjust.title', { dish: dish.name })}
+        </h2>
+        {adjustable(dish).map((c) => {
+          const current = choices.find((x) => x.componentId === c.id);
+          const options: { key: string; label: string; choice: Choice | null }[] = [
+            { key: 'menu', label: t('tables:adjust.asMenu'), choice: null },
+            ...(c.omittable
+              ? [
+                  {
+                    key: 'omit',
+                    label: t('tables:adjust.without'),
+                    choice: { componentId: c.id, action: 'OMIT' as const },
+                  },
+                ]
+              : []),
+            ...c.substitutions.map((s) => ({
+              key: s.replacement.id,
+              label: s.replacement.name,
+              choice: {
+                componentId: c.id,
+                action: 'SUBSTITUTE' as const,
+                substituteId: s.replacement.id,
+              },
+            })),
+          ];
+          const active = (o: (typeof options)[number]) =>
+            o.choice === null
+              ? !current
+              : current?.action === o.choice.action &&
+                current.substituteId === o.choice.substituteId;
+          return (
+            <fieldset key={c.id} className="grid gap-1.5">
+              <legend className="mb-1.5 text-[14px] font-semibold">{c.name}</legend>
+              <div className={segmentTrack}>
+                {options.map((o) => (
+                  <button
+                    key={o.key}
+                    type="button"
+                    aria-pressed={active(o)}
+                    onClick={() => pick(c.id, o.choice)}
+                    className={segmentItem(active(o))}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          );
+        })}
+        <div
+          role="status"
+          className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2.5 gap-y-1 rounded-xl bg-bg p-3"
+        >
+          <span className="text-[14px] font-semibold">{t('tables:adjust.verdict')}</span>
+          {guest.length > 0 ? <OutcomeBadge outcome={result.outcome} /> : <span />}
+          <AssessmentDetails result={result} dish={dish} />
+          {omitRefused && (
+            <span className="col-span-full text-[12.5px] text-soft">
+              {t('tables:adjust.omitNotEnough')}
+            </span>
+          )}
+        </div>
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="press min-h-11 rounded-full bg-mist px-4 text-[15px] font-semibold"
+          >
+            {t('tables:confirmStop.cancel')}
+          </button>
+          <button
+            type="submit"
+            className="press min-h-11 rounded-full bg-brand px-4 text-[15px] font-semibold text-white"
+          >
+            {t('tables:order')}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+type Inner = Omit<Props, 'title' | 'guest' | 'onOrder'> & {
+  groupOf: (d: MenuDish) => string;
+  onOrder: (dish: MenuDish) => void;
+  onAdjust?: (dish: MenuDish) => void;
+};
 
 /** Groups in menu order: by course first, then as the dishes come. */
 function groups(dishes: MenuDish[], groupOf: (d: MenuDish) => string) {
@@ -210,7 +394,7 @@ function groups(dishes: MenuDish[], groupOf: (d: MenuDish) => string) {
   return [...map.entries()];
 }
 
-function DishList({ dishes, judged, verdictOf, groupOf, onOrder }: Inner) {
+function DishList({ dishes, judged, verdictOf, groupOf, onOrder, onAdjust }: Inner) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<string | null>(null);
@@ -298,15 +482,27 @@ function DishList({ dishes, judged, verdictOf, groupOf, onOrder }: Inner) {
                     </span>
                     {judged && <OutcomeBadge outcome={result.outcome} />}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => onOrder(dish)}
-                    aria-label={t('tables:orderDish', { dish: dish.name })}
-                    className="press inline-flex min-h-9 items-center gap-1 rounded-full bg-brand-soft px-3 text-[13px] font-semibold text-brand-ink"
-                  >
-                    <Plus width={14} height={14} />
-                    {t('tables:order')}
-                  </button>
+                  <span className="flex items-center gap-1.5">
+                    {onAdjust && adjustable(dish).length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => onAdjust(dish)}
+                        aria-label={t('tables:adjust.open', { dish: dish.name })}
+                        className="press inline-flex min-h-9 items-center rounded-full bg-mist px-3 text-[13px] font-semibold"
+                      >
+                        {t('tables:adjust.button')}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onOrder(dish)}
+                      aria-label={t('tables:orderDish', { dish: dish.name })}
+                      className="press inline-flex min-h-9 items-center gap-1 rounded-full bg-brand-soft px-3 text-[13px] font-semibold text-brand-ink"
+                    >
+                      <Plus width={14} height={14} />
+                      {t('tables:order')}
+                    </button>
+                  </span>
                   {judged && <AssessmentDetails result={result} dish={dish} />}
                 </div>
               );
