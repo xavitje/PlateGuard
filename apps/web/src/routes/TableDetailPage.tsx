@@ -162,7 +162,11 @@ export function TableDetailPage() {
                 <span className="text-[12.5px] text-soft">{t('tables:customHint')}</span>
               )}
               {a.ingredient !== undefined && (
-                <span className="text-[12.5px] text-soft">{t('tables:ingredientHint')}</span>
+                <span className="text-[12.5px] text-soft">
+                  {a.severity === 'SEVERE'
+                    ? t('tables:ingredientHintSevere')
+                    : t('tables:ingredientHint')}
+                </span>
               )}
             </div>
           );
@@ -269,7 +273,11 @@ export function TableDetailPage() {
             {result.manualChecks.length > 0 && (
               <span className="col-span-2 text-[12.5px] text-soft">
                 {result.manualChecks
-                  .map((m) => t('kitchen:manualCheck', { label: m.custom }))
+                  .map((m) =>
+                    m.kind === 'CUSTOM'
+                      ? t('kitchen:manualCheck', { label: m.label })
+                      : t('kitchen:manualCheckTraces', { label: m.label }),
+                  )
                   .join(' · ')}
               </span>
             )}

@@ -127,6 +127,7 @@ export type ReasonCode =
   | 'UNMAPPED_ITEM'
   | 'CUSTOM_ALLERGY_MANUAL_CHECK'
   | 'CUSTOM_POSSIBLE_MATCH'
+  | 'INGREDIENT_TRACES_MANUAL_CHECK'
   | 'NOT_FOUND';
 
 /** Language neutral: the app translates codes, the audit stores them as they are. */
@@ -153,12 +154,24 @@ export interface AllergyResult {
   reasons: Reason[];
 }
 
+/**
+ * A check the recipe data cannot do:
+ *  - CUSTOM: an allergy typed by the waiter, not in the recipes at all.
+ *  - INGREDIENT_TRACES: a severe allergy to a picked ingredient. The recipes record the ingredient
+ *    itself, but traces are recorded per allergen only, so traces of it are checked by hand.
+ */
+export interface ManualCheck {
+  kind: 'CUSTOM' | 'INGREDIENT_TRACES';
+  label: string;
+  severity: Severity;
+}
+
 export interface Assessment {
   outcome: Outcome;
   /** Mandatory: printed on the allergy ticket, cannot be removed by the waiter. */
   modifications: Modification[];
-  /** Custom allergies the cook must check by hand before confirming the plate. */
-  manualChecks: { custom: string; severity: Severity }[];
+  /** What the cook must check by hand before confirming the plate. */
+  manualChecks: ManualCheck[];
   perAllergy: AllergyResult[];
   reasons: Reason[];
   engineVersion: string;

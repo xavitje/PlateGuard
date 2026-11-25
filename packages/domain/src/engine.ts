@@ -18,6 +18,7 @@ import {
   type AssessInput,
   type Assessment,
   type Component,
+  type ManualCheck,
   type GuestAllergy,
   type IngredientRef,
   type Modification,
@@ -345,6 +346,12 @@ function assessDish(dish: ResolvedDish, ctx: Ctx) {
       reasons.push(...unverified);
       outcomes.push('UNKNOWN');
     }
+    // Fail-safe: traces are recorded per allergen, never per ingredient. For a severe ingredient
+    // allergy the engine still finds and fixes the ingredient itself, but the cook checks traces.
+    if (a.ingredient && a.severity === 'SEVERE' && worstOutcome(outcomes) !== 'DO_NOT_SERVE') {
+      reasons.push({ code: 'INGREDIENT_TRACES_MANUAL_CHECK', ...who });
+      outcomes.push('UNKNOWN');
+    }
     if (reasons.length === 0) reasons.push({ code: 'NOT_FOUND', ...who });
 
     return { ...resultSubject(a), severity: a.severity, outcome: worstOutcome(outcomes), reasons };
@@ -421,12 +428,22 @@ export function assess(input: AssessInput, options: EngineOptions = {}): Assessm
 
   const outcome = worstOutcome(perAllergy.map((r) => r.outcome));
   // A plate that cannot go out carries no checklist: the ticket says DO NOT SERVE or UNKNOWN instead.
-  // An UNKNOWN that comes only from custom allergies keeps its checklist: the kitchen checks those by hand.
+  // An UNKNOWN that comes only from manual checks keeps its checklist: the kitchen checks those by
+  // hand. An UNKNOWN from the data (unverified ingredient, unmapped item) blocks the plate.
   const blocked = perAllergy.some(
-    (r) => r.outcome === 'DO_NOT_SERVE' || (r.outcome === 'UNKNOWN' && r.custom === undefined),
+    (r) =>
+      r.outcome === 'DO_NOT_SERVE' ||
+      r.reasons.some((x) => x.code === 'UNVERIFIED_INGREDIENT' || x.code === 'UNMAPPED_ITEM'),
   );
   if (blocked) modifications = [];
-  const manualChecks = guest.custom.map((c) => ({ custom: c.label, severity: c.severity }));
+  const manualChecks: ManualCheck[] = [
+    ...guest.known.flatMap((a) =>
+      a.ingredient && a.severity === 'SEVERE'
+        ? [{ kind: 'INGREDIENT_TRACES' as const, label: a.ingredient.name, severity: a.severity }]
+        : [],
+    ),
+    ...guest.custom.map((c) => ({ kind: 'CUSTOM' as const, label: c.label, severity: c.severity })),
+  ];
 
   return {
     outcome,

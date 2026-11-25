@@ -18,5 +18,6 @@
   "suggestions": "Ingredients this restaurant uses",
   "inRecipes": "In the recipes",
   "useTyped": "Use “{text}” as typed (checked by hand)",
-  "ingredientHint": "Checked against the recipes, like the allergens"
+  "ingredientHint": "Checked against the recipes, like the allergens",
+  "ingredientHintSevere": "Checked against the recipes; with severe, the kitchen also checks traces by hand"
 }

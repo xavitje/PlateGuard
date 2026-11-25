@@ -131,10 +131,12 @@ export function KitchenPage() {
             ))}
             {result.manualChecks.map((m) => (
               <li
-                key={m.custom}
+                key={`${m.kind}:${m.label}`}
                 className="rounded-xl bg-[#111317] px-3.5 py-3 text-[17px] leading-snug"
               >
-                {t('kitchen:manualCheck', { label: m.custom })}
+                {m.kind === 'CUSTOM'
+                  ? t('kitchen:manualCheck', { label: m.label })
+                  : t('kitchen:manualCheckTraces', { label: m.label })}
               </li>
             ))}
           </ul>

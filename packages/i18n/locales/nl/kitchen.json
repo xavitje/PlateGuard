@@ -7,5 +7,6 @@
   "reject": "Afkeuren",
   "remake": "Opnieuw maken",
   "exit": "Keukenmodus verlaten",
-  "manualCheck": "Met de hand controleren: {label}"
+  "manualCheck": "Met de hand controleren: {label}",
+  "manualCheckTraces": "Met de hand controleren op sporen van {label}"
 }
