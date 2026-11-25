@@ -86,7 +86,11 @@
     "course": "Gang",
     "price": "Prijs (€)",
     "components": "Componenten, in volgorde op het bord",
-    "addComponent": "Component toevoegen"
+    "addComponent": "Component toevoegen",
+    "category": "Categorie",
+    "categoryHint": "Bijv. Hoofdgerechten",
+    "subcategory": "Subcategorie (optioneel)",
+    "subcategoryHint": "Bijv. Vis"
   },
   "menu": {
     "intro": "Kies de gerechten en hun volgorde, en publiceer. Bediening en keuken zien alleen de gepubliceerde versie.",

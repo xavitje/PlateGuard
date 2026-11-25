@@ -33,5 +33,25 @@
     "PASS_CHECKED": "Checked at the pass",
     "SERVED": "Served"
   },
-  "allergyShort": "{count, plural, one {# allergy} other {# allergies}}"
+  "allergyShort": "{count, plural, one {# allergy} other {# allergies}}",
+  "pick": {
+    "view": "Show the menu as",
+    "list": "List",
+    "grid": "Grid",
+    "search": "Search a dish",
+    "filter": "Filter dishes",
+    "all": "All",
+    "hideStop": "Hide \"do not serve\"",
+    "none": "No dish matches.",
+    "categories": "Categories",
+    "path": "Where you are in the menu",
+    "dishCount": "{count, plural, one {# dish} other {# dishes}}",
+    "added": "{dish} added",
+    "course": {
+      "1": "Starters",
+      "2": "Mains",
+      "3": "Desserts",
+      "other": "Course {course}"
+    }
+  }
 }

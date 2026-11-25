@@ -19,6 +19,7 @@ import {
   DEMO_DISHES,
   DEMO_FLOORS,
   DEMO_INGREDIENTS,
+  DEMO_PLACEMENT,
   DEMO_SERVICE,
   DEMO_TABLES,
   type DemoSeat,
@@ -311,7 +312,13 @@ export function createMemoryClient(
         }),
       }));
     },
-    menu: async () => ({ dishes, ingredients: DEMO_INGREDIENTS }),
+    menu: async () => ({
+      dishes: dishes.map((d) => ({
+        ...d,
+        ...(DEMO_PLACEMENT[d.id] ?? { course: 0, category: null, subcategory: null }),
+      })),
+      ingredients: DEMO_INGREDIENTS,
+    }),
     table: async (_, label) => table(label),
     alerts: async () => alerts(),
     markAlertsRead: async (_, __, ids) => {

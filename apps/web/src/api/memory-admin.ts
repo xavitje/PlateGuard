@@ -79,6 +79,8 @@ export function createMemoryAdmin(
         name: d.name,
         nameNl: null,
         course: 1,
+        category: null,
+        subcategory: null,
         priceCents: null,
         componentIds: d.components.map((c) => c.id),
       },
@@ -193,6 +195,8 @@ export function createMemoryAdmin(
         name: body.name,
         nameNl: body.nameNl ?? null,
         course: body.course ?? 0,
+        category: body.category || null,
+        subcategory: (body.category && body.subcategory) || null,
         priceCents: body.priceCents ?? null,
         componentIds: body.componentIds,
       };

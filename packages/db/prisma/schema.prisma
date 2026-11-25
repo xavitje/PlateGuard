@@ -410,6 +410,9 @@ model Dish {
   name        String
   description String?
   course      Int      @default(0)
+  /// Groups the dish for ordering, e.g. "Hoofdgerechten" with subcategory "Vis". Free text.
+  category    String?
+  subcategory String?
   priceCents  Int?     @map("price_cents")
   kind        DishKind @default(MENU)
 

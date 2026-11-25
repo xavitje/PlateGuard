@@ -2,13 +2,14 @@ import {
   assess,
   normalizeLabel,
   searchIngredients,
-  type Assessment,
   type GuestAllergy,
   type Severity,
 } from '@plateguard/domain';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams, useSearchParams } from 'react-router';
+import { AssessmentDetails } from '../components/AssessmentDetails';
+import { DishPicker } from '../components/DishPicker';
 import { ChevronLeft, Plus } from '../components/icons';
 import { IncidentReport } from '../components/IncidentReport';
 import { OutcomeBadge } from '../components/OutcomeBadge';
@@ -321,35 +322,20 @@ export function TableDetailPage() {
                     </p>
                   )
                 )}
-                {current.length > 0 && line.status !== 'SERVED' && <Details result={result} />}
+                {current.length > 0 && line.status !== 'SERVED' && (
+                  <AssessmentDetails result={result} />
+                )}
               </div>
             ))}
           </section>
 
-          <h2 className="mx-1.5 mt-4 mb-2 text-[13px] font-semibold tracking-normal text-soft">
-            {t('tables:menuForSeat', { seat })}
-          </h2>
-          <section className="rounded-[18px] bg-card px-3.5 py-1">
-            {verdicts.map(({ dish, result }) => (
-              <div
-                key={dish.id}
-                className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2.5 gap-y-0.5 border-b border-line py-3 last:border-b-0"
-              >
-                <b className="text-[15px] font-semibold">{dish.name}</b>
-                {current.length > 0 ? <OutcomeBadge outcome={result.outcome} /> : <span />}
-                <button
-                  type="button"
-                  onClick={() => write.mutate({ kind: 'order', seat, dishId: dish.id })}
-                  aria-label={t('tables:orderDish', { dish: dish.name })}
-                  className="press inline-flex min-h-9 items-center gap-1 rounded-full bg-brand px-3 text-[13px] font-semibold text-white"
-                >
-                  <Plus width={14} height={14} />
-                  {t('tables:order')}
-                </button>
-                {current.length > 0 && <Details result={result} />}
-              </div>
-            ))}
-          </section>
+          <DishPicker
+            title={t('tables:menuForSeat', { seat })}
+            dishes={dishes}
+            judged={current.length > 0}
+            verdictOf={(id) => verdicts.find((v) => v.dish.id === id)!.result}
+            onOrder={(dish) => write.mutate({ kind: 'order', seat, dishId: dish.id })}
+          />
           <p className="mx-1.5 mt-2 text-[12.5px] text-soft">{t('tables:menuGuidance')}</p>
           <IncidentReport
             label={label}
@@ -370,32 +356,3 @@ export function TableDetailPage() {
 }
 
 /** The changes and manual checks for one dish, under its name. */
-function Details({ result }: { result: Assessment }) {
-  const { t } = useTranslation();
-  return (
-    <>
-      {result.modifications.length > 0 && (
-        <span className="col-span-3 text-[12.5px] text-soft">
-          {result.modifications
-            .map((m) =>
-              m.action === 'SUBSTITUTE'
-                ? `${m.componentName} → ${m.substitute?.name}`
-                : `− ${m.componentName}`,
-            )
-            .join(' · ')}
-        </span>
-      )}
-      {result.manualChecks.length > 0 && (
-        <span className="col-span-3 text-[12.5px] text-soft">
-          {result.manualChecks
-            .map((m) =>
-              m.kind === 'CUSTOM'
-                ? t('kitchen:manualCheck', { label: m.label })
-                : t('kitchen:manualCheckTraces', { label: m.label }),
-            )
-            .join(' · ')}
-        </span>
-      )}
-    </>
-  );
-}

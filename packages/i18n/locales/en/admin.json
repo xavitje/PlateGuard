@@ -86,7 +86,11 @@
     "course": "Course",
     "price": "Price (€)",
     "components": "Components, in plate order",
-    "addComponent": "Add a component"
+    "addComponent": "Add a component",
+    "category": "Category",
+    "categoryHint": "e.g. Mains",
+    "subcategory": "Subcategory (optional)",
+    "subcategoryHint": "e.g. Fish"
   },
   "menu": {
     "intro": "Choose the dishes and their order, then publish. Waiters and the kitchen only see the published version.",

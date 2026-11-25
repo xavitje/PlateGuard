@@ -56,6 +56,23 @@ export class MenuRepository {
     });
   }
 
+  /**
+   * Course and category as set now, for grouping the order screen. Not part of the published
+   * snapshot: where a dish sits on the screen does not change how it is judged.
+   */
+  placement(
+    ctx: TenantContext,
+    dishIds: string[],
+  ): Promise<Map<string, { course: number; category: string | null; subcategory: string | null }>> {
+    return this.prisma.forTenant(ctx, async (tx) => {
+      const rows = await tx.dish.findMany({
+        where: { id: { in: dishIds } },
+        select: { id: true, course: true, category: true, subcategory: true },
+      });
+      return new Map(rows.map(({ id, ...p }) => [id, p]));
+    });
+  }
+
   ingredients(ctx: TenantContext): Promise<SearchableIngredient[]> {
     return this.prisma.forTenant(ctx, async (tx) =>
       (

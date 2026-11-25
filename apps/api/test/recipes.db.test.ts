@@ -101,6 +101,8 @@ describe.skipIf(!hasDb)('recipes and publishing', () => {
         name: 'Tomato soup',
         nameNl: 'Tomatensoep',
         course: 1,
+        category: 'Starters',
+        subcategory: ' Soups ',
         priceCents: 850,
         componentIds: [soupC.id],
       })
@@ -128,8 +130,13 @@ describe.skipIf(!hasDb)('recipes and publishing', () => {
     ]);
     menu = await recipes.publish(ctx, loc, userId);
     expect(menu).toMatchObject({ changed: false, published: { version: 1, dishCount: 1 } });
-    expect((await service.getMenu(ctx, loc, 'nl')).dishes.map((d) => d.name)).toEqual([
-      'Tomatensoep',
+    expect((await service.getMenu(ctx, loc, 'nl')).dishes).toEqual([
+      expect.objectContaining({
+        name: 'Tomatensoep',
+        course: 1,
+        category: 'Starters',
+        subcategory: 'Soups',
+      }),
     ]);
   });
 
