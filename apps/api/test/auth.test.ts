@@ -88,6 +88,35 @@ describe.skipIf(!process.env.DATABASE_URL)('PIN login', () => {
     ).rejects.toMatchObject({ status: 401 });
   });
 
+  it('on a new device the PIN finds the location, or asks when it fits several', async () => {
+    const res = await auth.loginWithPin({ name: 'Sam', pin: '1234' });
+    expect(res.me.locations.map((l) => l.id)).toEqual([loc]);
+
+    await db.roleAssignment.create({
+      data: { userId: waiter, organizationId: org, locationId: other, role: 'WAITER' },
+    });
+    await db.staffPin.create({
+      data: { userId: waiter, locationId: other, pinHash: await hashPin('1234') },
+    });
+    await expect(auth.loginWithPin({ name: 'Sam', pin: '1234' })).rejects.toMatchObject({
+      status: 409,
+      response: {
+        code: 'LOCATION_CHOICE',
+        details: {
+          locations: [
+            { id: other, name: 'Other' },
+            { id: loc, name: 'Front' },
+          ].sort((a, b) => a.name.localeCompare(b.name)),
+        },
+      },
+    });
+    const there = await auth.loginWithPin({ locationId: other, name: 'Sam', pin: '1234' });
+    expect(there.me.locations.map((l) => l.id)).toEqual([other]);
+    await db.staffPin.delete({
+      where: { userId_locationId: { userId: waiter, locationId: other } },
+    });
+  });
+
   it('locks the PIN after five wrong tries, even for the right PIN after', async () => {
     for (let i = 1; i < MAX_PIN_TRIES; i++) {
       await expect(

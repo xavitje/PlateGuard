@@ -114,10 +114,12 @@ export interface AlertResponse {
 
 /**
  * POST /auth/pin: one person signs in on a location's shared device for one shift, with their
- * first name and PIN. The roles of the person found decide where the app opens.
+ * first name and PIN. The roles of the person found decide where the app opens. Without a
+ * location (a new device), the person's PIN finds it; when it fits more than one location the
+ * API answers 409 LOCATION_CHOICE with those locations, and the device asks which one.
  */
 export const PinLoginZ = z.strictObject({
-  locationId: IdZ,
+  locationId: IdZ.optional(),
   name: z.string().trim().min(1).max(80),
   pin: z.string().regex(/^\d{4,6}$/),
 });
