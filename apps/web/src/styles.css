@@ -27,6 +27,49 @@ body,
   min-height: 100%;
 }
 
+/*
+ * Phone baseline. No grey flash on tap, no font inflation in landscape, no pull-to-refresh
+ * or page bounce behind the app's own scrolling.
+ */
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+/* Controls fire on tap without waiting for a double-tap zoom, and a long press does not select their label. */
+button,
+a,
+label,
+select,
+summary,
+[role='button'],
+[role='tab'],
+[role='radio'] {
+  touch-action: manipulation;
+}
+button,
+nav a,
+[role='button'],
+[role='tab'],
+[role='radio'] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* A row of chips or tabs that scrolls sideways on a narrow screen, without a scrollbar. */
+.scroll-x {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
 body {
   margin: 0;
   background: var(--pg-mist);

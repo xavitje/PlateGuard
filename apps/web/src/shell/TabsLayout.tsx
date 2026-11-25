@@ -18,7 +18,7 @@ export function TabsLayout() {
 
   return (
     <div className="mx-auto min-h-dvh max-w-3xl bg-mist">
-      <main className="px-4 pt-[max(env(safe-area-inset-top),16px)] pb-28">
+      <main className="px-4 pt-[max(env(safe-area-inset-top),16px)] pb-[calc(env(safe-area-inset-bottom)+96px)]">
         <Outlet />
       </main>
       <nav
@@ -31,7 +31,7 @@ export function TabsLayout() {
               <NavLink
                 to={to}
                 className={({ isActive }) =>
-                  `relative grid min-h-[48px] justify-items-center gap-0.5 py-1 text-[11px] font-medium ${
+                  `press relative grid min-h-[48px] justify-items-center gap-0.5 py-1 text-[11px] font-medium no-underline ${
                     isActive ? 'text-brand-ink' : 'text-[#8a909c]'
                   }`
                 }

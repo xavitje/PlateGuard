@@ -27,8 +27,11 @@ export function KitchenPage() {
   const ticket = all.find((tk) => tk.plateId === selected) ?? all[0];
 
   return (
-    <div data-theme="kitchen" className="min-h-dvh bg-[#0b0c0f] p-4 text-[#f2f3f5]">
-      <div className="mx-auto grid max-w-6xl gap-4 rounded-[22px] bg-[#111317] p-[18px] md:grid-cols-[minmax(0,1fr)_minmax(0,1.45fr)]">
+    <div
+      data-theme="kitchen"
+      className="min-h-dvh bg-[#0b0c0f] px-2 pt-[max(env(safe-area-inset-top),8px)] pb-[max(env(safe-area-inset-bottom),8px)] text-[#f2f3f5] sm:px-4 sm:pt-[max(env(safe-area-inset-top),16px)] sm:pb-[max(env(safe-area-inset-bottom),16px)]"
+    >
+      <div className="mx-auto grid max-w-6xl gap-3 rounded-[22px] bg-[#111317] p-3 sm:gap-4 sm:p-[18px] md:grid-cols-[minmax(0,1fr)_minmax(0,1.45fr)]">
         <header className="flex flex-wrap items-center justify-between gap-2 md:col-span-2">
           <h1 className="text-[22px] font-semibold tracking-[-0.02em]">{t('kitchen:title')}</h1>
           <div className="flex flex-wrap items-center gap-2">
@@ -42,7 +45,7 @@ export function KitchenPage() {
             )}
             <Link
               to="/profile"
-              className="rounded-full bg-[#1d2026] px-3 py-1.5 text-[13px] text-[#9aa1ad] no-underline"
+              className="inline-flex min-h-10 items-center rounded-full bg-[#1d2026] px-3.5 text-[13px] text-[#9aa1ad] no-underline"
             >
               {t('kitchen:exit')}
             </Link>
@@ -57,7 +60,7 @@ export function KitchenPage() {
         {kitchen.isPending && <p className="text-[#9aa1ad] md:col-span-2">{t('common:loading')}</p>}
 
         {data && (
-          <nav aria-label={t('kitchen:title')} className="grid content-start gap-2">
+          <nav aria-label={t('kitchen:title')} className="grid min-w-0 content-start gap-2">
             {data.queue.length === 0 && <p className="text-[#9aa1ad]">{t('kitchen:empty')}</p>}
             <TicketList tickets={data.queue} selected={ticket?.plateId} onSelect={setSelected} />
             {data.ready.length > 0 && (
@@ -94,9 +97,9 @@ function TicketList({
 }) {
   const { t } = useTranslation();
   return (
-    <ul className="grid gap-2">
+    <ul className="scroll-x -mx-3 flex gap-2 px-3 sm:mx-0 sm:px-0 md:grid md:content-start md:overflow-visible">
       {tickets.map((tk) => (
-        <li key={tk.plateId}>
+        <li key={tk.plateId} className="shrink-0 max-md:min-w-[62%]">
           <button
             onClick={() => onSelect(tk.plateId)}
             aria-current={tk.plateId === selected}
@@ -173,7 +176,7 @@ function TicketCard({ ticket, passCheck }: { ticket: KitchenTicketResponse; pass
   return (
     <section
       aria-label={ticket.dishName}
-      className="grid content-start gap-3 rounded-[18px] bg-[#1a1d23] p-[18px]"
+      className="grid min-w-0 content-start gap-3 rounded-[18px] bg-[#1a1d23] p-3.5 sm:p-[18px]"
     >
       <div className="flex items-start justify-between gap-3">
         <div>

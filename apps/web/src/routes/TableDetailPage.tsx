@@ -127,7 +127,7 @@ export function TableDetailPage() {
         <>
           <div
             role="tablist"
-            className="mb-3 flex gap-1.5 rounded-[14px] bg-[#e9ebef] p-1 dark:bg-card"
+            className="scroll-x mb-3 flex gap-1.5 rounded-[14px] bg-[#e9ebef] p-1 dark:bg-card"
           >
             {Array.from({ length: seats }, (_, i) => i + 1).map((s) => (
               <button
@@ -135,7 +135,7 @@ export function TableDetailPage() {
                 role="tab"
                 aria-selected={seat === s}
                 onClick={() => setSeat(s)}
-                className={`grid min-h-12 flex-1 rounded-[11px] py-1 text-xs ${seat === s ? 'bg-card shadow-sm' : 'text-soft'}`}
+                className={`grid min-h-12 min-w-11 flex-1 shrink-0 rounded-[11px] py-1 text-xs ${seat === s ? 'bg-card shadow-sm' : 'text-soft'}`}
               >
                 <b className="text-base font-semibold text-ink">{s}</b>
                 {(seatOf(s)?.allergies.length ?? 0) > 0 && (
@@ -175,7 +175,7 @@ export function TableDetailPage() {
                       type="button"
                       onClick={() => remove(key)}
                       aria-label={`${nameOf(a)} ×`}
-                      className="grid size-7 place-items-center rounded-full bg-mist text-soft"
+                      className="relative grid size-7 place-items-center rounded-full bg-mist text-soft after:absolute after:-inset-2 after:content-['']"
                     >
                       ×
                     </button>
@@ -205,7 +205,7 @@ export function TableDetailPage() {
                     key={code}
                     type="button"
                     onClick={() => add({ allergen: code, severity: 'SEVERE' })}
-                    className="press min-h-8 rounded-full bg-mist px-3 text-[13px] font-medium"
+                    className="press min-h-9 rounded-full bg-mist px-3 text-[13px] font-medium"
                   >
                     + {ALLERGEN_NAMES[code]?.[lang] ?? code}
                   </button>
@@ -224,10 +224,12 @@ export function TableDetailPage() {
                   placeholder={t('tables:customPlaceholder')}
                   maxLength={60}
                   autoComplete="off"
+                  autoCorrect="off"
+                  enterKeyHint="done"
                   role="combobox"
                   aria-expanded={typed.length > 0}
                   aria-controls="ingredient-suggestions"
-                  className="min-h-10 min-w-0 flex-1 rounded-full border border-line bg-bg px-3.5 text-sm"
+                  className="min-h-11 min-w-0 flex-1 rounded-full border border-line bg-bg px-3.5 text-base"
                 />
                 {!typed && (
                   <span className="inline-flex min-h-10 items-center gap-1 rounded-full bg-mist px-3.5 text-[13px] font-semibold text-soft">
@@ -247,7 +249,7 @@ export function TableDetailPage() {
                       <button
                         type="button"
                         onClick={() => pickIngredient(m.id, m.name)}
-                        className="press flex min-h-10 w-full items-center justify-between gap-2 rounded-[10px] px-3 text-left text-sm hover:bg-mist"
+                        className="press flex min-h-10 w-full items-center justify-between gap-2 rounded-[10px] px-3 text-left text-sm hover:bg-mist active:bg-mist"
                       >
                         <span>
                           <b className="font-semibold">{m.name}</b>
@@ -264,7 +266,7 @@ export function TableDetailPage() {
                       <button
                         type="button"
                         onClick={addTyped}
-                        className="press flex min-h-10 w-full items-center gap-1.5 rounded-[10px] px-3 text-left text-sm hover:bg-mist"
+                        className="press flex min-h-10 w-full items-center gap-1.5 rounded-[10px] px-3 text-left text-sm hover:bg-mist active:bg-mist"
                       >
                         <Plus width={16} height={16} />
                         {t('tables:useTyped', { text: typed })}
@@ -296,7 +298,7 @@ export function TableDetailPage() {
                     type="button"
                     onClick={() => write.mutate({ kind: 'cancel', plateId: line.id })}
                     aria-label={t('tables:cancelOrder', { dish: dish.name })}
-                    className="grid size-7 place-items-center rounded-full bg-mist text-soft"
+                    className="relative grid size-7 place-items-center rounded-full bg-mist text-soft after:absolute after:-inset-2 after:content-['']"
                   >
                     ×
                   </button>
@@ -334,7 +336,7 @@ export function TableDetailPage() {
                   type="button"
                   onClick={() => write.mutate({ kind: 'order', seat, dishId: dish.id })}
                   aria-label={t('tables:orderDish', { dish: dish.name })}
-                  className="press inline-flex min-h-8 items-center gap-1 rounded-full bg-brand px-3 text-[13px] font-semibold text-white"
+                  className="press inline-flex min-h-9 items-center gap-1 rounded-full bg-brand px-3 text-[13px] font-semibold text-white"
                 >
                   <Plus width={14} height={14} />
                   {t('tables:order')}

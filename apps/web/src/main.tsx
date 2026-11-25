@@ -8,6 +8,9 @@ import { ServiceProvider, SIGNED_OUT_EVENT } from './service/ServiceProvider';
 import { getToken } from './session';
 import './styles.css';
 
+// iOS Safari applies :active (the press feedback) only once the page has a touch listener.
+document.addEventListener('touchstart', () => {}, { passive: true });
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <I18nProvider>
