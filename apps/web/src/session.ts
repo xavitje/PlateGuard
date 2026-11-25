@@ -34,9 +34,17 @@ export function setToken(token: string | null): void {
   write(TOKEN_KEY, token);
 }
 
-/** The location slug this device signs in to: set once, from ?location= or the build default. */
-export function deviceLocation(search = ''): string {
+/**
+ * The location slug this device signs in to: from ?location=, from an earlier sign-in, or the
+ * build default. Null on a new device; the first sign-in then finds the location.
+ */
+export function deviceLocation(search = ''): string | null {
   const fromUrl = new URLSearchParams(search).get('location');
   if (fromUrl) write(LOCATION_KEY, fromUrl);
-  return fromUrl ?? read(LOCATION_KEY) ?? import.meta.env.VITE_LOCATION_SLUG ?? 'de-haven-demo';
+  return fromUrl ?? read(LOCATION_KEY) ?? import.meta.env.VITE_LOCATION_SLUG ?? null;
+}
+
+/** After a sign-in: this device now serves that location. */
+export function rememberLocation(slug: string): void {
+  write(LOCATION_KEY, slug);
 }
