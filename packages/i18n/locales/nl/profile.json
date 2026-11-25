@@ -1,0 +1,11 @@
+{
+  "tab": "Profiel",
+  "title": "Profiel",
+  "language": "Taal",
+  "languageNote": "Engels is de standaard. Je beheerder kan meer talen toevoegen.",
+  "switchUser": "Gebruiker wisselen",
+  "switchLocation": "Locatie wisselen",
+  "kitchenMode": "Dit apparaat als keukenscherm gebruiken",
+  "admin": "Beheer openen",
+  "signOut": "Uitloggen"
+}

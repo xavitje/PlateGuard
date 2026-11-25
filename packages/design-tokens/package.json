@@ -1,0 +1,23 @@
+{
+  "name": "@plateguard/design-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PlateGuard design tokens (house style v3): CSS variables with light, dark and kitchen themes, plus the same values for TypeScript.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./tokens.css": "./tokens.css"
+  },
+  "files": [
+    "dist",
+    "tokens.css"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  }
+}

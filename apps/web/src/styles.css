@@ -1,0 +1,68 @@
+@import 'tailwindcss';
+@import '@plateguard/design-tokens/tokens.css';
+
+@theme inline {
+  --font-sans: var(--pg-font);
+  --color-brand: var(--pg-brand);
+  --color-brand-ink: var(--pg-brand-ink);
+  --color-brand-soft: var(--pg-brand-soft);
+  --color-bg: var(--pg-bg);
+  --color-mist: var(--pg-mist);
+  --color-card: var(--pg-card);
+  --color-ink: var(--pg-ink);
+  --color-soft: var(--pg-soft);
+  --color-line: var(--pg-line);
+  --color-red: var(--pg-red);
+  --color-amber: var(--pg-amber);
+  --radius-sm: var(--pg-radius-sm);
+  --radius-md: var(--pg-radius-md);
+  --radius-lg: var(--pg-radius-lg);
+  --shadow-card: var(--pg-shadow);
+  --ease-out-pg: var(--pg-ease-out);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--pg-mist);
+  color: var(--pg-ink);
+  font: 16px/1.55 var(--pg-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+}
+
+button {
+  cursor: pointer;
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--pg-brand-ink);
+  outline-offset: 2px;
+}
+
+.press {
+  transition: transform 120ms var(--pg-ease-out);
+}
+.press:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press:active {
+    transform: none;
+  }
+}

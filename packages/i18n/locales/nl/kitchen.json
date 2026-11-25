@@ -1,0 +1,11 @@
+{
+  "title": "Keuken",
+  "queue": "{count, plural, =0 {Geen allergieborden} one {# allergiebord} other {# allergieborden}}",
+  "seeAllergyTicket": "ZIE ALLERGIEBON",
+  "confirm": "Gecontroleerd, bord is klaar",
+  "confirmed": "Gecontroleerd",
+  "reject": "Afkeuren",
+  "remake": "Opnieuw maken",
+  "exit": "Keukenmodus verlaten",
+  "manualCheck": "Met de hand controleren: {label}"
+}

@@ -1,0 +1,34 @@
+{
+  "name": "@plateguard/db",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Data layer: Prisma schema, migrations (including row-level security and the append-only audit trigger), seed and the tenant-scoped client.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "prisma generate && tsc -p tsconfig.build.json",
+    "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
+    "generate": "prisma generate",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "seed": "tsx prisma/seed.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@prisma/client": "~6.19.3"
+  },
+  "devDependencies": {
+    "prisma": "~6.19.3",
+    "tsx": "^4.20.0",
+    "@plateguard/domain": "workspace:*",
+    "@types/node": "^22.10.0"
+  }
+}

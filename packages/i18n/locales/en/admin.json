@@ -1,0 +1,13 @@
+{
+  "title": "Admin",
+  "nav": {
+    "recipes": "Recipes",
+    "menus": "Menus",
+    "floorPlan": "Floor plan",
+    "integrations": "Integrations",
+    "webhooks": "Webhooks",
+    "staff": "Staff",
+    "dashboard": "Dashboard"
+  },
+  "comingSoon": "This section is built in a later phase."
+}

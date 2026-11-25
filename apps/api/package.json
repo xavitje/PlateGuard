@@ -1,0 +1,29 @@
+{
+  "name": "@plateguard/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PlateGuard API: one NestJS process. Presentation (controllers) -> business (services) -> data (repositories).",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json && node --enable-source-maps --watch-path=dist dist/main.js",
+    "start": "node --enable-source-maps dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.0",
+    "@nestjs/core": "^11.1.0",
+    "@nestjs/platform-express": "^11.1.0",
+    "@plateguard/contracts": "workspace:*",
+    "@plateguard/db": "workspace:*",
+    "@plateguard/domain": "workspace:*",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.0"
+  }
+}
