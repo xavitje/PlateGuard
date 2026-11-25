@@ -52,7 +52,8 @@ export function ProfilePage() {
       <p className="mx-1.5 mt-2 text-[13px] text-soft">{t('profile:languageNote')}</p>
 
       {places.length > 1 && (
-        <>
+        // From a laptop up the sidebar already lists these places.
+        <div className="lg:hidden">
           <h2 className="mx-1.5 mt-4 mb-2 text-[13px] font-semibold tracking-normal text-soft">
             {t('profile:workplace')}
           </h2>
@@ -69,7 +70,7 @@ export function ProfilePage() {
               </Link>
             ))}
           </nav>
-        </>
+        </div>
       )}
 
       <section className="mt-4 rounded-[18px] bg-card px-3.5">

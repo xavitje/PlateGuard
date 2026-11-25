@@ -147,7 +147,7 @@ export function IncidentReport({
               aria-pressed={severity === s}
               onClick={() => setSeverity(s)}
               className={`min-h-10 flex-1 rounded-full text-[14px] font-semibold ${
-                severity === s ? 'bg-brand text-white' : 'bg-mist text-ink'
+                severity === s ? 'bg-brand-soft font-semibold text-brand-ink' : 'bg-mist text-ink'
               }`}
             >
               {t(`admin:incidents.severity.${s}`)}

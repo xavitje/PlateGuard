@@ -20,6 +20,8 @@ import {
   SaveError,
   Toggle,
 } from './ui';
+import { PageHeader } from '../shell/TabsLayout';
+import { segmentItem, segmentTrack } from '../components/segment';
 
 const TABS = ['ingredients', 'components', 'dishes'] as const;
 type Tab = (typeof TABS)[number];
@@ -30,18 +32,15 @@ export function RecipesPage() {
   const [tab, setTab] = useState<Tab>('ingredients');
   return (
     <>
-      <h1 className="mb-1 text-3xl font-semibold">{t('admin:nav.recipes')}</h1>
-      <p className="mb-4 max-w-2xl text-soft">{t('admin:recipes.intro')}</p>
-      <div role="tablist" className="scroll-x -mx-4 mb-4 flex gap-1.5 px-4 md:mx-0 md:px-0">
+      <PageHeader title={t('admin:nav.recipes')} description={t('admin:recipes.intro')} />
+      <div role="tablist" className={`${segmentTrack} mb-5 sm:w-fit`}>
         {TABS.map((k) => (
           <button
             key={k}
             role="tab"
             aria-selected={tab === k}
             onClick={() => setTab(k)}
-            className={`press min-h-10 shrink-0 rounded-full px-4 text-[14.5px] ${
-              tab === k ? 'bg-ink font-semibold text-card' : 'bg-card text-ink'
-            }`}
+            className={segmentItem(tab === k)}
           >
             {t(`admin:recipes.tabs.${k}`)}
           </button>

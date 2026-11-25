@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAdmin, useAdminSave } from './hooks';
 import { button, Field, input, primary, SaveError, Toggle } from './ui';
 import { placed } from '../api/layout';
+import { PageHeader } from '../shell/TabsLayout';
 
 const SHAPES = ['ROUND', 'SQUARE', 'RECT'] as const;
 
@@ -28,10 +29,7 @@ export function FloorPlanPage() {
   };
   return (
     <div className="grid max-w-4xl gap-5">
-      <div>
-        <h1 className="mb-1 text-3xl font-semibold">{t('admin:nav.floorPlan')}</h1>
-        <p className="text-soft">{t('admin:floors.intro')}</p>
-      </div>
+      <PageHeader title={t('admin:nav.floorPlan')} description={t('admin:floors.intro')} />
       {settings && (
         <section className="rounded-2xl bg-card p-4">
           <Toggle

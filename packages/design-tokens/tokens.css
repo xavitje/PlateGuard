@@ -14,6 +14,7 @@
   --pg-bg: light-dark(#ffffff, #0d0e11);
   --pg-mist: light-dark(#f4f5f7, #15171c);
   --pg-card: light-dark(#ffffff, #1a1d23);
+  --pg-raised: light-dark(#ffffff, #2e333d); /* the chosen option in a segmented control */
   --pg-ink: light-dark(#0f1115, #f2f3f5);
   --pg-soft: light-dark(#5b616e, #9aa1ad);
   --pg-line: light-dark(#e6e8ec, #2a2e36);
@@ -43,7 +44,9 @@
   --pg-radius-lg: 20px; /* panels */
   --pg-target-min: 44px;
   --pg-target-kitchen: 64px;
-  --pg-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 10px 30px -12px rgba(16, 24, 40, 0.18);
+  /* Surfaces sit on the mist with a hairline, not a cloud: calm, and it holds in dark mode. */
+  --pg-shadow: 0 0 0 1px var(--pg-line), 0 1px 2px rgba(16, 24, 40, 0.04);
+  --pg-shadow-float: 0 0 0 1px var(--pg-line), 0 12px 32px -12px rgba(16, 24, 40, 0.22);
   --pg-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --pg-ease-push: cubic-bezier(0.32, 0.72, 0, 1);
 }

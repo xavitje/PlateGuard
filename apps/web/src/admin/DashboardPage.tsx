@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { OutcomeBadge } from '../components/OutcomeBadge';
 import { useClient, useLocationId } from '../service/ServiceProvider';
+import { PageHeader } from '../shell/TabsLayout';
 
 const PERIODS = [7, 30, 90] as const;
 const OUTCOMES: Outcome[] = [
@@ -38,34 +39,32 @@ export function DashboardPage() {
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="mb-1 text-3xl font-semibold">{t('admin:nav.dashboard')}</h1>
-          <p className="max-w-2xl text-soft">
-            {group ? t('admin:dashboard.introGroup') : t('admin:dashboard.intro')}
-          </p>
-        </div>
-        <div
-          role="radiogroup"
-          aria-label={t('admin:dashboard.period')}
-          className="flex rounded-full bg-card p-1 shadow-card"
-        >
-          {PERIODS.map((p) => (
-            <button
-              key={p}
-              type="button"
-              role="radio"
-              aria-checked={days === p}
-              onClick={() => setDays(p)}
-              className={`min-h-9 rounded-full px-3.5 text-[14px] font-medium ${
-                days === p ? 'bg-brand text-white' : 'text-ink'
-              }`}
-            >
-              {t('admin:dashboard.days', { count: p })}
-            </button>
-          ))}
-        </div>
-      </div>
+      <PageHeader
+        title={t('admin:nav.dashboard')}
+        description={group ? t('admin:dashboard.introGroup') : t('admin:dashboard.intro')}
+        actions={
+          <div
+            role="radiogroup"
+            aria-label={t('admin:dashboard.period')}
+            className="flex rounded-[12px] bg-line/60 p-1"
+          >
+            {PERIODS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                role="radio"
+                aria-checked={days === p}
+                onClick={() => setDays(p)}
+                className={`min-h-9 rounded-[9px] px-3.5 text-[14px] font-medium transition-colors duration-150 ${
+                  days === p ? 'bg-raised font-semibold text-ink shadow-sm' : 'text-soft'
+                }`}
+              >
+                {t('admin:dashboard.days', { count: p })}
+              </button>
+            ))}
+          </div>
+        }
+      />
 
       {q.isError && <p className="text-red">{t('common:loadError')}</p>}
       {!d && !q.isError && <p className="text-soft">{t('common:loading')}</p>}

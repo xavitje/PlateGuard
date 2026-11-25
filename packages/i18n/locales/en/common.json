@@ -19,5 +19,6 @@
   },
   "loading": "Loading…",
   "loadError": "Could not reach PlateGuard. Check the connection and try again.",
-  "saveError": "Not saved. Check the connection and try again."
+  "saveError": "Not saved. Check the connection and try again.",
+  "mainNav": "Main menu"
 }

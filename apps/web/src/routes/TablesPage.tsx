@@ -20,17 +20,14 @@ export function TablesPage() {
     <>
       <PageTitle>{t('tables:title')}</PageTitle>
       {floors.length > 1 && (
-        <div
-          role="tablist"
-          className="scroll-x mb-3 flex gap-1.5 rounded-[14px] bg-[#e9ebef] p-1 dark:bg-card"
-        >
+        <div role="tablist" className="scroll-x mb-4 flex gap-1 rounded-[13px] bg-line/60 p-1">
           {floors.map((f) => (
             <button
               key={f.id}
               role="tab"
               aria-selected={floor?.id === f.id}
               onClick={() => setFloor(f.id)}
-              className={`min-h-[40px] flex-1 shrink-0 rounded-[11px] px-3 text-sm whitespace-nowrap font-semibold ${floor?.id === f.id ? 'bg-brand text-white shadow-sm' : 'text-soft'}`}
+              className={`min-h-[40px] flex-1 shrink-0 rounded-[11px] px-3 text-sm whitespace-nowrap font-semibold transition-colors duration-150 ${floor?.id === f.id ? 'bg-raised text-ink shadow-sm' : 'text-soft'}`}
             >
               {f.name}
             </button>
@@ -111,15 +108,19 @@ function TableTile({
       style={style}
       aria-label={t('tables:table', { label: tb.label })}
       className={`press grid gap-0.5 text-ink no-underline ${className} ${
-        free ? 'bg-mist shadow-[inset_0_0_0_1.5px_var(--pg-line)]' : 'bg-card shadow-sm'
-      } ${compact && !free ? 'shadow-[inset_0_0_0_2px_var(--pg-brand)]' : ''}`}
+        free
+          ? 'bg-mist shadow-[inset_0_0_0_1.5px_var(--pg-line)]'
+          : tb.allergyGuests > 0
+            ? 'bg-brand-soft shadow-[inset_0_0_0_2px_var(--pg-brand-ink)]'
+            : 'bg-raised shadow-[inset_0_0_0_1.5px_color-mix(in_srgb,var(--pg-ink)_28%,transparent)]'
+      }`}
     >
       <span
         className="grid justify-items-center gap-0.5"
         style={rotation ? { transform: `rotate(${-rotation}deg)` } : undefined}
       >
         <b
-          className={`font-semibold tracking-[-0.02em] ${compact ? 'text-lg leading-none' : 'text-xl'} ${free ? 'text-[#9aa1ad]' : ''}`}
+          className={`font-semibold tracking-[-0.02em] ${compact ? 'text-lg leading-none' : 'text-xl'} ${free ? 'text-soft' : ''}`}
         >
           {tb.label}
         </b>

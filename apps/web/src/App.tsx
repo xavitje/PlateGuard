@@ -18,10 +18,9 @@ import { HomeRedirect } from './shell/HomeRedirect';
 import { TabsLayout } from './shell/TabsLayout';
 
 /**
- * Four separate surfaces:
- *  - service app with three tabs (phone and tablet),
+ * Three surfaces:
+ *  - the app: tables, alerts, profile and admin in one frame (sidebar on a laptop, tab bar on a phone),
  *  - kitchen display, full screen without tabs (device mode),
- *  - admin, desktop with a sidebar,
  *  - public guest menu per location.
  */
 export const router = createBrowserRouter([
@@ -33,24 +32,24 @@ export const router = createBrowserRouter([
       { path: 'tables/:label', element: <TableDetailPage /> },
       { path: 'alerts', element: <AlertsPage /> },
       { path: 'profile', element: <ProfilePage /> },
+      {
+        path: 'admin',
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <Navigate to="recipes" replace /> },
+          { path: 'recipes', element: <RecipesPage /> },
+          { path: 'menus', element: <MenuPage /> },
+          { path: 'floor-plan', element: <FloorPlanPage /> },
+          { path: 'staff', element: <StaffPage /> },
+          { path: 'integrations', element: <IntegrationsPage /> },
+          { path: 'incidents', element: <IncidentsPage /> },
+          { path: 'dashboard', element: <DashboardPage /> },
+          { path: ':section', element: <AdminSection /> },
+        ],
+      },
     ],
   },
   { path: 'login', element: <LoginPage /> },
   { path: 'kitchen', element: <KitchenPage /> },
-  {
-    path: 'admin',
-    element: <AdminLayout />,
-    children: [
-      { index: true, element: <Navigate to="recipes" replace /> },
-      { path: 'recipes', element: <RecipesPage /> },
-      { path: 'menus', element: <MenuPage /> },
-      { path: 'floor-plan', element: <FloorPlanPage /> },
-      { path: 'staff', element: <StaffPage /> },
-      { path: 'integrations', element: <IntegrationsPage /> },
-      { path: 'incidents', element: <IncidentsPage /> },
-      { path: 'dashboard', element: <DashboardPage /> },
-      { path: ':section', element: <AdminSection /> },
-    ],
-  },
   { path: 'menu/:slug', element: <GuestMenuPage /> },
 ]);

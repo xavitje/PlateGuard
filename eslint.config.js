@@ -110,6 +110,7 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/coverage/**',
       'packages/i18n/src/resources.generated.ts',
+      '.claude/skills/**',
     ],
   },
   js.configs.recommended,

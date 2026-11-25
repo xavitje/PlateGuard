@@ -27,7 +27,7 @@ export function SeveritySegment({
             aria-checked={value === s}
             onClick={() => onChange(s)}
             className={`min-h-[34px] rounded-[9px] text-[13px] font-medium transition-colors ${
-              value === s ? 'bg-card font-semibold shadow-sm' : 'text-soft'
+              value === s ? 'bg-raised font-semibold shadow-sm' : 'text-soft'
             } ${value === s && s === 'SEVERE' ? 'text-red' : ''}`}
           >
             {t(`common:severity.${s}`)}

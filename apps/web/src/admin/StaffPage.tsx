@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useMe } from '../service/ServiceProvider';
 import { useAdmin, useAdminSave, useCan } from './hooks';
 import { button, Field, input, MasterDetail, primary, SaveError, Toggle } from './ui';
+import { PageHeader } from '../shell/TabsLayout';
 
 /** Who works here, in which roles, and their PIN for the devices at this location. */
 export function StaffPage() {
@@ -13,8 +14,7 @@ export function StaffPage() {
   const [selected, setSelected] = useState<string | null>(null);
   return (
     <>
-      <h1 className="mb-1 text-3xl font-semibold">{t('admin:nav.staff')}</h1>
-      <p className="mb-4 max-w-2xl text-soft">{t('admin:staff.intro')}</p>
+      <PageHeader title={t('admin:nav.staff')} description={t('admin:staff.intro')} />
       <MasterDetail
         items={rows.map((m) => ({
           id: m.id,

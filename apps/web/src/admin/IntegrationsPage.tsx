@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAdmin, useAdminSave } from './hooks';
 import { PosSection } from './PosSection';
 import { button, Field, input, primary, SaveError } from './ui';
+import { PageHeader } from '../shell/TabsLayout';
 
 /**
  * Connections to the restaurant's own systems: the kitchen printer, for kitchens without a
@@ -17,10 +18,7 @@ export function IntegrationsPage() {
   const add = useAdminSave((c, l, body: { name: string }) => c.addPrinter(l, body));
   return (
     <div className="grid max-w-3xl gap-5">
-      <div>
-        <h1 className="mb-1 text-3xl font-semibold">{t('admin:nav.integrations')}</h1>
-        <p className="text-soft">{t('admin:printers.intro')}</p>
-      </div>
+      <PageHeader title={t('admin:nav.integrations')} description={t('admin:printers.intro')} />
 
       <section
         aria-labelledby="printers"
