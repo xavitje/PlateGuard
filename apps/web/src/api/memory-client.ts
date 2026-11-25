@@ -67,6 +67,21 @@ export function createMemoryClient(
     }));
 
   return {
+    staff: async () => ({
+      location: { id: LOCATION, name: 'Demo' },
+      staff: [{ id: 'demo', name: 'Demo Waiter' }],
+    }),
+    loginPin: async (body) => {
+      if (body.pin !== '1234') throw new ApiError(401, 'PIN_INVALID', { triesLeft: 4 });
+      return {
+        token: 'memory',
+        expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+        me: {
+          user: { id: 'demo', name: 'Demo Waiter', locale: 'en' },
+          locations: [{ id: LOCATION, organizationId: 'demo', name: 'Demo', slug: 'demo' }],
+        },
+      };
+    },
     me: async () => ({
       user: { id: 'demo', name: 'Demo Waiter', locale: 'en' },
       locations: [{ id: LOCATION, organizationId: 'demo', name: 'Demo', slug: 'demo' }],

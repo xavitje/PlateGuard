@@ -12,7 +12,7 @@ function renderTable(label: string) {
   });
   return render(
     <I18nProvider locale="en">
-      <ServiceProvider client={createMemoryClient()}>
+      <ServiceProvider client={createMemoryClient()} signedIn>
         <RouterProvider router={router} />
       </ServiceProvider>
     </I18nProvider>,

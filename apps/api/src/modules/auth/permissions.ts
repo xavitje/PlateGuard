@@ -25,6 +25,8 @@ export interface AuthedRequest {
   location?: { id: string; organizationId: string };
   /** Row-level security context for this request's location. */
   tenant?: TenantContext;
+  /** The location a PIN session is bound to. Absent for the development header. */
+  sessionLocation?: string;
 }
 
 /** The tenant of a /locations/:locationId route, as set by SessionGuard. */

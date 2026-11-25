@@ -3,6 +3,7 @@ import { AdminLayout, AdminSection } from './routes/AdminPage';
 import { AlertsPage } from './routes/AlertsPage';
 import { GuestMenuPage } from './routes/GuestMenuPage';
 import { KitchenPage } from './routes/KitchenPage';
+import { LoginPage } from './routes/LoginPage';
 import { ProfilePage } from './routes/ProfilePage';
 import { TableDetailPage } from './routes/TableDetailPage';
 import { TablesPage } from './routes/TablesPage';
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
       { path: 'profile', element: <ProfilePage /> },
     ],
   },
+  { path: 'login', element: <LoginPage /> },
   { path: 'kitchen', element: <KitchenPage /> },
   {
     path: 'admin',

@@ -203,7 +203,7 @@ model RoleAssignment {
   @@map("role_assignment")
 }
 
-/// A PIN is unique per location (shared tablets). Argon2 hash, locked after 5 failed tries.
+/// A PIN per person, per location (shared tablets). scrypt hash (hashPin in src/pin.ts), locked after 5 failed tries.
 model StaffPin {
   userId      String @map("user_id") @db.Uuid
   locationId  String @map("location_id") @db.Uuid

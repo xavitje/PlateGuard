@@ -4,13 +4,16 @@ import { RouterProvider } from 'react-router';
 import { createHttpClient } from './api/client';
 import { router } from './App';
 import { I18nProvider } from './i18n';
-import { ServiceProvider } from './service/ServiceProvider';
+import { ServiceProvider, SIGNED_OUT_EVENT } from './service/ServiceProvider';
+import { getToken } from './session';
 import './styles.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <I18nProvider>
-      <ServiceProvider client={createHttpClient()}>
+      <ServiceProvider
+        client={createHttpClient(getToken, () => window.dispatchEvent(new Event(SIGNED_OUT_EVENT)))}
+      >
         <RouterProvider router={router} />
       </ServiceProvider>
     </I18nProvider>

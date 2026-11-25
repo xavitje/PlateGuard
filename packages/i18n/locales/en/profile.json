@@ -4,8 +4,8 @@
   "language": "Language",
   "languageNote": "English is the default. Your admin can add more languages.",
   "switchUser": "Switch user",
-  "switchLocation": "Switch location",
   "kitchenMode": "Use this device as kitchen display",
   "admin": "Open admin",
-  "signOut": "Sign out"
+  "signOut": "Sign out",
+  "signedInAs": "Signed in as {name}"
 }

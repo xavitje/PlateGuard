@@ -1,4 +1,4 @@
-import type { SeatUpdateInput, TableResponse } from '@plateguard/contracts';
+import type { LoginResponse, SeatUpdateInput, TableResponse } from '@plateguard/contracts';
 import {
   QueryClient,
   QueryClientProvider,
@@ -6,9 +6,29 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ServiceClient } from '../api/client';
+import { getToken, setToken } from '../session';
+
+/** Fired by the HTTP client when the API says the session ended. */
+export const SIGNED_OUT_EVENT = 'pg:signed-out';
+
+interface Session {
+  signedIn: boolean;
+  signIn: (res: LoginResponse) => void;
+  signOut: () => void;
+}
+
+const SessionContext = createContext<Session | null>(null);
 
 const ClientContext = createContext<ServiceClient | null>(null);
 
@@ -20,24 +40,57 @@ export function ServiceProvider({
   client,
   children,
   queryClient,
+  signedIn: initiallySignedIn,
 }: {
   client: ServiceClient;
   children: ReactNode;
   queryClient?: QueryClient;
+  /** Tests start signed in; the app reads the stored session. */
+  signedIn?: boolean;
 }) {
   const [qc] = useState(
     () =>
       queryClient ??
       new QueryClient({ defaultOptions: { queries: { staleTime: 10_000, retry: 1 } } }),
   );
+  const [signedIn, setSignedIn] = useState(() => initiallySignedIn ?? getToken() !== null);
+
+  const signOut = useCallback(() => {
+    setToken(null);
+    setSignedIn(false);
+    qc.clear();
+  }, [qc]);
+  const signIn = useCallback(
+    (res: LoginResponse) => {
+      qc.clear();
+      setToken(res.token);
+      qc.setQueryData(['me'], res.me);
+      setSignedIn(true);
+    },
+    [qc],
+  );
+  useEffect(() => {
+    window.addEventListener(SIGNED_OUT_EVENT, signOut);
+    return () => window.removeEventListener(SIGNED_OUT_EVENT, signOut);
+  }, [signOut]);
+  const session = useMemo(() => ({ signedIn, signIn, signOut }), [signedIn, signIn, signOut]);
+
   return (
     <QueryClientProvider client={qc}>
-      <ClientContext.Provider value={client}>{children}</ClientContext.Provider>
+      <ClientContext.Provider value={client}>
+        <SessionContext.Provider value={session}>{children}</SessionContext.Provider>
+      </ClientContext.Provider>
     </QueryClientProvider>
   );
 }
 
-function useClient(): ServiceClient {
+export function useSession(): Session {
+  const session = useContext(SessionContext);
+  if (!session) throw new Error('useSession needs a ServiceProvider');
+  return session;
+}
+
+export function useClient(): ServiceClient {
   const client = useContext(ClientContext);
   if (!client) throw new Error('useClient needs a ServiceProvider');
   return client;
@@ -47,7 +100,8 @@ const lang = (l: string) => (l === 'nl' ? 'nl' : 'en');
 
 export function useMe() {
   const client = useClient();
-  return useQuery({ queryKey: ['me'], queryFn: () => client.me() });
+  const { signedIn } = useSession();
+  return useQuery({ queryKey: ['me'], queryFn: () => client.me(), enabled: signedIn });
 }
 
 /** The location this device works for: the first one the user may see, until a picker exists. */
