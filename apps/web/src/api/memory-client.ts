@@ -252,11 +252,10 @@ export function createMemoryClient(
         for (const p of printers) p.waiting++;
       },
     },
-    staff: async () => ({
-      location: { id: LOCATION, name: 'Demo' },
-      staff: [{ id: 'demo', name: 'Demo Waiter' }],
-    }),
+    signInLocation: async () => ({ location: { id: LOCATION, name: 'Demo' }, hasStaff: true }),
+    // The demo has one person: first name "Demo", PIN 1234.
     loginPin: async (body) => {
+      if (body.name.trim().toLowerCase() !== 'demo') throw new ApiError(401, 'NAME_UNKNOWN');
       if (body.pin !== '1234') throw new ApiError(401, 'PIN_INVALID', { triesLeft: 4 });
       return {
         token: 'memory',

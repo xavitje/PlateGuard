@@ -65,36 +65,40 @@ describe.skipIf(!process.env.DATABASE_URL)('PIN login', () => {
   });
   afterAll(() => prisma.onModuleDestroy());
 
-  it('lists the names on the sign-in screen', async () => {
-    expect(await auth.staff(slug)).toEqual({
+  it('shows the location on the sign-in screen, without names', async () => {
+    expect(await auth.signInLocation(slug)).toEqual({
       location: { id: loc, name: 'Front' },
-      staff: [{ id: waiter, name: 'Sam' }],
+      hasStaff: true,
     });
   });
 
-  it('signs in with the right PIN, bound to that location', async () => {
-    const res = await auth.loginWithPin({ locationId: loc, userId: waiter, pin: '1234' });
+  it('signs in with first name and PIN, bound to that location', async () => {
+    const res = await auth.loginWithPin({ locationId: loc, name: ' sám ', pin: '1234' });
     expect(readToken(res.token)).toMatchObject({ sub: waiter, loc });
     expect(res.me.locations.map((l) => l.id)).toEqual([loc]);
+    expect(res.me.locations[0]?.permissions).toContain('order.create');
   });
 
-  it('has no PIN on a location without one', async () => {
+  it('does not know the name, or has no PIN on a location without one', async () => {
     await expect(
-      auth.loginWithPin({ locationId: other, userId: waiter, pin: '1234' }),
+      auth.loginWithPin({ locationId: loc, name: 'Kim', pin: '1234' }),
+    ).rejects.toMatchObject({ status: 401, response: { code: 'NAME_UNKNOWN' } });
+    await expect(
+      auth.loginWithPin({ locationId: other, name: 'Sam', pin: '1234' }),
     ).rejects.toMatchObject({ status: 401 });
   });
 
   it('locks the PIN after five wrong tries, even for the right PIN after', async () => {
     for (let i = 1; i < MAX_PIN_TRIES; i++) {
       await expect(
-        auth.loginWithPin({ locationId: loc, userId: waiter, pin: '0000' }),
+        auth.loginWithPin({ locationId: loc, name: 'Sam', pin: '0000' }),
       ).rejects.toMatchObject({ status: 401 });
     }
     await expect(
-      auth.loginWithPin({ locationId: loc, userId: waiter, pin: '0000' }),
+      auth.loginWithPin({ locationId: loc, name: 'Sam', pin: '0000' }),
     ).rejects.toMatchObject({ status: 423 });
     await expect(
-      auth.loginWithPin({ locationId: loc, userId: waiter, pin: '1234' }),
+      auth.loginWithPin({ locationId: loc, name: 'Sam', pin: '1234' }),
     ).rejects.toMatchObject({ status: 423 });
   });
 });

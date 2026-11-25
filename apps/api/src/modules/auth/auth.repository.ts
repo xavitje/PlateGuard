@@ -60,18 +60,18 @@ export class AuthRepository {
     });
   }
 
-  /** Who can sign in on this location's devices: everyone with a PIN there. Names only. */
-  async staffWithPin(locationId: string): Promise<{ id: string; name: string }[]> {
-    const pins = await this.prisma.system().staffPin.findMany({
-      where: { locationId },
-      select: { user: { select: { id: true, name: true } } },
-    });
-    return pins.map((p) => p.user).sort((a, b) => a.name.localeCompare(b.name));
+  hasPins(locationId: string): Promise<boolean> {
+    return this.prisma
+      .system()
+      .staffPin.count({ where: { locationId } })
+      .then((n) => n > 0);
   }
 
-  findPin(userId: string, locationId: string) {
-    return this.prisma.system().staffPin.findUnique({
-      where: { userId_locationId: { userId, locationId } },
+  /** Everyone with a PIN on this location, with their name to match the typed first name. */
+  pins(locationId: string) {
+    return this.prisma.system().staffPin.findMany({
+      where: { locationId },
+      select: { userId: true, pinHash: true, failedTries: true, user: { select: { name: true } } },
     });
   }
 

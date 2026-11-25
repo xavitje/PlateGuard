@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -25,6 +26,8 @@ export class StaffService {
 
   async create(ctx: TenantContext, user: Principal, location: Location, input: StaffInput) {
     this.mayGrant(user, location, input.roles);
+    if (input.pin && (await this.repo.pinTaken(ctx, location, input.name, input.pin)))
+      throw new ConflictException({ code: 'PIN_TAKEN' });
     await this.repo.create(ctx, location, input);
     return this.list(ctx, location);
   }
@@ -47,6 +50,8 @@ export class StaffService {
   async setPin(ctx: TenantContext, user: Principal, location: Location, id: string, pin: string) {
     const member = await this.member(ctx, location, id);
     if (id !== user.userId) this.mayGrant(user, location, [...member.roles, ...member.orgRoles]);
+    if (await this.repo.pinTaken(ctx, location, member.name, pin, id))
+      throw new ConflictException({ code: 'PIN_TAKEN' });
     await this.repo.setPin(ctx, location, id, pin);
     return this.list(ctx, location);
   }

@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import type { StaffMember } from '@plateguard/contracts';
-import { hashPin } from '@plateguard/db';
+import { hashPin, verifyPin } from '@plateguard/db';
 import type { Role } from '@plateguard/domain';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../common/prisma.service.js';
 import { MAX_PIN_TRIES } from '../auth/auth.service.js';
+import { firstNameKey } from '../auth/first-name.js';
 import type { TenantContext } from '../auth/permissions.js';
 
 type Location = { id: string; organizationId: string };
@@ -44,6 +45,32 @@ export class StaffRepository {
         if (p) Object.assign(p, { hasPin: true, locked: pin.failedTries >= MAX_PIN_TRIES });
       }
       return [...people.values()].sort((a, b) => a.name.localeCompare(b.name));
+    });
+  }
+
+  /**
+   * Whether someone else here with the same first name already has this PIN. People sign in
+   * with first name and PIN, so that pair has to point to one person.
+   */
+  pinTaken(
+    ctx: TenantContext,
+    location: Location,
+    name: string,
+    pin: string,
+    exceptUserId?: string,
+  ): Promise<boolean> {
+    return this.prisma.forTenant(ctx, async (tx) => {
+      const pins = await tx.staffPin.findMany({
+        where: {
+          locationId: location.id,
+          ...(exceptUserId ? { NOT: { userId: exceptUserId } } : {}),
+        },
+        select: { pinHash: true, user: { select: { name: true } } },
+      });
+      const key = firstNameKey(name);
+      const same = pins.filter((p) => firstNameKey(p.user.name) === key);
+      const checks = await Promise.all(same.map((p) => verifyPin(pin, p.pinHash)));
+      return checks.some(Boolean);
     });
   }
 

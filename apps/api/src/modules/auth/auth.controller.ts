@@ -14,10 +14,10 @@ export class AuthController {
     return this.auth.me(principal, req.sessionLocation);
   }
 
-  /** The sign-in screen of a location's devices. Public: names only, no roles. */
-  @Get('auth/locations/:slug/staff')
-  staff(@Param('slug') slug: string) {
-    return this.auth.staff(slug);
+  /** The sign-in screen of a location's devices. Public: the location only, no names. */
+  @Get('auth/locations/:slug')
+  signInLocation(@Param('slug') slug: string) {
+    return this.auth.signInLocation(slug);
   }
 
   @Post('auth/pin')

@@ -20,7 +20,7 @@ import type {
   MenuDraftResponse,
   LoginResponse,
   PinLogin,
-  StaffListResponse,
+  SignInLocationResponse,
   AlertResponse,
   FloorResponse,
   MeResponse,
@@ -128,7 +128,7 @@ export interface KitchenClient {
 export interface ServiceClient {
   admin: AdminClient;
   kitchen: KitchenClient;
-  staff(slug: string): Promise<StaffListResponse>;
+  signInLocation(slug: string): Promise<SignInLocationResponse>;
   loginPin(body: PinLogin): Promise<LoginResponse>;
   me(): Promise<MeResponse>;
   /** Public: the published allergen menu of a location, judged for what the guest avoids. */
@@ -263,7 +263,7 @@ export function createHttpClient(
       serve: (l, id) => call(`${loc(l)}/plates/${id}/serve`, { method: 'POST' }),
       reprint: (l, id) => call(`${loc(l)}/plates/${id}/print`, { method: 'POST' }),
     },
-    staff: (slug) => call(`/auth/locations/${encodeURIComponent(slug)}/staff`),
+    signInLocation: (slug) => call(`/auth/locations/${encodeURIComponent(slug)}`),
     loginPin: (body) => call('/auth/pin', { method: 'POST', body }),
     me: () => call('/me'),
     guestMenu: (slug, locale, avoid) =>

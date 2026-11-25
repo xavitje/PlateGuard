@@ -112,10 +112,13 @@ export interface AlertResponse {
   rejected?: { reason: string };
 }
 
-/** POST /auth/pin: one person signs in on a location's shared device for one shift. */
+/**
+ * POST /auth/pin: one person signs in on a location's shared device for one shift, with their
+ * first name and PIN. The roles of the person found decide where the app opens.
+ */
 export const PinLoginZ = z.strictObject({
   locationId: IdZ,
-  userId: IdZ,
+  name: z.string().trim().min(1).max(80),
   pin: z.string().regex(/^\d{4,6}$/),
 });
 export type PinLogin = z.infer<typeof PinLoginZ>;
@@ -126,8 +129,9 @@ export interface LoginResponse {
   me: MeResponse;
 }
 
-/** GET /auth/locations/:slug/staff: the names on the sign-in screen of a location's devices. */
-export interface StaffListResponse {
+/** GET /auth/locations/:slug: the location a shared device signs in to. No names. */
+export interface SignInLocationResponse {
   location: { id: string; name: string };
-  staff: { id: string; name: string }[];
+  /** False until a manager has given someone a PIN here. */
+  hasStaff: boolean;
 }

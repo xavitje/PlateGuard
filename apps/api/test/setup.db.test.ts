@@ -134,8 +134,27 @@ describe.skipIf(!hasDb)('floor plan and staff', () => {
     });
     const sam = list.find((m) => m.name === 'Sam')!;
     expect(sam).toMatchObject({ roles: ['WAITER'], hasPin: true, locked: false });
-    const login = await auth.loginWithPin({ locationId: loc, userId: sam.id, pin: '4321' });
+    const login = await auth.loginWithPin({ locationId: loc, name: 'sam', pin: '4321' });
     expect(login.me.locations[0]?.permissions).toContain('order.create');
+  });
+
+  it('refuses a PIN that someone with the same first name already has here', async () => {
+    await expect(
+      staff.create(ctx, manager, location, { name: 'Sam Jansen', roles: ['COOK'], pin: '4321' }),
+    ).rejects.toMatchObject({ status: 409, response: { code: 'PIN_TAKEN' } });
+    const list = await staff.create(ctx, manager, location, {
+      name: 'Sam Jansen',
+      roles: ['COOK'],
+      pin: '5678',
+    });
+    const cook = list.find((m) => m.name === 'Sam Jansen')!;
+    await expect(staff.setPin(ctx, manager, location, cook.id, '4321')).rejects.toMatchObject({
+      status: 409,
+    });
+    // Same first name, different PINs: the PIN tells them apart.
+    const login = await auth.loginWithPin({ locationId: loc, name: 'Sam', pin: '5678' });
+    expect(login.me.user.id).toBe(cook.id);
+    await staff.remove(ctx, manager, location, cook.id);
   });
 
   it('only an owner can make someone an owner, and nobody changes their own roles', async () => {
