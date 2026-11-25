@@ -42,6 +42,20 @@ describe('decision table: contains the allergen, solvable', () => {
     expect(a.modifications[0]?.action).toBe('OMIT');
   });
 
+  it('SEVERE: left off only when it is made separately', () => {
+    const burger = (separate: boolean) =>
+      dish('Burger', [
+        simple('Patty', {}),
+        simple('Cheddar', { contains: ['MILK'] }, { omittable: true, suitableForSevere: separate }),
+      ]);
+    expect(assess({ dish: burger(false), guest: guest('MILK', 'SEVERE') }).outcome).toBe(
+      'DO_NOT_SERVE',
+    );
+    const a = assess({ dish: burger(true), guest: guest('MILK', 'SEVERE') });
+    expect(a.outcome).toBe('ADAPTABLE');
+    expect(a.modifications).toMatchObject([{ componentName: 'Cheddar', action: 'OMIT' }]);
+  });
+
   it('SEVERE: adaptable only with a substitute that is suitable for severe', () => {
     const a = assess({
       dish: steakWithJus({ gfJusSevere: true }),

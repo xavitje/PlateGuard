@@ -307,7 +307,7 @@ function DishList({ dishes, judged, verdictOf, groupOf, onOrder }: Inner) {
                     <Plus width={14} height={14} />
                     {t('tables:order')}
                   </button>
-                  {judged && <AssessmentDetails result={result} />}
+                  {judged && <AssessmentDetails result={result} dish={dish} />}
                 </div>
               );
             })}

@@ -61,5 +61,6 @@
     "reason": "Waarom keur je het goed? (verplicht)",
     "send": "Goedkeuren",
     "approved": "Goedgekeurd ondanks blokkade: {reason}"
-  }
+  },
+  "blockedBy": "Lukt niet: {names}"
 }

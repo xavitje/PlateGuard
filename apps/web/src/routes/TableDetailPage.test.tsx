@@ -28,6 +28,12 @@ describe('TableDetailPage', () => {
     expect((await screen.findAllByText('Jus → GF jus')).length).toBeGreaterThan(0);
   });
 
+  it('names the part of a dish that cannot be fixed', async () => {
+    renderTable('7');
+    fireEvent.click(await screen.findByRole('tab', { name: /2/ }));
+    expect((await screen.findAllByText('Cannot be fixed: Soup')).length).toBeGreaterThan(0);
+  });
+
   it('adds a dish to the seat order, and removes it again', async () => {
     renderTable('5');
     fireEvent.click(await screen.findByRole('button', { name: 'Order Tomato soup' }));

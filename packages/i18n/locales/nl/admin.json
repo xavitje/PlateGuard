@@ -73,7 +73,7 @@
     "premixed": "Vooraf doorgemengd",
     "premixedHint": "Zit al in het bovenliggende component of gerecht, dus weglaten of vervangen kan niet.",
     "suitableForSevere": "Apart bereid, zonder kruisbesmetting",
-    "suitableForSevereHint": "Dan kan het een ander component vervangen bij een ernstige allergie.",
+    "suitableForSevereHint": "Dan kan het een ander component vervangen, of weggelaten worden, bij een ernstige allergie.",
     "ingredients": "Ingrediënten",
     "children": "Gemaakt met deze componenten",
     "substitutes": "Kan vervangen worden door",

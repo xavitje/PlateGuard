@@ -59,7 +59,7 @@ export interface Component {
    * stock in a batch-made jus). It cannot be left off or swapped; only its parent can.
    */
   premixed: boolean;
-  /** Made separately, without cross-contact, so usable as a substitute for a SEVERE allergy. */
+  /** Made separately, without cross-contact: usable as a substitute, or left off, for a SEVERE allergy. */
   suitableForSevere: boolean;
   preparedWith: Equipment[];
   ingredients: Ingredient[];

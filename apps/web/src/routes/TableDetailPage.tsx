@@ -320,7 +320,7 @@ export function TableDetailPage() {
                   )
                 )}
                 {current.length > 0 && line.status !== 'SERVED' && (
-                  <AssessmentDetails result={result} />
+                  <AssessmentDetails result={result} dish={dish} />
                 )}
                 {line.approved && (
                   <p className="col-span-3 text-[13px] font-semibold">

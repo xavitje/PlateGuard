@@ -222,8 +222,8 @@ function resolveComponent(c: Component, parentPath: string[], ctx: Ctx): Resolut
     }
   }
 
-  // Leaving something off is not enough for SEVERE: that needs a substitute made separately.
-  if (c.omittable && !c.premixed && !anySevere) {
+  // For SEVERE, leaving it off is only enough when it is made separately and never touched the plate.
+  if (c.omittable && !c.premixed && (!anySevere || c.suitableForSevere)) {
     return {
       ok: true,
       modifications: [

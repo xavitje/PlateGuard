@@ -73,7 +73,7 @@
     "premixed": "Mixed in before service",
     "premixedHint": "Already in its parent or the dish, so it cannot be left off or swapped.",
     "suitableForSevere": "Made separately, without cross-contact",
-    "suitableForSevereHint": "Lets it replace another component for a severe allergy.",
+    "suitableForSevereHint": "Lets it replace another component, or be left off, for a severe allergy.",
     "ingredients": "Ingredients",
     "children": "Made with these components",
     "substitutes": "Can be replaced by",
