@@ -268,7 +268,8 @@
       "unmapped": "{count, plural, one {# item not linked} other {# items not linked}}",
       "noSeat": "{count, plural, one {# line without a seat} other {# lines without a seat}}",
       "noTable": "{count, plural, one {table unknown} other {# orders with an unknown table}}",
-      "failed": "{count, plural, one {# line not placed (seat or dish)} other {# lines not placed (seat or dish)}}"
+      "failed": "{count, plural, one {# line not placed (seat or dish)} other {# lines not placed (seat or dish)}}",
+      "withoutAllergy": "{count, plural, one {# on a seat without allergies (not on the kitchen screen)} other {# on seats without allergies (not on the kitchen screen)}}"
     },
     "state": {
       "PENDING": "Waiting",
@@ -289,6 +290,34 @@
       "POS_NOT_CONNECTED": "No till is connected.",
       "WEBHOOK_URL_MISMATCH": "This URL does not point to this connection.",
       "DISH_NOT_IN_POS": "One of the dishes is not linked to an item in Square."
+    },
+    "log": {
+      "table": "Table {table}",
+      "attention": "Check this",
+      "noLines": "No items with a Square item in this order.",
+      "rejected": {
+        "WEBHOOK_SIGNATURE_INVALID": "Refused: the signature does not match. Copy the signature key from the Square subscription again, and check that its notification URL is exactly the webhook URL above."
+      },
+      "skip": {
+        "CLOSED": "Skipped: the order was paid and closed more than 2 hours ago.",
+        "CANCELLED": "Skipped: the order was cancelled in Square.",
+        "NO_TABLE": "Skipped: no table in the order. Put the table in the ticket name, such as \"Table 12\".",
+        "TABLE_NOT_FOUND": "Skipped: this table is not on the floor plan.",
+        "NOT_FOUND": "Skipped: Square did not return this order."
+      },
+      "line": {
+        "PLACED": "to the kitchen",
+        "PLACED_NO_ALLERGY": "placed, seat has no allergies so not on the kitchen screen",
+        "DUPLICATE": "already placed",
+        "UNMAPPED": "not placed: Square item not linked to a dish",
+        "NO_SEAT": "not placed: no seat. Put \"seat 2\" in the item note",
+        "FAILED": "not placed"
+      },
+      "reason": {
+        "SEAT_NOT_AT_TABLE": "the table has fewer seats",
+        "DISH_NOT_FOUND": "the dish is not on the published menu",
+        "TABLE_NOT_FOUND": "table not on the floor plan"
+      }
     }
   },
   "incidents": {

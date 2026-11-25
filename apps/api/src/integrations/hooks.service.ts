@@ -27,16 +27,23 @@ export class HooksService {
     const record = await this.connections.findForWebhook(provider, connectionId);
     if (!adapter || !record || !record.active)
       throw new NotFoundException({ code: 'CONNECTION_NOT_FOUND' });
+    const ctx = {
+      organizationId: record.organizationId,
+      locationIds: [record.connection.locationId],
+    };
     if (!canVerifyWebhooks(adapter) || !adapter.verifyWebhook(req, record.connection)) {
+      // Shown in admin: the usual cause is a signature key or URL that differs from Square's.
+      await this.inbox.storeRejected(
+        ctx,
+        record.connection.id,
+        record.connection.locationId,
+        'WEBHOOK_SIGNATURE_INVALID',
+      );
       throw new UnauthorizedException({ code: 'WEBHOOK_SIGNATURE_INVALID' });
     }
 
     const parse = 'parseWebhook' in adapter ? adapter.parseWebhook : undefined;
     const events = parse ? parse.call(adapter, req) : [];
-    const ctx = {
-      organizationId: record.organizationId,
-      locationIds: [record.connection.locationId],
-    };
     let stored = 0;
     for (const event of events) {
       const isNew = await this.inbox.storeRaw(

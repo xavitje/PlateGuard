@@ -162,6 +162,12 @@ describe.skipIf(!hasDb)('Square test link', () => {
     ]);
     const seat2 = (await service.table(ctx, loc, '7')).bySeat.find((s) => s.seat === 2)!;
     expect(seat2.orders[0]!.outcome).not.toBe('SAFE');
+    // The test order shows in the log too, line by line.
+    const { events } = await pos.events(ctx, loc);
+    expect(events[0]!.order?.lines.map((l) => [l.seat, l.outcome])).toEqual([
+      [1, 'PLACED_NO_ALLERGY'],
+      [2, 'PLACED'],
+    ]);
   });
 
   it('a signed webhook for the same order adds nothing twice', async () => {
@@ -186,6 +192,11 @@ describe.skipIf(!hasDb)('Square test link', () => {
     await expect(
       hooks.receive('square', connection!.id, { headers: {}, body }),
     ).rejects.toMatchObject({ status: 401 });
+    // The refused message shows in the log, so admin sees Square did send something.
+    expect((await pos.events(ctx, loc)).events[0]).toMatchObject({
+      status: 'DEAD',
+      rejected: 'WEBHOOK_SIGNATURE_INVALID',
+    });
     expect(await hooks.receive('square', connection!.id, { headers, body })).toEqual({
       stored: 1,
       duplicates: 0,
@@ -207,10 +218,22 @@ describe.skipIf(!hasDb)('Square test link', () => {
     const orderId = square.ring({
       ticket_name: 'Tafel 7',
       line_items: [
-        { uid: 'a', catalog_object_id: variation(salad), quantity: '2', note: 'stoel 3' },
-        { uid: 'b', catalog_object_id: variation(soup), quantity: '1' },
+        {
+          uid: 'a',
+          name: 'Salad',
+          catalog_object_id: variation(salad),
+          quantity: '2',
+          note: 'stoel 3',
+        },
+        { uid: 'b', name: 'Bread soup', catalog_object_id: variation(soup), quantity: '1' },
         { uid: 'c', catalog_object_id: 'UNKNOWN', quantity: '1', note: 'stoel 1' },
-        { uid: 'd', catalog_object_id: variation(soup), quantity: '1', note: 'stoel 9' },
+        {
+          uid: 'd',
+          name: 'Bread soup',
+          catalog_object_id: variation(soup),
+          quantity: '1',
+          note: 'stoel 9',
+        },
       ],
     });
     const body = Buffer.from(
@@ -233,6 +256,25 @@ describe.skipIf(!hasDb)('Square test link', () => {
       noSeat: 1,
       noTable: 0,
       failed: 1,
+      withoutAllergy: 2,
+    });
+    // Line by line, with the reason a line did not become a plate.
+    expect(events[0]!.order).toEqual({
+      table: '7',
+      skipped: null,
+      lines: [
+        { name: 'Salad', seat: 3, quantity: 1, outcome: 'PLACED_NO_ALLERGY' },
+        { name: 'Salad', seat: 3, quantity: 1, outcome: 'PLACED_NO_ALLERGY' },
+        { name: 'Bread soup', seat: null, quantity: 1, outcome: 'NO_SEAT' },
+        { name: 'UNKNOWN', seat: 1, quantity: 1, outcome: 'UNMAPPED' },
+        {
+          name: 'Bread soup',
+          seat: 9,
+          quantity: 1,
+          outcome: 'FAILED',
+          reason: 'SEAT_NOT_AT_TABLE',
+        },
+      ],
     });
     expect((await plates()).filter(([seat]) => seat === 3)).toEqual([
       [3, 'Salad'],
@@ -245,6 +287,52 @@ describe.skipIf(!hasDb)('Square test link', () => {
     const result = await pos.sync(ctx, loc);
     expect(result).toMatchObject({ noTable: 1, plates: 0 });
     expect(result.duplicates).toBe(4);
+  });
+
+  it('a paid order goes to the kitchen when recent; an old closed one is skipped with the reason', async () => {
+    const { connection } = await pos.status(ctx, loc);
+    const url = connection!.webhookUrl!;
+    const soupItem = square.items.find((i) => i.name === 'Bread soup')!.variationId;
+    const send = async (orderId: string) => {
+      const body = Buffer.from(
+        JSON.stringify({
+          event_id: randomUUID(),
+          type: 'order.created',
+          data: { id: orderId, object: { order_created: { order_id: orderId } } },
+        }),
+      );
+      const headers = {
+        'x-square-hmacsha256-signature': squareSignature('signature-key-123', url, body),
+      };
+      await hooks.receive('square', connection!.id, { headers, body });
+      return (await pos.events(ctx, loc)).events[0]!;
+    };
+    const paid = square.ring({
+      ticket_name: 'Tafel 7',
+      line_items: [
+        {
+          uid: 'p',
+          name: 'Bread soup',
+          catalog_object_id: soupItem,
+          quantity: '1',
+          note: 'stoel 2',
+        },
+      ],
+    });
+    square.orders.get(paid)!.state = 'COMPLETED';
+    expect((await send(paid)).order).toMatchObject({
+      skipped: null,
+      lines: [{ name: 'Bread soup', seat: 2, outcome: 'PLACED' }],
+    });
+    const old = square.ring({
+      ticket_name: 'Tafel 7',
+      line_items: [{ uid: 'q', catalog_object_id: soupItem, quantity: '1', note: 'stoel 2' }],
+    });
+    Object.assign(square.orders.get(old)!, {
+      state: 'COMPLETED',
+      created_at: new Date(Date.now() - 5 * 3600_000).toISOString(),
+    });
+    expect((await send(old)).order).toEqual({ table: '7', skipped: 'CLOSED', lines: [] });
   });
 
   it('disconnecting removes the secrets and audits every step', async () => {

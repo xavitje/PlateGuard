@@ -1,4 +1,4 @@
-import type { PosConnection, PosSyncResult } from '@plateguard/contracts';
+import type { PosConnection, PosEvent, PosSyncResult } from '@plateguard/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -247,7 +247,13 @@ function Webhook({ connection: c }: { connection: PosConnection }) {
 
 function usePosRead<T>(kind: 'posItems' | 'posEvents', fn: (l: string) => Promise<T>) {
   const loc = useLocationId();
-  return useQuery({ queryKey: ['admin', kind, loc], queryFn: () => fn(loc!), enabled: !!loc });
+  return useQuery({
+    queryKey: ['admin', kind, loc],
+    queryFn: () => fn(loc!),
+    enabled: !!loc,
+    // New orders arrive by webhook, so the log keeps itself up to date.
+    refetchInterval: kind === 'posEvents' ? 15_000 : false,
+  });
 }
 
 function Items() {
@@ -312,7 +318,7 @@ function Summary({ result }: { result: PosSyncResult }) {
   const { t } = useTranslation();
   const parts = [
     t('admin:pos.result.plates', { count: result.plates }),
-    ...(['duplicates', 'unmapped', 'noSeat', 'noTable', 'failed'] as const)
+    ...(['withoutAllergy', 'duplicates', 'unmapped', 'noSeat', 'noTable', 'failed'] as const)
       .filter((k) => result[k] > 0)
       .map((k) => t(`admin:pos.result.${k}`, { count: result[k] })),
   ];
@@ -470,22 +476,80 @@ function Events() {
       {list.length === 0 ? (
         <p className="text-[14px] text-soft">{t('admin:pos.noEvents')}</p>
       ) : (
-        <ul className="grid gap-1 text-[14px]">
+        <ul className="grid gap-2 text-[14px]">
           {list.map((e) => (
-            <li key={e.id} className="flex flex-wrap gap-x-3">
-              <span className="tabular-nums text-soft">{time.format(new Date(e.receivedAt))}</span>
-              <span className="font-mono text-[13px]">{e.orderId?.slice(-8) ?? '—'}</span>
-              {e.result ? (
-                <Summary result={e.result} />
-              ) : (
-                <span className={e.error ? 'text-red' : 'text-soft'}>
-                  {e.error ?? t(`admin:pos.state.${e.status}`)}
-                </span>
-              )}
-            </li>
+            <EventRow key={e.id} event={e} time={time.format(new Date(e.receivedAt))} />
           ))}
         </ul>
       )}
     </div>
+  );
+}
+
+/** One message from the POS: the order, and per line whether it became a plate and why not. */
+function EventRow({ event: e, time }: { event: PosEvent; time: string }) {
+  const { t } = useTranslation();
+  const o = e.order;
+  const problem =
+    !!e.rejected ||
+    !!o?.skipped ||
+    e.status === 'FAILED' ||
+    !!o?.lines.some((l) => !['PLACED', 'PLACED_NO_ALLERGY', 'DUPLICATE'].includes(l.outcome));
+  return (
+    <li className="grid gap-1 rounded-[10px] border border-line px-3 py-2">
+      <div className="flex flex-wrap items-baseline gap-x-3">
+        <span className="tabular-nums text-soft">{time}</span>
+        {o?.table && (
+          <span className="font-medium">{t('admin:pos.log.table', { table: o.table })}</span>
+        )}
+        <span className="font-mono text-[12.5px] text-soft">{e.orderId?.slice(-8) ?? ''}</span>
+        {problem && (
+          <span className="rounded-full bg-red/10 px-2 text-[12.5px] font-semibold text-red">
+            {t('admin:pos.log.attention')}
+          </span>
+        )}
+      </div>
+      {e.rejected ? (
+        <p className="text-red">
+          {t(`admin:pos.log.rejected.${e.rejected}`, { defaultValue: e.rejected })}
+        </p>
+      ) : o?.skipped ? (
+        <p className="text-red">{t(`admin:pos.log.skip.${o.skipped}`)}</p>
+      ) : o ? (
+        o.lines.length === 0 ? (
+          <p className="text-soft">{t('admin:pos.log.noLines')}</p>
+        ) : (
+          <ul className="grid gap-0.5">
+            {o.lines.map((l, i) => (
+              <li key={i} className="flex flex-wrap gap-x-2">
+                <span>
+                  {l.quantity > 1 ? `${l.quantity}× ` : ''}
+                  {l.name}
+                  {l.seat ? ` · ${t('tables:seat.label', { seat: l.seat })}` : ''}
+                </span>
+                <span
+                  className={
+                    ['PLACED', 'PLACED_NO_ALLERGY', 'DUPLICATE'].includes(l.outcome)
+                      ? 'text-soft'
+                      : 'font-medium text-red'
+                  }
+                >
+                  {t(`admin:pos.log.line.${l.outcome}`)}
+                  {l.reason &&
+                    `: ${t(`admin:pos.log.reason.${l.reason}`, { defaultValue: l.reason })}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : e.result ? (
+        <Summary result={e.result} />
+      ) : (
+        <p className={e.error ? 'text-red' : 'text-soft'}>
+          {e.error ?? t(`admin:pos.state.${e.status}`)}
+        </p>
+      )}
+      {e.status === 'FAILED' && e.error && o && <p className="text-red">{e.error}</p>}
+    </li>
   );
 }

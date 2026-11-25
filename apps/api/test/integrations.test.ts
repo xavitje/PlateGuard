@@ -51,11 +51,15 @@ describe('HooksService', () => {
             }
           : null,
     } as unknown as ConnectionsRepository;
+    const rejected: string[] = [];
     const inbox = {
       storeRaw: async (_ctx: unknown, _c: string, _l: string, key: string) => {
         if (stored.has(key)) return false;
         stored.add(key);
         return true;
+      },
+      storeRejected: async (_ctx: unknown, _c: string, _l: string, code: string) => {
+        rejected.push(code);
       },
     } as unknown as InboxRepository;
     const handled: string[] = [];
@@ -69,7 +73,7 @@ describe('HooksService', () => {
       inbox,
       dispatcher,
     );
-    return { service, handled };
+    return { service, handled, rejected };
   }
 
   const req = (token: string) => ({
@@ -91,7 +95,7 @@ describe('HooksService', () => {
   });
 
   it('rejects a bad token and an unknown connection', async () => {
-    const { service } = setup();
+    const { service, rejected } = setup();
     await expect(service.receive('fake-pos', 'c1', req('nope'))).rejects.toMatchObject({
       status: 401,
     });
@@ -102,5 +106,7 @@ describe('HooksService', () => {
     await expect(service.receive('fake-pos', 'c1', noHeader)).rejects.toMatchObject({
       status: 401,
     });
+    // Refusals of a known connection are noted for admin; the unknown one is not.
+    expect(rejected).toEqual(['WEBHOOK_SIGNATURE_INVALID', 'WEBHOOK_SIGNATURE_INVALID']);
   });
 });

@@ -268,7 +268,8 @@
       "unmapped": "{count, plural, one {# artikel niet gekoppeld} other {# artikelen niet gekoppeld}}",
       "noSeat": "{count, plural, one {# regel zonder stoel} other {# regels zonder stoel}}",
       "noTable": "{count, plural, one {tafel onbekend} other {# bestellingen met onbekende tafel}}",
-      "failed": "{count, plural, one {# regel niet geplaatst (stoel of gerecht)} other {# regels niet geplaatst (stoel of gerecht)}}"
+      "failed": "{count, plural, one {# regel niet geplaatst (stoel of gerecht)} other {# regels niet geplaatst (stoel of gerecht)}}",
+      "withoutAllergy": "{count, plural, one {# op een stoel zonder allergie (niet op het keukenscherm)} other {# op stoelen zonder allergie (niet op het keukenscherm)}}"
     },
     "state": {
       "PENDING": "Wacht",
@@ -289,6 +290,34 @@
       "POS_NOT_CONNECTED": "Er is geen kassa gekoppeld.",
       "WEBHOOK_URL_MISMATCH": "Deze URL hoort niet bij deze koppeling.",
       "DISH_NOT_IN_POS": "Een van de gerechten is niet aan een artikel in Square gekoppeld."
+    },
+    "log": {
+      "table": "Tafel {table}",
+      "attention": "Nakijken",
+      "noLines": "Geen artikelen uit Square in deze bestelling.",
+      "rejected": {
+        "WEBHOOK_SIGNATURE_INVALID": "Geweigerd: de handtekening klopt niet. Kopieer de signature key van de Square-subscription opnieuw en controleer dat de notification URL precies de webhook-URL hierboven is."
+      },
+      "skip": {
+        "CLOSED": "Overgeslagen: de bestelling is meer dan 2 uur geleden afgerekend en gesloten.",
+        "CANCELLED": "Overgeslagen: de bestelling is in Square geannuleerd.",
+        "NO_TABLE": "Overgeslagen: geen tafel in de bestelling. Zet de tafel in de ticketnaam, zoals \"Tafel 12\".",
+        "TABLE_NOT_FOUND": "Overgeslagen: deze tafel staat niet in de plattegrond.",
+        "NOT_FOUND": "Overgeslagen: Square gaf deze bestelling niet terug."
+      },
+      "line": {
+        "PLACED": "naar de keuken",
+        "PLACED_NO_ALLERGY": "geplaatst, stoel heeft geen allergie dus niet op het keukenscherm",
+        "DUPLICATE": "stond er al",
+        "UNMAPPED": "niet geplaatst: Square-artikel niet aan een gerecht gekoppeld",
+        "NO_SEAT": "niet geplaatst: geen stoel. Zet \"stoel 2\" in de notitie van de regel",
+        "FAILED": "niet geplaatst"
+      },
+      "reason": {
+        "SEAT_NOT_AT_TABLE": "de tafel heeft minder stoelen",
+        "DISH_NOT_FOUND": "het gerecht staat niet op de gepubliceerde kaart",
+        "TABLE_NOT_FOUND": "tafel staat niet in de plattegrond"
+      }
     }
   },
   "incidents": {

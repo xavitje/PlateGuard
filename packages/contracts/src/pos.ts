@@ -76,6 +76,32 @@ export interface PosSyncResult {
   noTable: number;
   /** Lines that could not be placed (seat not at the table, dish not on the menu). */
   failed: number;
+  /** Of the new plates: on a seat without allergies, so not on the kitchen screen. */
+  withoutAllergy: number;
+}
+
+/** What happened to one line of a POS order. */
+export type PosLineOutcome =
+  'PLACED' | 'PLACED_NO_ALLERGY' | 'DUPLICATE' | 'UNMAPPED' | 'NO_SEAT' | 'FAILED';
+
+export interface PosLineLog {
+  /** The item's name in the POS. */
+  name: string;
+  seat: number | null;
+  quantity: number;
+  outcome: PosLineOutcome;
+  /** For FAILED: the error code, such as SEAT_NOT_AT_TABLE or DISH_NOT_FOUND. */
+  reason?: string;
+}
+
+/** Why a whole order was left alone. */
+export type PosOrderSkip = 'CLOSED' | 'CANCELLED' | 'NO_TABLE' | 'TABLE_NOT_FOUND' | 'NOT_FOUND';
+
+/** One order as PlateGuard handled it, line by line, for admin. */
+export interface PosOrderLog {
+  table: string | null;
+  skipped: PosOrderSkip | null;
+  lines: PosLineLog[];
 }
 
 export interface PosEvent {
@@ -84,6 +110,10 @@ export interface PosEvent {
   status: 'PENDING' | 'PROCESSING' | 'DONE' | 'FAILED' | 'DEAD';
   orderId: string | null;
   result: PosSyncResult | null;
+  /** The order line by line. Missing for messages handled before this log existed. */
+  order: PosOrderLog | null;
+  /** A message refused before it was stored, such as WEBHOOK_SIGNATURE_INVALID. */
+  rejected: string | null;
   error: string | null;
 }
 
