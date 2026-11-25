@@ -25,6 +25,7 @@ import {
 } from '../demo';
 import { ApiError, type ServiceClient } from './client';
 import { createMemoryAdmin } from './memory-admin';
+import { createMemoryIncidents } from './memory-incidents';
 import { createMemoryPos } from './memory-pos';
 import { createMemoryPrinters } from './memory-printers';
 import { createMemorySetup } from './memory-setup';
@@ -177,6 +178,7 @@ export function createMemoryClient(
   };
 
   const { printers, admin: printerAdmin } = createMemoryPrinters();
+  const incidents = createMemoryIncidents(ME.user.name);
 
   return {
     admin: {
@@ -188,6 +190,7 @@ export function createMemoryClient(
       },
       ...printerAdmin,
       ...createMemoryPos(dishes),
+      ...incidents.admin,
     },
     kitchen: {
       tickets: async () => {
@@ -286,6 +289,10 @@ export function createMemoryClient(
       table(label);
       seat(label, n).orders.push({ id: `new-${nextId++}`, dishId });
       return table(label);
+    },
+    reportIncident: async (_, label, body) => {
+      table(label);
+      return incidents.report(label, body);
     },
     cancelOrder: async (_, label, plateId) => {
       const s = Object.values(state[label] ?? {}).find((x) =>

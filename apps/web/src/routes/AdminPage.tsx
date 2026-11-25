@@ -13,6 +13,7 @@ const SECTIONS: { slug: string; key: string; permission?: Permission }[] = [
   { slug: 'integrations', key: 'admin:nav.integrations', permission: 'integrations.manage' },
   { slug: 'webhooks', key: 'admin:nav.webhooks' },
   { slug: 'staff', key: 'admin:nav.staff', permission: 'staff.manage' },
+  { slug: 'incidents', key: 'admin:nav.incidents', permission: 'incident.manage' },
   { slug: 'dashboard', key: 'admin:nav.dashboard' },
 ];
 

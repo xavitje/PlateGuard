@@ -163,8 +163,9 @@ export function MasterDetail({
   items: { id: string; name: string; meta?: ReactNode }[];
   selected: string | null;
   onSelect: (id: string | null) => void;
-  onNew: () => void;
-  newLabel: string;
+  /** Leave out for a list that cannot gain items here. */
+  onNew?: () => void;
+  newLabel?: string;
   detail: ReactNode;
 }) {
   const { t } = useTranslation();
@@ -175,9 +176,11 @@ export function MasterDetail({
   return (
     <div className="grid items-start gap-5 lg:grid-cols-[minmax(240px,320px)_minmax(0,1fr)]">
       <div className={`grid gap-2 ${selected ? 'max-lg:hidden' : ''}`}>
-        <button type="button" className={button} onClick={onNew}>
-          + {newLabel}
-        </button>
+        {onNew && (
+          <button type="button" className={button} onClick={onNew}>
+            + {newLabel}
+          </button>
+        )}
         <ul className="overflow-hidden rounded-[14px] bg-card">
           {items.map((i) => (
             <li key={i.id} className="border-b border-line last:border-b-0">

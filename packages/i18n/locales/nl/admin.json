@@ -8,7 +8,8 @@
     "integrations": "Koppelingen",
     "webhooks": "Webhooks",
     "staff": "Personeel",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "incidents": "Incidenten"
   },
   "comingSoon": "Dit onderdeel komt in een latere fase.",
   "filter": "Filteren",
@@ -33,7 +34,9 @@
     "TABLE_IN_USE": "Aan deze tafel zitten gasten. Probeer het opnieuw als het bezoek is afgesloten.",
     "FLOOR_NOT_FOUND": "Deze verdieping bestaat niet meer. Laad opnieuw en probeer het nog eens.",
     "STAFF_SELF": "Je kunt je eigen rollen niet aanpassen.",
-    "STAFF_ORG_ROLE": "Deze persoon heeft een rol op elke locatie. Een eigenaar past dat aan."
+    "STAFF_ORG_ROLE": "Deze persoon heeft een rol op elke locatie. Een eigenaar past dat aan.",
+    "INCIDENT_FOLLOW_UP_INCOMPLETE": "Vul de oorzaak en de maatregel in voordat je afsluit.",
+    "INCIDENT_NOT_FOUND": "Dit incident bestaat niet meer."
   },
   "fields": {
     "name": "Naam",
@@ -286,6 +289,107 @@
       "POS_NOT_CONNECTED": "Er is geen kassa gekoppeld.",
       "WEBHOOK_URL_MISMATCH": "Deze URL hoort niet bij deze koppeling.",
       "DISH_NOT_IN_POS": "Een van de gerechten is niet aan een artikel in Square gekoppeld."
+    }
+  },
+  "incidents": {
+    "title": "Incidenten",
+    "intro": "Allergie-incidenten die het team heeft gemeld. Wat er op dat moment bekend was, wordt bij elke melding vastgelegd; de gastgegevens van dat bezoek blijven bewaard voor de opvolging.",
+    "none": "Geen incidenten gemeld.",
+    "report": "Incident melden",
+    "reportTitle": "Incident melden bij tafel {table}",
+    "reportHow": "Wat is er gebeurd? Het bord, de checks en wie wat deed worden zoals ze nu zijn bij de melding opgeslagen.",
+    "plate": "Bord",
+    "noPlateChoice": "Geen specifiek bord",
+    "send": "Melding versturen",
+    "sent": "Incident gemeld. Een manager volgt het op.",
+    "cancel": "Annuleren",
+    "where": "Tafel {table} · stoel {seat}",
+    "whereTable": "Tafel {table}",
+    "reportedBy": "Gemeld door {name}",
+    "open": "Openen",
+    "download": "PDF downloaden",
+    "pdf": {
+      "title": "Allergie-incident",
+      "subtitle": "{location} · gemeld {time}",
+      "footer": "PlateGuard-incident {id} · geprint {time}",
+      "page": "Pagina {n} van {of}"
+    },
+    "back": "Alle incidenten",
+    "followUpTitle": "Opvolging",
+    "followUpHow": "Schrijf de oorzaak op en de maatregel die herhaling voorkomt. Afsluiten kan pas met allebei.",
+    "save": "Opslaan",
+    "saveClose": "Opslaan en afsluiten",
+    "reopen": "Heropenen",
+    "saved": "Opgeslagen.",
+    "noAllergies": "Er waren geen allergieën vastgelegd voor deze stoel.",
+    "noPlate": "De melding gaat niet over één bord.",
+    "noChecks": "Er zijn geen checks vastgelegd voor dit bord.",
+    "noTimeline": "Er zijn geen stappen vastgelegd voor deze stoel of dit bord.",
+    "kind": {
+      "REACTION": "Gast kreeg een reactie",
+      "NEAR_MISS": "Bijna-incident (op tijd ontdekt)",
+      "OTHER": "Anders"
+    },
+    "severity": {
+      "LOW": "Laag",
+      "MEDIUM": "Middel",
+      "HIGH": "Hoog"
+    },
+    "status": {
+      "OPEN": "Open",
+      "CLOSED": "Afgesloten"
+    },
+    "check": {
+      "KITCHEN": "Keukencheck",
+      "PASS": "Pascheck"
+    },
+    "plateStatus": {
+      "ASSESSED": "Besteld",
+      "IN_KITCHEN": "In de keuken",
+      "CHECKED": "Gecheckt door de keuken",
+      "PASS_CHECKED": "Gecheckt bij de pas",
+      "SERVED": "Geserveerd",
+      "REJECTED": "Teruggestuurd",
+      "CANCELLED": "Geannuleerd"
+    },
+    "event": {
+      "guest_allergies_recorded": "Allergieën vastgelegd",
+      "order_created": "Besteld",
+      "order_cancelled": "Van de bestelling gehaald",
+      "plate_checked": "Gecheckt door de keuken",
+      "plate_pass_checked": "Gecheckt bij de pas",
+      "plate_served": "Geserveerd",
+      "plate_rejected": "Teruggestuurd door de keuken",
+      "plate_ticket_printed": "Allergiebon geprint",
+      "plate_ticket_reprinted": "Allergiebon opnieuw geprint"
+    },
+    "section": {
+      "report": "Melding",
+      "guest": "Allergieën van de gast",
+      "plate": "Bord",
+      "checks": "Checks",
+      "timeline": "Tijdlijn",
+      "followUp": "Opvolging"
+    },
+    "field": {
+      "seat": "Stoel",
+      "reportedAt": "Gemeld",
+      "reportedBy": "Gemeld door",
+      "where": "Waar",
+      "kind": "Wat gebeurde er",
+      "severity": "Ernst",
+      "description": "Omschrijving",
+      "dish": "Gerecht",
+      "orderedAt": "Besteld",
+      "course": "Gang",
+      "outcome": "Beoordeling",
+      "status": "Status",
+      "modifications": "Aanpassingen",
+      "rejectReason": "Teruggestuurd omdat",
+      "engine": "Engine · menuversie",
+      "cause": "Oorzaak",
+      "measure": "Maatregel",
+      "closed": "Afgesloten"
     }
   }
 }

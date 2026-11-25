@@ -25,6 +25,10 @@ import type {
   FloorResponse,
   MeResponse,
   MenuResponse,
+  IncidentDetail,
+  IncidentFollowUp,
+  IncidentReport,
+  IncidentsResponse,
   PosConnectInput,
   PosEventsResponse,
   PosItemsResponse,
@@ -100,6 +104,10 @@ export interface AdminClient {
   posTestOrder(location: string, body: PosTestOrderInput): Promise<PosSyncResult>;
   syncPos(location: string): Promise<PosSyncResult>;
   posEvents(location: string): Promise<PosEventsResponse>;
+  incidents(location: string): Promise<IncidentsResponse>;
+  incident(location: string, id: string): Promise<IncidentDetail>;
+  followUpIncident(location: string, id: string, body: IncidentFollowUp): Promise<IncidentDetail>;
+  incidentPdf(location: string, id: string, locale: string): Promise<Blob>;
 }
 
 /** The kitchen display and the pass. Writes answer nothing: the screen reloads its tickets. */
@@ -134,6 +142,8 @@ export interface ServiceClient {
   ): Promise<TableResponse>;
   order(location: string, label: string, seat: number, dishId: string): Promise<TableResponse>;
   cancelOrder(location: string, label: string, plateId: string): Promise<TableResponse>;
+  /** An incident at a table; the server freezes what is known about the seat and plate. */
+  reportIncident(location: string, label: string, body: IncidentReport): Promise<{ id: string }>;
 }
 
 export class ApiError extends Error {
@@ -230,6 +240,11 @@ export function createHttpClient(
       posTestOrder: (l, body) => call(adm(l, 'pos/test-order'), { method: 'POST', body }),
       syncPos: (l) => call(adm(l, 'pos/sync'), { method: 'POST' }),
       posEvents: (l) => call(adm(l, 'pos/events')),
+      incidents: (l) => call(`${loc(l)}/incidents`),
+      incident: (l, id) => call(`${loc(l)}/incidents/${id}`),
+      followUpIncident: (l, id, body) => call(`${loc(l)}/incidents/${id}`, { method: 'PUT', body }),
+      incidentPdf: (l, id, locale) =>
+        call(`${loc(l)}/incidents/${id}/report.pdf?locale=${locale}`, { blob: true }),
     },
     kitchen: {
       tickets: (l, locale) => call(`${loc(l)}/kitchen?locale=${locale}`),
@@ -261,5 +276,7 @@ export function createHttpClient(
       call(`${tbl(l, label)}/seats/${seat}/orders`, { method: 'POST', body: { dishId } }),
     cancelOrder: (l, label, plateId) =>
       call(`${tbl(l, label)}/orders/${plateId}`, { method: 'DELETE' }),
+    reportIncident: (l, label, body) =>
+      call(`${tbl(l, label)}/incidents`, { method: 'POST', body }),
   };
 }
