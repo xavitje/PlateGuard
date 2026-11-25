@@ -30,7 +30,7 @@ export function TablesPage() {
               role="tab"
               aria-selected={floor?.id === f.id}
               onClick={() => setFloor(f.id)}
-              className={`min-h-[40px] flex-1 shrink-0 rounded-[11px] px-3 text-sm whitespace-nowrap font-semibold ${floor?.id === f.id ? 'bg-card shadow-sm' : 'text-soft'}`}
+              className={`min-h-[40px] flex-1 shrink-0 rounded-[11px] px-3 text-sm whitespace-nowrap font-semibold ${floor?.id === f.id ? 'bg-brand text-white shadow-sm' : 'text-soft'}`}
             >
               {f.name}
             </button>
