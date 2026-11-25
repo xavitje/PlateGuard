@@ -10,15 +10,20 @@ import type { Component, ResolvedDish } from '@plateguard/domain';
 import { ALLERGEN_NAMES } from '../allergens';
 import { ApiError, type AdminClient } from './client';
 import type { createMemorySetup } from './memory-setup';
+import type { createMemoryPos } from './memory-pos';
 import type { createMemoryPrinters } from './memory-printers';
 
 type Setup = ReturnType<typeof createMemorySetup>;
 type PrinterAdmin = ReturnType<typeof createMemoryPrinters>['admin'];
+type PosAdmin = ReturnType<typeof createMemoryPos>;
 
 /** The recipe database in memory, built from the demo dishes. For tests and offline demos. */
 export function createMemoryAdmin(
   dishes: ResolvedDish[],
-): Omit<AdminClient, keyof Setup | 'settings' | 'saveSettings' | keyof PrinterAdmin> {
+): Omit<
+  AdminClient,
+  keyof Setup | 'settings' | 'saveSettings' | keyof PrinterAdmin | keyof PosAdmin
+> {
   const ingredients = new Map<string, IngredientResponse>();
   const equipment = new Map<string, EquipmentResponse>();
   const components = new Map<string, ComponentResponse>();

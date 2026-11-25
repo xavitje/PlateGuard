@@ -25,6 +25,7 @@ import {
 } from '../demo';
 import { ApiError, type ServiceClient } from './client';
 import { createMemoryAdmin } from './memory-admin';
+import { createMemoryPos } from './memory-pos';
 import { createMemoryPrinters } from './memory-printers';
 import { createMemorySetup } from './memory-setup';
 
@@ -186,6 +187,7 @@ export function createMemoryClient(
         passCheck = body.passCheck;
       },
       ...printerAdmin,
+      ...createMemoryPos(dishes),
     },
     kitchen: {
       tickets: async () => {

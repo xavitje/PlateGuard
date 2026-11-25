@@ -25,6 +25,14 @@ import type {
   FloorResponse,
   MeResponse,
   MenuResponse,
+  PosConnectInput,
+  PosEventsResponse,
+  PosItemsResponse,
+  PosMappingInput,
+  PosResponse,
+  PosSyncResult,
+  PosTestOrderInput,
+  PosWebhookInput,
   PrinterAddress,
   PrinterInput,
   PrintersResponse,
@@ -79,6 +87,19 @@ export interface AdminClient {
   newPrinterKey(location: string, id: string): Promise<PrinterAddress>;
   testPrinter(location: string, id: string): Promise<void>;
   removePrinter(location: string, id: string): Promise<PrintersResponse>;
+  /** The POS link (for now a Square test account). */
+  pos(location: string): Promise<PosResponse>;
+  connectPos(location: string, body: PosConnectInput): Promise<PosResponse>;
+  posWebhook(location: string, body: PosWebhookInput): Promise<PosResponse>;
+  disconnectPos(location: string): Promise<PosResponse>;
+  /** The POS's items, read from the POS, with the dish each is linked to. */
+  posItems(location: string): Promise<PosItemsResponse>;
+  mapPosItem(location: string, body: PosMappingInput): Promise<PosItemsResponse>;
+  /** Puts every published dish not yet linked into the test POS. */
+  pushPosMenu(location: string): Promise<PosItemsResponse>;
+  posTestOrder(location: string, body: PosTestOrderInput): Promise<PosSyncResult>;
+  syncPos(location: string): Promise<PosSyncResult>;
+  posEvents(location: string): Promise<PosEventsResponse>;
 }
 
 /** The kitchen display and the pass. Writes answer nothing: the screen reloads its tickets. */
@@ -199,6 +220,16 @@ export function createHttpClient(
       newPrinterKey: (l, id) => call(adm(l, `printers/${id}/key`), { method: 'POST' }),
       testPrinter: (l, id) => call(adm(l, `printers/${id}/test`), { method: 'POST' }),
       removePrinter: (l, id) => call(adm(l, `printers/${id}`), { method: 'DELETE' }),
+      pos: (l) => call(adm(l, 'pos')),
+      connectPos: (l, body) => call(adm(l, 'pos'), { method: 'POST', body }),
+      posWebhook: (l, body) => call(adm(l, 'pos/webhook'), { method: 'PUT', body }),
+      disconnectPos: (l) => call(adm(l, 'pos'), { method: 'DELETE' }),
+      posItems: (l) => call(adm(l, 'pos/items')),
+      mapPosItem: (l, body) => call(adm(l, 'pos/items'), { method: 'PUT', body }),
+      pushPosMenu: (l) => call(adm(l, 'pos/items/push'), { method: 'POST' }),
+      posTestOrder: (l, body) => call(adm(l, 'pos/test-order'), { method: 'POST', body }),
+      syncPos: (l) => call(adm(l, 'pos/sync'), { method: 'POST' }),
+      posEvents: (l) => call(adm(l, 'pos/events')),
     },
     kitchen: {
       tickets: (l, locale) => call(`${loc(l)}/kitchen?locale=${locale}`),

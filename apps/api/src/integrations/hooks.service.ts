@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { AdapterRegistry } from './core/registry.js';
 import { ConnectionsRepository } from './core/connections.repository.js';
+import { InboxDispatcher } from './core/inbox-dispatcher.js';
 import { InboxRepository } from './core/inbox.repository.js';
 import { canVerifyWebhooks, type RawRequest } from './core/ports.js';
 
@@ -14,6 +15,7 @@ export class HooksService {
     private readonly registry: AdapterRegistry,
     private readonly connections: ConnectionsRepository,
     private readonly inbox: InboxRepository,
+    private readonly dispatcher: InboxDispatcher,
   ) {}
 
   async receive(
@@ -46,6 +48,7 @@ export class HooksService {
       );
       if (isNew) stored++;
     }
+    if (stored > 0) await this.dispatcher.dispatch(record.connection.id);
     return { stored, duplicates: events.length - stored };
   }
 }

@@ -68,11 +68,12 @@ database on Supabase Postgres in Frankfurt (eu-central-1).
 
 Environment variables, set in Vercel (never in the repository):
 
-| Variable       | Value                                                                                                                                           |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL` | `postgresql://plateguard_owner.<project-ref>:<password>@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1` |
-| `JWT_SECRET`   | a long random value                                                                                                                             |
-| `NODE_ENV`     | `production`                                                                                                                                    |
+| Variable                 | Value                                                                                                                                           |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`           | `postgresql://plateguard_owner.<project-ref>:<password>@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1` |
+| `JWT_SECRET`             | a long random value                                                                                                                             |
+| `INTEGRATION_SECRET_KEY` | another long random value (32+ characters); encrypts POS tokens and webhook keys                                                                |
+| `NODE_ENV`               | `production`                                                                                                                                    |
 
 Migrations run on deploy: `scripts/vercel-build.sh` applies pending migrations when
 `MIGRATE_DATABASE_URL` is set, and runs the seed when `SEED_ON_DEPLOY=true` (it only fills an empty

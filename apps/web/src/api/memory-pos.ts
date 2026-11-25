@@ -1,0 +1,96 @@
+import type { PosConnection, PosItem, PosSyncResult } from '@plateguard/contracts';
+import type { ResolvedDish } from '@plateguard/domain';
+import { ApiError, type AdminClient } from './client';
+
+type PosAdmin = Pick<
+  AdminClient,
+  | 'pos'
+  | 'connectPos'
+  | 'posWebhook'
+  | 'disconnectPos'
+  | 'posItems'
+  | 'mapPosItem'
+  | 'pushPosMenu'
+  | 'posTestOrder'
+  | 'syncPos'
+  | 'posEvents'
+>;
+
+const none = (): PosSyncResult => ({
+  orders: 0,
+  plates: 0,
+  duplicates: 0,
+  unmapped: 0,
+  noSeat: 0,
+  noTable: 0,
+  failed: 0,
+});
+
+/** A POS link for the demo and tests. Nothing leaves the browser; orders are not placed. */
+export function createMemoryPos(dishes: ResolvedDish[]): PosAdmin {
+  let connection: PosConnection | null = null;
+  let items: PosItem[] = [];
+  const status = async () => ({ connection: structuredClone(connection), secretsReady: true });
+  const need = () => {
+    if (!connection) throw new ApiError(404, 'POS_NOT_CONNECTED');
+    return connection;
+  };
+  const list = async () => ({ items: structuredClone(items) });
+  return {
+    pos: status,
+    connectPos: async (_, body) => {
+      connection = {
+        id: 'demo-pos',
+        provider: 'square',
+        status: 'ACTIVE',
+        locationName: 'Sandbox',
+        squareLocationId: body.squareLocationId,
+        sandbox: true,
+        webhookPath: '/hooks/square/demo-pos',
+        webhookUrl: null,
+        lastEventAt: null,
+      };
+      return status();
+    },
+    posWebhook: async (_, body) => {
+      need().webhookUrl = body.url;
+      return status();
+    },
+    disconnectPos: async () => {
+      connection = null;
+      items = [];
+      return status();
+    },
+    posItems: async () => {
+      need();
+      return list();
+    },
+    mapPosItem: async (_, body) => {
+      need();
+      items = items.map((i) =>
+        i.externalId === body.externalItemId ? { ...i, dishId: body.dishId } : i,
+      );
+      return list();
+    },
+    pushPosMenu: async () => {
+      need();
+      const linked = new Set(items.map((i) => i.dishId));
+      items = [
+        ...items,
+        ...dishes
+          .filter((d) => !linked.has(d.id))
+          .map((d) => ({ externalId: `sq-${d.id}`, name: d.name, dishId: d.id })),
+      ];
+      return list();
+    },
+    posTestOrder: async (_, body) => {
+      need();
+      return { ...none(), orders: 1, plates: body.lines.length };
+    },
+    syncPos: async () => {
+      need();
+      return none();
+    },
+    posEvents: async () => ({ events: [] }),
+  };
+}

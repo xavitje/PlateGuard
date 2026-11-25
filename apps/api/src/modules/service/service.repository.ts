@@ -38,6 +38,12 @@ export interface SeatRow {
   orders: OrderRow[];
 }
 
+/** A POS order line, so the same line never becomes two plates. */
+export interface PosLineRef {
+  connectionId: string;
+  externalId: string;
+}
+
 export interface TableRow {
   id: string;
   label: string;
@@ -170,8 +176,21 @@ export class ServiceRepository {
     input: unknown,
     userId: string,
     menuVersionId: string | null = null,
-  ): Promise<string> {
+    ref?: PosLineRef,
+  ): Promise<string | null> {
     return this.prisma.forTenant(ctx, async (tx) => {
+      if (ref) {
+        const seen = await tx.externalRef.findUnique({
+          where: {
+            connectionId_externalType_externalId: {
+              connectionId: ref.connectionId,
+              externalType: 'pos.line',
+              externalId: ref.externalId,
+            },
+          },
+        });
+        if (seen) return null;
+      }
       const guestId = await ensureGuest(tx, locationId, tableId, seat, userId);
       const guest = await tx.guest.findUniqueOrThrow({ where: { id: guestId } });
       const plate = await tx.plateOrder.create({
@@ -210,13 +229,29 @@ export class ServiceRepository {
           })),
         });
       }
+      // The unique key on the ref makes a second, concurrent attempt fail as a whole.
+      if (ref)
+        await tx.externalRef.create({
+          data: {
+            connectionId: ref.connectionId,
+            locationId,
+            externalType: 'pos.line',
+            externalId: ref.externalId,
+            plateId: plate.id,
+          },
+        });
       await queueAllergyTicket(tx, locationId, guestId, plate.id);
       await audit(tx, ctx, {
         locationId,
         type: 'order.created',
         entity: 'plate',
         entityId: plate.id,
-        payload: { dishId: dish.id, outcome: assessment.outcome, inputHash: assessment.inputHash },
+        payload: {
+          dishId: dish.id,
+          outcome: assessment.outcome,
+          inputHash: assessment.inputHash,
+          ...(ref ? { source: 'pos', externalId: ref.externalId } : {}),
+        },
       });
       return plate.id;
     });
