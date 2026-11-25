@@ -104,6 +104,32 @@ function toSeat(g: GuestWithData): SeatRow {
 export class ServiceRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** The alerts this person has opened here, by key. */
+  readAlertKeys(ctx: TenantContext, locationId: string, userId: string): Promise<Set<string>> {
+    return this.prisma.forTenant(ctx, async (tx) => {
+      const rows = await tx.alertRead.findMany({
+        where: { locationId, userId },
+        select: { alertKey: true },
+      });
+      return new Set(rows.map((r) => r.alertKey));
+    });
+  }
+
+  markAlertsRead(
+    ctx: TenantContext,
+    locationId: string,
+    userId: string,
+    keys: string[],
+  ): Promise<unknown> {
+    if (keys.length === 0) return Promise.resolve();
+    return this.prisma.forTenant(ctx, (tx) =>
+      tx.alertRead.createMany({
+        data: keys.map((alertKey) => ({ userId, locationId, alertKey })),
+        skipDuplicates: true,
+      }),
+    );
+  }
+
   floors(ctx: TenantContext, locationId: string) {
     return this.prisma.forTenant(ctx, async (tx) => {
       const [floors, tables] = await Promise.all([

@@ -71,4 +71,16 @@ describe('KitchenPage', () => {
     await waitFor(() => expect(screen.queryByText('At the pass')).toBeNull());
     expect(screen.getByText('1 allergy plate')).toBeTruthy();
   });
+
+  it('ticks every point at once, and still needs the tap on "checked"', async () => {
+    renderApp('/kitchen', createMemoryClient());
+    fireEvent.click(await screen.findByRole('button', { name: /Table 12 · Seat 3/ }));
+    const card = screen.getByRole('region', { name: 'Steak, jus and fries' });
+    const boxes = within(card).getAllByRole('checkbox') as HTMLInputElement[];
+    fireEvent.click(within(card).getByRole('button', { name: `Tick all ${boxes.length} points` }));
+    expect(boxes.every((b) => b.checked)).toBe(true);
+    expect(within(card).queryByRole('button', { name: /^Tick all/ })).toBeNull();
+    fireEvent.click(within(card).getByRole('button', { name: 'Checked, plate is ready' }));
+    expect(await screen.findByText(/Steak, jus and fries · checked/)).toBeTruthy();
+  });
 });

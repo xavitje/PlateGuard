@@ -110,7 +110,13 @@ export interface AlertResponse {
   result: Pick<Assessment, 'outcome' | 'modifications' | 'manualChecks'>;
   /** Set when the kitchen sent the plate back: the waiter talks to the guest. */
   rejected?: { reason: string };
+  /** The signed-in person opened it. It comes back unread when it gets worse or is sent back. */
+  read: boolean;
 }
+
+/** POST /locations/:id/alerts/read: mark these alerts read, or every open one without ids. */
+export const AlertsReadZ = z.strictObject({ ids: z.array(IdZ).max(500).optional() });
+export type AlertsRead = z.infer<typeof AlertsReadZ>;
 
 /**
  * POST /auth/pin: one person signs in on a location's shared device for one shift, with their

@@ -17,7 +17,7 @@ export function TabsLayout() {
   const permissions = me?.locations[0]?.permissions ?? [];
   const places = workspaces(permissions);
   const serves = !me || places.includes('tables');
-  const openAlerts = useAlerts(serves).data?.length ?? 0;
+  const openAlerts = useAlerts(serves).data?.filter((a) => !a.read).length ?? 0;
   const tabs = [
     ...(serves
       ? [

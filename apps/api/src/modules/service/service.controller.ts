@@ -1,8 +1,10 @@
 import { Body, Controller, Delete, Get, Param, Put, Post, Query } from '@nestjs/common';
 import {
+  AlertsReadZ,
   OrderCreateZ,
   SeatParamZ,
   SeatUpdateZ,
+  type AlertsRead,
   type OrderCreate,
   type SeatUpdate,
 } from '@plateguard/contracts';
@@ -46,8 +48,21 @@ export class ServiceController {
     @Tenant() ctx: TenantContext,
     @Param('locationId') locationId: string,
     @Query('locale', new ZodPipe(LocaleZ)) locale: string,
+    @CurrentPrincipal() user: Principal,
   ) {
-    return this.service.alerts(ctx, locationId, locale);
+    return this.service.alerts(ctx, locationId, locale, user.userId);
+  }
+
+  @Post('alerts/read')
+  @RequirePermission('table.view')
+  readAlerts(
+    @Tenant() ctx: TenantContext,
+    @Param('locationId') locationId: string,
+    @Query('locale', new ZodPipe(LocaleZ)) locale: string,
+    @CurrentPrincipal() user: Principal,
+    @Body(new ZodPipe(AlertsReadZ)) body: AlertsRead,
+  ) {
+    return this.service.markAlertsRead(ctx, locationId, locale, user.userId, body.ids);
   }
 
   @Get('tables/:label')

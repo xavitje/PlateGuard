@@ -50,5 +50,6 @@
     "again": "Opnieuw printen",
     "printed": "Naar de printer gestuurd"
   },
-  "tab": "Keuken"
+  "tab": "Keuken",
+  "checkAll": "Alle {count, plural, one {# punt} other {# punten}} afvinken"
 }
