@@ -46,7 +46,7 @@ export function MenuPage() {
         <p className="text-soft">{t('admin:menu.intro')}</p>
       </div>
 
-      <section className="grid gap-3 rounded-[18px] bg-card p-5 shadow-card">
+      <section className="grid gap-3 rounded-[18px] bg-card p-4 shadow-card sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-semibold">
@@ -63,7 +63,7 @@ export function MenuPage() {
           </div>
           {can('menu.publish') ? (
             confirming ? (
-              <span className="flex gap-2">
+              <span className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   className={primary}
@@ -110,7 +110,7 @@ export function MenuPage() {
         )}
       </section>
 
-      <section className="rounded-[18px] bg-card p-5 shadow-card">
+      <section className="rounded-[18px] bg-card p-4 shadow-card sm:p-5">
         <h2 className="mb-3 text-lg font-semibold">{t('admin:menu.dishes')}</h2>
         <ul className="grid gap-1.5">
           {ordered.map((d) => {
@@ -118,7 +118,7 @@ export function MenuPage() {
             return (
               <li
                 key={d.id}
-                className="flex items-center justify-between gap-2 rounded-[10px] border border-line px-3 py-1.5"
+                className="flex items-center justify-between gap-2 rounded-[10px] border border-line px-3 py-1"
               >
                 <Toggle
                   label={d.name}
@@ -128,7 +128,7 @@ export function MenuPage() {
                   }
                 />
                 {i >= 0 && (
-                  <span className="flex gap-1">
+                  <span className="flex shrink-0 gap-1">
                     <button
                       type="button"
                       className={button}
@@ -157,11 +157,11 @@ export function MenuPage() {
       </section>
 
       {draft.versions.length > 0 && (
-        <section className="rounded-[18px] bg-card p-5 shadow-card">
+        <section className="rounded-[18px] bg-card p-4 shadow-card sm:p-5">
           <h2 className="mb-2 text-lg font-semibold">{t('admin:menu.history')}</h2>
           <ul className="grid gap-1 text-[14px]">
             {draft.versions.map((v) => (
-              <li key={v.id} className="flex justify-between">
+              <li key={v.id} className="flex flex-wrap justify-between gap-x-3">
                 <span>
                   {t('admin:menu.version', { version: v.version })}
                   {v.id === draft.published?.id && ` · ${t('admin:menu.live')}`}
