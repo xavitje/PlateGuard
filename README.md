@@ -34,10 +34,15 @@ Needs Node 22.12 or newer, pnpm 10 and PostgreSQL 16 (`docker compose up -d` sta
 pnpm install
 cp .env.example .env            # DATABASE_URL for migrations, seed and the API
 pnpm db:migrate                 # schema, row-level security, audit triggers
-pnpm db:seed                    # EU-14 allergens in English and Dutch, plus a demo location
-pnpm dev:web                    # http://localhost:5173
-pnpm dev:api                    # http://localhost:3000/api/health
+pnpm db:seed                    # EU-14 allergens, plus a demo restaurant with two tables in service
+pnpm dev:api                    # http://localhost:3000/api/health (needs AUTH_MODE=dev for now)
+pnpm dev:web                    # http://localhost:5173, reads and writes through the API
 ```
+
+Until PIN login lands, the API accepts the user id in an `x-plateguard-user` header when
+`AUTH_MODE=dev`, and the web app sends `VITE_DEV_USER` (the seeded demo waiter). The seed only fills
+an empty demo location; `pnpm db:reset` rebuilds a development database from scratch and deletes all
+its data, so never point it at a real one.
 
 Checks, as CI runs them: `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm i18n:check`, `pnpm test`
 (the database tests run when `DATABASE_URL` is set) and `pnpm build`.
@@ -71,6 +76,19 @@ data never gives "no allergen found".
 - Every assessment carries the engine version and a sha256 hash of its canonical input, for the audit trail.
 
 There is a test for every cell of the decision table in `packages/domain/test/engine.test.ts`.
+
+## Service: tables, seats, orders and alerts
+
+The waiter's screens read and write through the API (`apps/api/src/modules/service`), under
+`/api/locations/{locationId}/…`: floors with their tables, the menu as resolved recipe trees, a table's
+seats with allergies and orders, and alerts.
+
+- Recording an allergy opens the table's visit and the seat's guest on first use.
+- Ordering a dish runs the engine and stores the plate with its assessment (append-only) and the
+  changes for the ticket, in one transaction. Taking a dish off the order marks it cancelled.
+- Alerts are not stored. They follow from the open orders and each seat's current allergies
+  (`orderAlerts` in `packages/domain`), so the menu alone never raises one, and the Alerts tab, its
+  badge and the table grid always agree.
 
 ## Tenants, locations and roles
 

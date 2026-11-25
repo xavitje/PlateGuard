@@ -17,6 +17,7 @@
     "i18n:check": "pnpm --filter @plateguard/i18n check",
     "db:migrate": "pnpm --filter @plateguard/db migrate:deploy",
     "db:seed": "pnpm --filter @plateguard/db seed",
+    "db:reset": "pnpm --filter @plateguard/db reset && pnpm db:seed",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:db": "pnpm --filter @plateguard/db test"

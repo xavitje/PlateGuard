@@ -17,5 +17,8 @@
     "CAUTION": "Ask guest",
     "UNKNOWN": "Unknown",
     "DO_NOT_SERVE": "Do not serve"
-  }
+  },
+  "loading": "Loading…",
+  "loadError": "Could not reach PlateGuard. Check the connection and try again.",
+  "saveError": "Not saved. Check the connection and try again."
 }

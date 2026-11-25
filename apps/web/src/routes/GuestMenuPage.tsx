@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Logo } from '../components/icons';
 import { OutcomeBadge } from '../components/OutcomeBadge';
-import { DEMO_ALLERGEN_NAMES, DEMO_DISHES, QUICK_ALLERGENS } from '../demo';
+import { ALLERGEN_NAMES, QUICK_ALLERGENS } from '../allergens';
+import { DEMO_DISHES } from '../demo';
 
 /**
  * Public allergen menu per location (QR per table). No tabs, no login.
@@ -47,7 +48,7 @@ export function GuestMenuPage() {
             aria-pressed={avoid.includes(code)}
             className={`press min-h-9 rounded-full px-3.5 text-sm font-medium ${avoid.includes(code) ? 'bg-brand text-white' : 'bg-mist'}`}
           >
-            {DEMO_ALLERGEN_NAMES[code]?.[lang] ?? code}
+            {ALLERGEN_NAMES[code]?.[lang] ?? code}
           </button>
         ))}
       </div>
