@@ -5,6 +5,7 @@ import { IntegrationsModule } from './integrations/integrations.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { PermissionGuard } from './modules/auth/permissions.js';
 import { SessionGuard } from './modules/auth/session.guard.js';
+import { KitchenModule } from './modules/kitchen/kitchen.module.js';
 import { HealthController } from './modules/health/health.controller.js';
 import { SafetyModule } from './modules/safety/safety.module.js';
 import { RecipesModule } from './modules/recipes/recipes.module.js';
@@ -22,6 +23,7 @@ import { SetupModule } from './modules/setup/setup.module.js';
     AuthModule,
     SafetyModule,
     ServiceModule,
+    KitchenModule,
     RecipesModule,
     SetupModule,
     IntegrationsModule,

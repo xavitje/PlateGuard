@@ -15,7 +15,14 @@ import {
 } from '@plateguard/domain';
 import type { TenantContext } from '../auth/permissions.js';
 import { MenuRepository } from './menu.repository.js';
-import { ServiceRepository, type TableRow } from './service.repository.js';
+import {
+  OPEN_PLATE_STATUSES,
+  ServiceRepository,
+  type PlateStatus,
+  type TableRow,
+} from './service.repository.js';
+
+const OPEN = new Set<PlateStatus>(OPEN_PLATE_STATUSES);
 
 const allergyKey = (a: GuestAllergy) =>
   a.allergen ?? (a.ingredient ? `i:${a.ingredient.id}` : `c:${normalizeLabel(a.custom ?? '')}`);
@@ -70,7 +77,13 @@ export class ServiceService {
         seat: s.seat,
         allergies: s.allergies,
         noAllergy: s.noAllergy,
-        orders: s.orders.map((o) => ({ id: o.id, dishId: o.dishId, outcome: o.outcome })),
+        orders: s.orders.map((o) => ({
+          id: o.id,
+          dishId: o.dishId,
+          outcome: o.outcome,
+          status: o.status,
+          ...(o.status === 'REJECTED' && o.rejectReason ? { rejectReason: o.rejectReason } : {}),
+        })),
       })),
     };
   }
@@ -168,7 +181,7 @@ export class ServiceService {
   ): Promise<TableResponse> {
     const t = await this.requireTable(ctx, locationId, label);
     const onTable = t.bySeat.some((s) => s.orders.some((o) => o.id === plateId));
-    if (!onTable || !(await this.service.cancelOrder(ctx, plateId)))
+    if (!onTable || !(await this.service.cancelOrder(ctx, locationId, plateId)))
       throw new NotFoundException({ code: 'ORDER_NOT_FOUND' });
     return this.table(ctx, locationId, label);
   }
@@ -180,25 +193,27 @@ export class ServiceService {
   }
 }
 
-/** The API shape of the domain's order alerts. */
+/**
+ * The API shape of the domain's order alerts, for plates on their way to the guest. A plate the
+ * kitchen sent back always alerts as a stop, with the cook's reason, until the waiter removes it.
+ */
 export function alertsFor(
   tables: TableRow[],
   dishes: ResolvedDish[],
   versions: Map<string, ResolvedDish[]> = new Map(),
 ): AlertResponse[] {
+  const byId = new Map(dishes.map((d) => [d.id, d]));
+  const dishOf = (o: TableRow['bySeat'][number]['orders'][number]) =>
+    (o.menuVersionId ? versions.get(o.menuVersionId)?.find((d) => d.id === o.dishId) : undefined) ??
+    byId.get(o.dishId);
   const seats = tables.flatMap((t) =>
     t.bySeat.map((s) => ({
       ...s,
       table: t.label,
-      orders: s.orders.map((o) => ({
-        ...o,
-        dish: o.menuVersionId
-          ? versions.get(o.menuVersionId)?.find((d) => d.id === o.dishId)
-          : undefined,
-      })),
+      orders: s.orders.filter((o) => OPEN.has(o.status)).map((o) => ({ ...o, dish: dishOf(o) })),
     })),
   );
-  return orderAlerts(seats, dishes).map((a) => ({
+  const open: AlertResponse[] = orderAlerts(seats, dishes).map((a) => ({
     id: a.id,
     kind: a.kind,
     table: a.table,
@@ -211,4 +226,30 @@ export function alertsFor(
       manualChecks: a.result.manualChecks,
     },
   }));
+  const rejected: AlertResponse[] = tables.flatMap((t) =>
+    t.bySeat.flatMap((s) =>
+      s.orders.flatMap((o) => {
+        const dish = o.status === 'REJECTED' ? dishOf(o) : undefined;
+        if (!dish) return [];
+        const result = assess({ dish, guest: s.allergies });
+        return [
+          {
+            id: o.id,
+            kind: 'stop' as const,
+            table: t.label,
+            seat: s.seat,
+            dishId: dish.id,
+            dishName: dish.name,
+            result: {
+              outcome: result.outcome,
+              modifications: result.modifications,
+              manualChecks: result.manualChecks,
+            },
+            rejected: { reason: o.rejectReason ?? '' },
+          },
+        ];
+      }),
+    ),
+  );
+  return [...rejected, ...open];
 }

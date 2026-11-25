@@ -13,8 +13,7 @@ const KIND_STYLE: Record<AlertKind, string> = {
 
 /**
  * Everything that needs attention. Order alerts come only from dishes a guest with an allergy
- * actually ordered, never from the menu. Kitchen events (a plate that skipped its check) join
- * with the kitchen phase. Filtered by role once login exists.
+ * actually ordered, never from the menu, and from plates the kitchen sent back, with its reason.
  */
 export function AlertsPage() {
   const { t } = useTranslation();
@@ -49,6 +48,11 @@ export function AlertsPage() {
               <OutcomeBadge outcome={a.result.outcome} />
             </span>
             <span className="text-[13px] text-soft">
+              {a.rejected && (
+                <b className="block font-semibold text-red">
+                  {t('alerts:rejected', { reason: a.rejected.reason })}
+                </b>
+              )}
               {t('alerts:ordered', { seat: a.seat, dish: a.dishName })}
               {a.result.modifications.length > 0 &&
                 ` · ${a.result.modifications

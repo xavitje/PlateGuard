@@ -14,7 +14,9 @@ import type { createMemorySetup } from './memory-setup';
 type Setup = ReturnType<typeof createMemorySetup>;
 
 /** The recipe database in memory, built from the demo dishes. For tests and offline demos. */
-export function createMemoryAdmin(dishes: ResolvedDish[]): Omit<AdminClient, keyof Setup> {
+export function createMemoryAdmin(
+  dishes: ResolvedDish[],
+): Omit<AdminClient, keyof Setup | 'settings' | 'saveSettings'> {
   const ingredients = new Map<string, IngredientResponse>();
   const equipment = new Map<string, EquipmentResponse>();
   const components = new Map<string, ComponentResponse>();

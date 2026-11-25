@@ -68,7 +68,14 @@ export interface OrderLineResponse {
   dishId: string;
   /** The engine's decision when the order was placed, as stored for the audit trail. */
   outcome: Outcome;
+  /** Where the plate is: ordered, checked by the kitchen, at the pass, served, or sent back. */
+  status: PlateStatusName;
+  /** Why the kitchen sent it back. Only with status REJECTED. */
+  rejectReason?: string;
 }
+
+export type PlateStatusName =
+  'ASSESSED' | 'IN_KITCHEN' | 'CHECKED' | 'PASS_CHECKED' | 'SERVED' | 'REJECTED' | 'CANCELLED';
 
 export interface SeatResponse {
   seat: number;
@@ -95,6 +102,8 @@ export interface AlertResponse {
   dishId: string;
   dishName: string;
   result: Pick<Assessment, 'outcome' | 'modifications' | 'manualChecks'>;
+  /** Set when the kitchen sent the plate back: the waiter talks to the guest. */
+  rejected?: { reason: string };
 }
 
 /** POST /auth/pin: one person signs in on a location's shared device for one shift. */

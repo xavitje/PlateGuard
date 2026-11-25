@@ -5,7 +5,14 @@ import type { AdminClient } from '../api/client';
 import { useClient, useLocationId, useMe } from '../service/ServiceProvider';
 
 type Reads =
-  'ingredients' | 'equipment' | 'components' | 'dishes' | 'menuDraft' | 'floors' | 'staff';
+  | 'ingredients'
+  | 'equipment'
+  | 'components'
+  | 'dishes'
+  | 'menuDraft'
+  | 'floors'
+  | 'staff'
+  | 'settings';
 
 /** What the signed-in user may do at this location. Only for hiding buttons: the API decides. */
 export function useCan(): (p: Permission) => boolean {

@@ -25,5 +25,12 @@
   "order": "Bestel",
   "orderDish": "Bestel {dish}",
   "cancelOrder": "{dish} uit de bestelling halen",
-  "menuGuidance": "De kleuren helpen bij het opnemen. Alleen bestelde gerechten geven een melding."
+  "menuGuidance": "De kleuren helpen bij het opnemen. Alleen bestelde gerechten geven een melding.",
+  "rejected": "Teruggestuurd door de keuken: {reason}. Overleg met de gast, haal het dan weg of bestel iets anders.",
+  "status": {
+    "IN_KITCHEN": "In de keuken",
+    "CHECKED": "Gecontroleerd door de keuken",
+    "PASS_CHECKED": "Gecontroleerd aan de pass",
+    "SERVED": "Uitgeserveerd"
+  }
 }

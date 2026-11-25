@@ -1,4 +1,6 @@
 import type {
+  KitchenResponse,
+  LocationSettings,
   AdminFloor,
   FloorDraft,
   StaffDraft,
@@ -60,11 +62,23 @@ export interface AdminClient {
   updateStaff(location: string, id: string, body: Omit<StaffDraft, 'pin'>): Promise<StaffMember[]>;
   setStaffPin(location: string, id: string, pin: string): Promise<StaffMember[]>;
   removeStaff(location: string, id: string): Promise<StaffMember[]>;
+  settings(location: string): Promise<LocationSettings>;
+  saveSettings(location: string, body: LocationSettings): Promise<void>;
+}
+
+/** The kitchen display and the pass. Writes answer nothing: the screen reloads its tickets. */
+export interface KitchenClient {
+  tickets(location: string, locale: string): Promise<KitchenResponse>;
+  check(location: string, plateId: string, checked: string[], locale: string): Promise<void>;
+  reject(location: string, plateId: string, reason: string): Promise<void>;
+  passCheck(location: string, plateId: string): Promise<void>;
+  serve(location: string, plateId: string): Promise<void>;
 }
 
 /** Everything the service app reads and writes. One implementation per source. */
 export interface ServiceClient {
   admin: AdminClient;
+  kitchen: KitchenClient;
   staff(slug: string): Promise<StaffListResponse>;
   loginPin(body: PinLogin): Promise<LoginResponse>;
   me(): Promise<MeResponse>;
@@ -118,6 +132,7 @@ export function createHttpClient(
       if (res.status === 401 && token) onSignedOut();
       throw new ApiError(res.status, err.code ?? 'HTTP_ERROR', err.details);
     }
+    if (res.status === 204) return undefined as T;
     return (await res.json()) as T;
   };
   const loc = (l: string) => `/locations/${encodeURIComponent(l)}`;
@@ -151,6 +166,20 @@ export function createHttpClient(
       setStaffPin: (l, id, pin) =>
         call(adm(l, `staff/${id}/pin`), { method: 'PUT', body: { pin } }),
       removeStaff: (l, id) => call(adm(l, `staff/${id}`), { method: 'DELETE' }),
+      settings: (l) => call(adm(l, 'settings')),
+      saveSettings: (l, body) => call(adm(l, 'settings'), { method: 'PUT', body }),
+    },
+    kitchen: {
+      tickets: (l, locale) => call(`${loc(l)}/kitchen?locale=${locale}`),
+      check: (l, id, checked, locale) =>
+        call(`${loc(l)}/plates/${id}/check?locale=${locale}`, {
+          method: 'POST',
+          body: { checked },
+        }),
+      reject: (l, id, reason) =>
+        call(`${loc(l)}/plates/${id}/reject`, { method: 'POST', body: { reason } }),
+      passCheck: (l, id) => call(`${loc(l)}/plates/${id}/pass-check`, { method: 'POST' }),
+      serve: (l, id) => call(`${loc(l)}/plates/${id}/serve`, { method: 'POST' }),
     },
     staff: (slug) => call(`/auth/locations/${encodeURIComponent(slug)}/staff`),
     loginPin: (body) => call('/auth/pin', { method: 'POST', body }),
