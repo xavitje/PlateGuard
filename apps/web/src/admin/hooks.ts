@@ -13,7 +13,8 @@ type Reads =
   | 'floors'
   | 'staff'
   | 'settings'
-  | 'printers';
+  | 'printers'
+  | 'pos';
 
 /** What the signed-in user may do at this location. Only for hiding buttons: the API decides. */
 export function useCan(): (p: Permission) => boolean {

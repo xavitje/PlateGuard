@@ -19,6 +19,7 @@ import {
   OPEN_PLATE_STATUSES,
   ServiceRepository,
   type PlateStatus,
+  type PosLineRef,
   type TableRow,
 } from './service.repository.js';
 
@@ -150,6 +151,23 @@ export class ServiceService {
     dishId: string,
     userId: string,
   ): Promise<TableResponse> {
+    await this.place(ctx, locationId, label, seat, dishId, userId);
+    return this.table(ctx, locationId, label);
+  }
+
+  /**
+   * Puts a plate on a seat, judged against the seat's allergies. With a POS line as ref, the
+   * same line is placed only once: a second attempt answers null.
+   */
+  async place(
+    ctx: TenantContext,
+    locationId: string,
+    label: string,
+    seat: number,
+    dishId: string,
+    userId: string,
+    ref?: PosLineRef,
+  ): Promise<string | null> {
     const t = await this.requireTable(ctx, locationId, label);
     if (seat > t.seats) throw new BadRequestException({ code: 'SEAT_NOT_AT_TABLE' });
     const [dishRow, menu] = await Promise.all([
@@ -162,7 +180,7 @@ export class ServiceService {
     const guest = t.bySeat.find((s) => s.seat === seat)?.allergies ?? [];
     const input = { dish, guest };
     const result = assess(input);
-    await this.service.createOrder(
+    return this.service.createOrder(
       ctx,
       locationId,
       t.id,
@@ -172,8 +190,8 @@ export class ServiceService {
       input,
       userId,
       menu.versionId,
+      ref,
     );
-    return this.table(ctx, locationId, label);
   }
 
   async cancelOrder(

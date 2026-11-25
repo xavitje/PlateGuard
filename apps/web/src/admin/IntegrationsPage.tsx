@@ -2,11 +2,12 @@ import type { PrinterAddress, PrinterSummary } from '@plateguard/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAdmin, useAdminSave } from './hooks';
+import { PosSection } from './PosSection';
 import { button, Field, input, primary, SaveError } from './ui';
 
 /**
- * Connections to the restaurant's own systems. For now the kitchen printer: allergy tickets print
- * on it with every allergy order, for kitchens without a screen. The POS link follows later.
+ * Connections to the restaurant's own systems: the kitchen printer, for kitchens without a
+ * screen, and the till (for now a Square test account) as a source of orders.
  */
 export function IntegrationsPage() {
   const { t } = useTranslation();
@@ -71,6 +72,8 @@ export function IntegrationsPage() {
         </form>
         <SaveError error={add.error} />
       </section>
+
+      <PosSection />
     </div>
   );
 }

@@ -818,6 +818,8 @@ model InboundEvent {
   status         QueueStatus @default(PENDING)
   attempts       Int         @default(0)
   lastError      String?     @map("last_error")
+  /// What handling the message did, for admin: plates added, lines skipped and why.
+  result         Json?
   receivedAt     DateTime    @default(now()) @map("received_at")
   processedAt    DateTime?   @map("processed_at")
 

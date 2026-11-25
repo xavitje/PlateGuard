@@ -40,6 +40,8 @@ export interface InboundEvent {
   idempotencyKey: string;
   type: 'order.updated' | 'order.closed' | 'ticket.confirmed';
   order?: CanonicalOrder;
+  /** When the message names the order but does not carry it: fetched with getOrder. */
+  externalOrderId?: string;
   ticket?: TicketConfirmed;
 }
 
@@ -51,6 +53,8 @@ export interface TicketConfirmed {
 export interface ConnectResult {
   ok: boolean;
   error?: string;
+  /** What the system told about itself, kept in the connection's config (name, currency). */
+  info?: Record<string, string>;
 }
 
 export interface HealthStatus {
@@ -84,6 +88,7 @@ export interface IntegrationAdapter {
 export interface PosAdapter extends IntegrationAdapter {
   listMenuItems(conn: Connection): Promise<CanonicalMenuItem[]>;
   pullOrders(conn: Connection, since: Date): Promise<CanonicalOrder[]>;
+  getOrder?(conn: Connection, externalOrderId: string): Promise<CanonicalOrder | null>;
   verifyWebhook?(req: RawRequest, conn: Connection): boolean;
   parseWebhook?(req: RawRequest): InboundEvent[];
   annotateOrder?(conn: Connection, ref: ExternalOrderRef, note: string): Promise<void>;
@@ -111,6 +116,28 @@ export function isTicketPrinter(a: AnyAdapter | undefined): a is TicketPrinter {
 }
 
 export type AnyAdapter = PosAdapter | KdsAdapter | PrinterAdapter;
+
+export function isPosAdapter(a: AnyAdapter | undefined): a is PosAdapter {
+  return !!a && a.kinds.includes('POS') && 'pullOrders' in a;
+}
+
+/**
+ * A test POS (a sandbox account): PlateGuard can fill its catalog and ring up orders in it, so the
+ * whole path (order in the POS, webhook, plate in the kitchen) can be tried without a till.
+ */
+export interface SandboxPos extends PosAdapter {
+  /** Creates catalog items; answers the external id for each key. */
+  pushMenu(conn: Connection, items: { key: string; name: string }[]): Promise<Map<string, string>>;
+  /** Rings up an order the way a till would; answers its external id. */
+  placeOrder(
+    conn: Connection,
+    order: { table: string; lines: { externalItemId: string; seat: number }[] },
+  ): Promise<string>;
+}
+
+export function isSandboxPos(a: AnyAdapter | undefined): a is SandboxPos {
+  return isPosAdapter(a) && typeof (a as { placeOrder?: unknown }).placeOrder === 'function';
+}
 
 /** Adapters that can receive webhooks implement verifyWebhook. */
 export function canVerifyWebhooks(

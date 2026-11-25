@@ -26,6 +26,8 @@ export const CanonicalOrderZ = z.object({
   externalOrderId: z.string(),
   externalTableRef: z.string().optional(),
   openedAt: z.iso.datetime(),
+  /** Closed or cancelled orders add no plates. Missing: open. */
+  status: z.enum(['OPEN', 'CLOSED', 'CANCELLED']).optional(),
   lines: z.array(CanonicalOrderLineZ),
   /** Only when the POS reports allergies per seat (capability order.allergens). */
   seatAllergies: z

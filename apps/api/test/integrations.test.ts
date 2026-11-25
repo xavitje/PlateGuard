@@ -4,6 +4,7 @@ import type { ConnectionsRepository } from '../src/integrations/core/connections
 import type { InboxRepository } from '../src/integrations/core/inbox.repository.js';
 import type { Connection } from '../src/integrations/core/ports.js';
 import { AdapterRegistry } from '../src/integrations/core/registry.js';
+import { InboxDispatcher } from '../src/integrations/core/inbox-dispatcher.js';
 import { HooksService } from '../src/integrations/hooks.service.js';
 
 const conn = (provider: string, id = 'c1'): Connection => ({
@@ -57,12 +58,18 @@ describe('HooksService', () => {
         return true;
       },
     } as unknown as InboxRepository;
+    const handled: string[] = [];
+    const dispatcher = new InboxDispatcher();
+    dispatcher.handle(async (id) => {
+      handled.push(id);
+    });
     const service = new HooksService(
       new AdapterRegistry().register(new FakePosAdapter()),
       connections,
       inbox,
+      dispatcher,
     );
-    return { service };
+    return { service, handled };
   }
 
   const req = (token: string) => ({
@@ -70,8 +77,8 @@ describe('HooksService', () => {
     body: Buffer.from(JSON.stringify(order)),
   });
 
-  it('stores a verified message once and ignores the duplicate', async () => {
-    const { service } = setup();
+  it('stores a verified message once, hands it on, and ignores the duplicate', async () => {
+    const { service, handled } = setup();
     expect(await service.receive('fake-pos', 'c1', req('tok'))).toEqual({
       stored: 1,
       duplicates: 0,
@@ -80,6 +87,7 @@ describe('HooksService', () => {
       stored: 0,
       duplicates: 1,
     });
+    expect(handled).toEqual(['c1']);
   });
 
   it('rejects a bad token and an unknown connection', async () => {

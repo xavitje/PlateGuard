@@ -6,3 +6,4 @@ export * from './admin.js';
 export * from './kitchen.js';
 export * from './guest.js';
 export * from './print.js';
+export * from './pos.js';
