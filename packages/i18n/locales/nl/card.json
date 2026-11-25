@@ -1,0 +1,12 @@
+{
+  "title": "Allergeneninformatie",
+  "subtitle": "{location} · menukaart versie {version}, gepubliceerd {date}",
+  "legend": {
+    "CONTAINS": "Bevat",
+    "ON_REQUEST": "Kan op verzoek worden weggelaten",
+    "TRACES": "Kan sporen bevatten",
+    "UNKNOWN": "Onbekend: vraag het ons"
+  },
+  "footer": "De 14 allergenen van EU-verordening 1169/2011. Recepten kunnen veranderen: meld je allergie altijd bij de bediening.",
+  "page": "Pagina {n} van {of}"
+}

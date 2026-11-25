@@ -55,6 +55,8 @@ export interface AdminClient {
   menuDraft(location: string): Promise<MenuDraftResponse>;
   setMenuItems(location: string, dishIds: string[]): Promise<MenuDraftResponse>;
   publishMenu(location: string): Promise<MenuDraftResponse>;
+  /** The printable allergen card of a published menu version, as a PDF. */
+  allergenCard(location: string, versionId: string, locale: string): Promise<Blob>;
   floors(location: string): Promise<AdminFloor[]>;
   saveFloor(location: string, id: string | null, body: FloorDraft): Promise<AdminFloor[]>;
   orderFloors(location: string, floorIds: string[]): Promise<AdminFloor[]>;
@@ -119,7 +121,10 @@ export function createHttpClient(
   getToken: () => string | null,
   onSignedOut: () => void,
 ): ServiceClient {
-  const call = async <T>(path: string, init?: { method?: string; body?: unknown }) => {
+  const call = async <T>(
+    path: string,
+    init?: { method?: string; body?: unknown; blob?: boolean },
+  ) => {
     const token = getToken();
     const res = await fetch(`/api${path}`, {
       method: init?.method ?? 'GET',
@@ -138,6 +143,7 @@ export function createHttpClient(
       throw new ApiError(res.status, err.code ?? 'HTTP_ERROR', err.details);
     }
     if (res.status === 204) return undefined as T;
+    if (init?.blob) return (await res.blob()) as T;
     return (await res.json()) as T;
   };
   const loc = (l: string) => `/locations/${encodeURIComponent(l)}`;
@@ -160,6 +166,8 @@ export function createHttpClient(
       setMenuItems: (l, dishIds) =>
         call(adm(l, 'menu/items'), { method: 'PUT', body: { dishIds } }),
       publishMenu: (l) => call(adm(l, 'menu/publish'), { method: 'POST' }),
+      allergenCard: (l, id, locale) =>
+        call(adm(l, `menu/versions/${id}/card.pdf?locale=${locale}`), { blob: true }),
       floors: (l) => call(adm(l, 'floors')),
       saveFloor: (l, id, body) => save(l, 'floors', id, body),
       orderFloors: (l, floorIds) =>

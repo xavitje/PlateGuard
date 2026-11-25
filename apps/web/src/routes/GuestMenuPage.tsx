@@ -96,6 +96,16 @@ export function GuestMenuPage() {
           </li>
         ))}
       </ul>
+      {menu.data?.published && (
+        <a
+          className="mt-5 inline-flex min-h-10 items-center text-[14px] font-medium text-brand-ink"
+          href={`/api/public/locations/${encodeURIComponent(slug)}/allergen-card.pdf?locale=${lang}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {t('guest:card')}
+        </a>
+      )}
       <p className="mt-6 text-[13px] text-soft">{t('guest:disclaimer')}</p>
     </div>
   );

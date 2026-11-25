@@ -32,6 +32,10 @@ describe('GuestMenuPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Gluten' }));
     expect(await screen.findByText('Jus replaced by GF jus')).toBeTruthy();
     expect(router.state.location.search).toBe('?avoid=GLUTEN');
+    const card = screen.getByRole('link', { name: 'Allergen card to print (PDF)' });
+    expect(card.getAttribute('href')).toBe(
+      '/api/public/locations/demo/allergen-card.pdf?locale=en',
+    );
   });
 
   it('keeps the choice from the link', async () => {

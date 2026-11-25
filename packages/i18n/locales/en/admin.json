@@ -103,7 +103,10 @@
     "history": "Published versions",
     "version": "Version {version}",
     "live": "live",
-    "dishCount": "{count, plural, one {# dish} other {# dishes}}"
+    "dishCount": "{count, plural, one {# dish} other {# dishes}}",
+    "card": "Allergen card {language} (PDF)",
+    "cardError": "Could not open the allergen card.",
+    "cardHint": "Each published version has its allergen card, made from exactly that version. Guests find the live one under the allergen menu."
   },
   "floors": {
     "intro": "Floors appear in this order in the service app. A hidden floor, like a closed terrace, disappears from service and keeps its tables.",

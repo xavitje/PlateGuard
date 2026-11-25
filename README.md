@@ -168,6 +168,16 @@ needs no sign-in and reads `GET /api/public/locations/<slug>/menu?locale=nl&avoi
 - The choice stays in the address (`?avoid=GLUTEN`), so a reload or a shared link keeps it. The page
   never says "safe" and tells the guest to mention their allergy to their server.
 
+## Allergen card
+
+Every published menu version has a printable allergen card (PDF, landscape A4): each dish against the
+14 EU allergens, marked as contains, can be left out on request, may contain traces, or unknown. The
+marks come from the same engine as the app (`allergenCard` in `packages/domain`), and the card is drawn
+from the frozen version, so the card of a version never changes and exists from the moment it is
+published. Staff open any version's card from Menus (`/api/locations/<id>/admin/menu/versions/<id>/card.pdf`);
+guests get the live one from the guest menu (`/api/public/locations/<slug>/allergen-card.pdf`). Both
+take `?locale=nl` or `en`.
+
 ## Admin: recipes, menu, floor plan and staff
 
 `/admin` is the desktop environment. Each section shows only to roles that may use it; the API checks
@@ -254,5 +264,5 @@ never green ("no allergen found in the recipe", not "safe"), and unknown is alwa
 
 ## Not in this skeleton yet
 
-The PDF allergen card on publishing, remaking a plate, real-time updates (SSE; the kitchen polls every 5 seconds for now), the inbox worker and
+Remaking a plate, real-time updates (SSE; the kitchen polls every 5 seconds for now), the inbox worker and
 outbox dispatcher, real adapters, incidents and the dashboard. Each arrives in its phase of the plan.

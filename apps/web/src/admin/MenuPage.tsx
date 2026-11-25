@@ -1,6 +1,7 @@
 import type { MenuDraftResponse } from '@plateguard/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useClient, useLocationId } from '../service/ServiceProvider';
 import { useAdmin, useAdminSave, useCan } from './hooks';
 import { button, primary, SaveError, Toggle } from './ui';
 
@@ -21,6 +22,23 @@ export function MenuPage() {
       ),
   );
   const publish = useAdminSave((c, l) => c.publishMenu(l));
+  const client = useClient();
+  const loc = useLocationId();
+  const [cardError, setCardError] = useState(false);
+  /** Opens the PDF in a new tab. The tab opens at once, so the browser does not block it. */
+  const openCard = async (versionId: string, locale: string) => {
+    const tab = window.open('', '_blank');
+    setCardError(false);
+    try {
+      const blob = await client.admin.allergenCard(loc!, versionId, locale);
+      const url = URL.createObjectURL(blob);
+      if (tab) tab.location.href = url;
+      else window.location.assign(url);
+    } catch {
+      tab?.close();
+      setCardError(true);
+    }
+  };
   const [confirming, setConfirming] = useState(false);
   if (!draft) return <p className="text-soft">{t('common:loading')}</p>;
 
@@ -169,9 +187,27 @@ export function MenuPage() {
                 <span className="text-soft">
                   {t('admin:menu.dishCount', { count: v.dishCount })} · {date(v.publishedAt)}
                 </span>
+                <span className="flex w-full gap-3">
+                  {(['nl', 'en'] as const).map((locale) => (
+                    <button
+                      key={locale}
+                      type="button"
+                      className="text-brand-ink underline"
+                      onClick={() => void openCard(v.id, locale)}
+                    >
+                      {t('admin:menu.card', { language: locale.toUpperCase() })}
+                    </button>
+                  ))}
+                </span>
               </li>
             ))}
           </ul>
+          {cardError && (
+            <p role="alert" className="mt-2 text-[13.5px] text-red">
+              {t('admin:menu.cardError')}
+            </p>
+          )}
+          <p className="mt-2 text-[13px] text-soft">{t('admin:menu.cardHint')}</p>
         </section>
       )}
     </div>

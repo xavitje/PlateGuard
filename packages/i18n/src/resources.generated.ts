@@ -2,6 +2,7 @@
 import en_admin from '../locales/en/admin.json' with { type: 'json' };
 import en_alerts from '../locales/en/alerts.json' with { type: 'json' };
 import en_auth from '../locales/en/auth.json' with { type: 'json' };
+import en_card from '../locales/en/card.json' with { type: 'json' };
 import en_common from '../locales/en/common.json' with { type: 'json' };
 import en_guest from '../locales/en/guest.json' with { type: 'json' };
 import en_kitchen from '../locales/en/kitchen.json' with { type: 'json' };
@@ -10,15 +11,16 @@ import en_tables from '../locales/en/tables.json' with { type: 'json' };
 import nl_admin from '../locales/nl/admin.json' with { type: 'json' };
 import nl_alerts from '../locales/nl/alerts.json' with { type: 'json' };
 import nl_auth from '../locales/nl/auth.json' with { type: 'json' };
+import nl_card from '../locales/nl/card.json' with { type: 'json' };
 import nl_common from '../locales/nl/common.json' with { type: 'json' };
 import nl_guest from '../locales/nl/guest.json' with { type: 'json' };
 import nl_kitchen from '../locales/nl/kitchen.json' with { type: 'json' };
 import nl_profile from '../locales/nl/profile.json' with { type: 'json' };
 import nl_tables from '../locales/nl/tables.json' with { type: 'json' };
 
-export const NAMESPACES = ["admin","alerts","auth","common","guest","kitchen","profile","tables"] as const;
+export const NAMESPACES = ["admin","alerts","auth","card","common","guest","kitchen","profile","tables"] as const;
 
 export const resources = {
-  "en": { admin: en_admin, alerts: en_alerts, auth: en_auth, common: en_common, guest: en_guest, kitchen: en_kitchen, profile: en_profile, tables: en_tables },
-  "nl": { admin: nl_admin, alerts: nl_alerts, auth: nl_auth, common: nl_common, guest: nl_guest, kitchen: nl_kitchen, profile: nl_profile, tables: nl_tables },
+  "en": { admin: en_admin, alerts: en_alerts, auth: en_auth, card: en_card, common: en_common, guest: en_guest, kitchen: en_kitchen, profile: en_profile, tables: en_tables },
+  "nl": { admin: nl_admin, alerts: nl_alerts, auth: nl_auth, card: nl_card, common: nl_common, guest: nl_guest, kitchen: nl_kitchen, profile: nl_profile, tables: nl_tables },
 } as const;
