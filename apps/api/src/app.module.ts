@@ -8,6 +8,7 @@ import { SessionGuard } from './modules/auth/session.guard.js';
 import { CardModule } from './modules/card/card.module.js';
 import { GuestModule } from './modules/guest/guest.module.js';
 import { KitchenModule } from './modules/kitchen/kitchen.module.js';
+import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { IncidentModule } from './modules/incident/incident.module.js';
 import { PosModule } from './modules/pos/pos.module.js';
 import { PrintModule } from './modules/print/print.module.js';
@@ -32,6 +33,7 @@ import { SetupModule } from './modules/setup/setup.module.js';
     PrintModule,
     PosModule,
     IncidentModule,
+    DashboardModule,
     GuestModule,
     CardModule,
     RecipesModule,

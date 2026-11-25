@@ -30,6 +30,7 @@ export function createMemoryAdmin(
   | keyof PrinterAdmin
   | keyof PosAdmin
   | keyof IncidentAdmin
+  | 'dashboard'
 > {
   const ingredients = new Map<string, IngredientResponse>();
   const equipment = new Map<string, EquipmentResponse>();

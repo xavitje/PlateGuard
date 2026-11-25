@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router';
+import { DashboardPage } from './admin/DashboardPage';
 import { FloorPlanPage } from './admin/FloorPlanPage';
 import { MenuPage } from './admin/MenuPage';
 import { RecipesPage } from './admin/RecipesPage';
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
       { path: 'staff', element: <StaffPage /> },
       { path: 'integrations', element: <IntegrationsPage /> },
       { path: 'incidents', element: <IncidentsPage /> },
+      { path: 'dashboard', element: <DashboardPage /> },
       { path: ':section', element: <AdminSection /> },
     ],
   },
