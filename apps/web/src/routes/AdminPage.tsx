@@ -10,7 +10,7 @@ const SECTIONS: { slug: string; key: string; permission?: Permission }[] = [
   { slug: 'recipes', key: 'admin:nav.recipes', permission: 'menu.edit' },
   { slug: 'menus', key: 'admin:nav.menus', permission: 'menu.edit' },
   { slug: 'floor-plan', key: 'admin:nav.floorPlan', permission: 'floorplan.edit' },
-  { slug: 'integrations', key: 'admin:nav.integrations' },
+  { slug: 'integrations', key: 'admin:nav.integrations', permission: 'integrations.manage' },
   { slug: 'webhooks', key: 'admin:nav.webhooks' },
   { slug: 'staff', key: 'admin:nav.staff', permission: 'staff.manage' },
   { slug: 'dashboard', key: 'admin:nav.dashboard' },

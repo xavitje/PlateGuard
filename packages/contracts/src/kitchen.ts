@@ -27,6 +27,8 @@ export interface KitchenResponse {
   ready: KitchenTicketResponse[];
   /** When on, a runner checks each allergy plate at the pass before it is served. */
   passCheck: boolean;
+  /** Active kitchen printers: tickets print there, and the kitchen can print one again. */
+  printers: number;
 }
 
 /** The cook confirms a plate with the checklist ids they ticked. All of them are needed. */

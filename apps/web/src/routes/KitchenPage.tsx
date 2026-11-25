@@ -79,7 +79,12 @@ export function KitchenPage() {
         )}
 
         {ticket && (
-          <TicketCard key={ticket.plateId} ticket={ticket} passCheck={!!data?.passCheck} />
+          <TicketCard
+            key={ticket.plateId}
+            ticket={ticket}
+            passCheck={!!data?.passCheck}
+            printers={data?.printers ?? 0}
+          />
         )}
       </div>
     </div>
@@ -152,7 +157,16 @@ function ItemLabel({ item }: { item: ChecklistItem }) {
   }
 }
 
-function TicketCard({ ticket, passCheck }: { ticket: KitchenTicketResponse; passCheck: boolean }) {
+function TicketCard({
+  ticket,
+  passCheck,
+  printers,
+}: {
+  ticket: KitchenTicketResponse;
+  passCheck: boolean;
+  /** With a kitchen printer, the ticket can be printed again. */
+  printers: number;
+}) {
   const { t } = useTranslation();
   const can = useCan();
   const name = useSubjectName();
@@ -160,6 +174,7 @@ function TicketCard({ ticket, passCheck }: { ticket: KitchenTicketResponse; pass
   const [ticked, setTicked] = useState<Set<string>>(new Set());
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
+  const [printed, setPrinted] = useState(false);
   const toCheck = ticket.status === 'ASSESSED' || ticket.status === 'IN_KITCHEN';
   const left = ticket.checklist.filter((i) => !ticked.has(i.id)).length;
   const toggle = (id: string) =>
@@ -316,6 +331,20 @@ function TicketCard({ ticket, passCheck }: { ticket: KitchenTicketResponse; pass
           {can('plate.reject') && (
             <button className={`${grey} flex-none`} onClick={() => setRejecting(true)}>
               {t('kitchen:reject')}
+            </button>
+          )}
+          {printers > 0 && (
+            <button
+              className={`${grey} flex-none`}
+              disabled={action.isPending}
+              onClick={() =>
+                action.mutate(
+                  { kind: 'reprint', plateId: ticket.plateId },
+                  { onSuccess: () => setPrinted(true) },
+                )
+              }
+            >
+              {printed ? t('kitchen:print.printed') : t('kitchen:print.again')}
             </button>
           )}
         </div>

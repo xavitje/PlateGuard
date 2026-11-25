@@ -4,6 +4,7 @@
  * "which adapter of this location can order.read?".
  */
 import type { CanonicalMenuItem, CanonicalOrder, KitchenTicket } from '@plateguard/contracts';
+import type { TicketLine } from './ticket-document.js';
 
 export type Capability =
   | 'menu.read' // fetch the menu and items, for mapping
@@ -96,6 +97,17 @@ export interface KdsAdapter extends IntegrationAdapter {
 
 export interface PrinterAdapter extends IntegrationAdapter {
   print(conn: Connection, t: KitchenTicket): Promise<PrintResult>; // ESC/POS, CloudPRNT
+}
+
+/** A printer that fetches its own jobs and needs them drawn in one of its formats. */
+export interface TicketPrinter extends PrinterAdapter {
+  /** The formats the server offers, best first. */
+  readonly mediaTypes: readonly string[];
+  render(lines: TicketLine[], type: string, width?: number): { type: string; body: string };
+}
+
+export function isTicketPrinter(a: AnyAdapter | undefined): a is TicketPrinter {
+  return typeof (a as { render?: unknown } | undefined)?.render === 'function';
 }
 
 export type AnyAdapter = PosAdapter | KdsAdapter | PrinterAdapter;

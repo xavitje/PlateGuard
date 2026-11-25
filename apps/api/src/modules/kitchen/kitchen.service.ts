@@ -44,9 +44,10 @@ export class KitchenService {
   ) {}
 
   async tickets(ctx: TenantContext, locationId: string, locale: string): Promise<KitchenResponse> {
-    const [plates, passCheck] = await Promise.all([
+    const [plates, passCheck, printers] = await Promise.all([
       this.plates(ctx, locationId),
       this.service.passCheck(ctx, locationId),
+      this.service.printers(ctx, locationId),
     ]);
     const judge = await this.judge(ctx, locationId, locale, plates);
     const byAge = (a: KitchenTicketResponse, b: KitchenTicketResponse) =>
@@ -59,7 +60,19 @@ export class KitchenService {
       queue: tickets.filter((t) => TO_CHECK.includes(t.status)).sort(byAge),
       ready: tickets.filter((t) => AT_PASS.includes(t.status)).sort(byAge),
       passCheck,
+      printers,
     };
+  }
+
+  /** One plate's ticket as the kitchen sees it now, or null when the plate is no longer open. */
+  async ticket(
+    ctx: TenantContext,
+    locationId: string,
+    plateId: string,
+    locale: string,
+  ): Promise<KitchenTicketResponse | null> {
+    const plate = await this.plate(ctx, locationId, plateId).catch(() => null);
+    return plate ? (await this.judge(ctx, locationId, locale, [plate]))(plate) : null;
   }
 
   async check(

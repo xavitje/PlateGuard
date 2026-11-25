@@ -25,6 +25,9 @@ import type {
   FloorResponse,
   MeResponse,
   MenuResponse,
+  PrinterAddress,
+  PrinterInput,
+  PrintersResponse,
   SeatUpdateInput,
   TableResponse,
 } from '@plateguard/contracts';
@@ -69,6 +72,13 @@ export interface AdminClient {
   removeStaff(location: string, id: string): Promise<StaffMember[]>;
   settings(location: string): Promise<LocationSettings>;
   saveSettings(location: string, body: LocationSettings): Promise<void>;
+  /** Kitchen printers that fetch allergy tickets themselves (Star CloudPRNT). */
+  printers(location: string): Promise<PrintersResponse>;
+  /** Answers with the address to enter in the printer: shown once. */
+  addPrinter(location: string, body: PrinterInput): Promise<PrinterAddress>;
+  newPrinterKey(location: string, id: string): Promise<PrinterAddress>;
+  testPrinter(location: string, id: string): Promise<void>;
+  removePrinter(location: string, id: string): Promise<PrintersResponse>;
 }
 
 /** The kitchen display and the pass. Writes answer nothing: the screen reloads its tickets. */
@@ -78,6 +88,8 @@ export interface KitchenClient {
   reject(location: string, plateId: string, reason: string): Promise<void>;
   passCheck(location: string, plateId: string): Promise<void>;
   serve(location: string, plateId: string): Promise<void>;
+  /** The plate's allergy ticket again, on every kitchen printer. */
+  reprint(location: string, plateId: string): Promise<void>;
 }
 
 /** Everything the service app reads and writes. One implementation per source. */
@@ -182,6 +194,11 @@ export function createHttpClient(
       removeStaff: (l, id) => call(adm(l, `staff/${id}`), { method: 'DELETE' }),
       settings: (l) => call(adm(l, 'settings')),
       saveSettings: (l, body) => call(adm(l, 'settings'), { method: 'PUT', body }),
+      printers: (l) => call(adm(l, 'printers')),
+      addPrinter: (l, body) => call(adm(l, 'printers'), { method: 'POST', body }),
+      newPrinterKey: (l, id) => call(adm(l, `printers/${id}/key`), { method: 'POST' }),
+      testPrinter: (l, id) => call(adm(l, `printers/${id}/test`), { method: 'POST' }),
+      removePrinter: (l, id) => call(adm(l, `printers/${id}`), { method: 'DELETE' }),
     },
     kitchen: {
       tickets: (l, locale) => call(`${loc(l)}/kitchen?locale=${locale}`),
@@ -194,6 +211,7 @@ export function createHttpClient(
         call(`${loc(l)}/plates/${id}/reject`, { method: 'POST', body: { reason } }),
       passCheck: (l, id) => call(`${loc(l)}/plates/${id}/pass-check`, { method: 'POST' }),
       serve: (l, id) => call(`${loc(l)}/plates/${id}/serve`, { method: 'POST' }),
+      reprint: (l, id) => call(`${loc(l)}/plates/${id}/print`, { method: 'POST' }),
     },
     staff: (slug) => call(`/auth/locations/${encodeURIComponent(slug)}/staff`),
     loginPin: (body) => call('/auth/pin', { method: 'POST', body }),
