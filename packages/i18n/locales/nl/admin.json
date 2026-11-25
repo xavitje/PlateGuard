@@ -36,7 +36,8 @@
     "STAFF_SELF": "Je kunt je eigen rollen niet aanpassen.",
     "STAFF_ORG_ROLE": "Deze persoon heeft een rol op elke locatie. Een eigenaar past dat aan.",
     "INCIDENT_FOLLOW_UP_INCOMPLETE": "Vul de oorzaak en de maatregel in voordat je afsluit.",
-    "INCIDENT_NOT_FOUND": "Dit incident bestaat niet meer."
+    "INCIDENT_NOT_FOUND": "Dit incident bestaat niet meer.",
+    "PIN_TAKEN": "Iemand anders hier met dezelfde voornaam heeft deze pincode al. Kies een andere."
   },
   "fields": {
     "name": "Naam",

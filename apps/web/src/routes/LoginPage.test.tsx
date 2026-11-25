@@ -33,12 +33,18 @@ afterEach(cleanup);
 describe('LoginPage', () => {
   it('sends a signed-out device to sign in, then back to the tables', async () => {
     const router = renderApp();
-    fireEvent.click(await screen.findByRole('button', { name: 'Demo Waiter' }));
-    fireEvent.change(screen.getByLabelText('PIN for Demo Waiter'), { target: { value: '0000' } });
+    expect(screen.queryByRole('button', { name: 'Demo Waiter' })).toBeNull();
+    fireEvent.change(await screen.findByLabelText('First name'), { target: { value: 'Someone' } });
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(await screen.findByText(/Nobody with this first name/)).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'demo' } });
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '0000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText('Wrong PIN. 4 tries left before it locks.')).toBeTruthy();
 
-    fireEvent.change(screen.getByLabelText('PIN for Demo Waiter'), { target: { value: '1234' } });
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText('Tables screen')).toBeTruthy();
     expect(router.state.location.pathname).toBe('/tables');
@@ -50,8 +56,8 @@ describe('LoginPage', () => {
     ['MANAGER', 'Admin screen'],
   ] as const)('one sign-in: a %s starts on their own screen', async (role, screenText) => {
     renderApp(role);
-    fireEvent.click(await screen.findByRole('button', { name: 'Demo Waiter' }));
-    fireEvent.change(screen.getByLabelText('PIN for Demo Waiter'), { target: { value: '1234' } });
+    fireEvent.change(await screen.findByLabelText('First name'), { target: { value: 'Demo' } });
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText(screenText)).toBeTruthy();
   });
