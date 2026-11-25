@@ -17,7 +17,12 @@ export interface SeatRow {
   seat: number;
   noAllergy: boolean;
   allergies: GuestAllergy[];
-  orders: { id: string; dishId: string; outcome: Assessment['outcome'] }[];
+  orders: {
+    id: string;
+    dishId: string;
+    outcome: Assessment['outcome'];
+    menuVersionId: string | null;
+  }[];
 }
 
 export interface TableRow {
@@ -34,7 +39,7 @@ const guestInclude = {
   allergies: { include: { ingredient: { select: { id: true, name: true } } } },
   plates: {
     where: { status: { in: [...OPEN_PLATE_STATUSES] } },
-    include: { assessment: { select: { outcome: true } } },
+    include: { assessment: { select: { outcome: true, menuVersionId: true } } },
     orderBy: { createdAt: 'asc' },
   },
 } satisfies Prisma.GuestInclude;
@@ -53,7 +58,16 @@ function toSeat(g: GuestWithData): SeatRow {
       return { custom: a.customLabel ?? '', severity };
     }),
     orders: g.plates.flatMap((p) =>
-      p.dishId ? [{ id: p.id, dishId: p.dishId, outcome: p.assessment?.outcome ?? 'UNKNOWN' }] : [],
+      p.dishId
+        ? [
+            {
+              id: p.id,
+              dishId: p.dishId,
+              outcome: p.assessment?.outcome ?? 'UNKNOWN',
+              menuVersionId: p.menuVersionId ?? p.assessment?.menuVersionId ?? null,
+            },
+          ]
+        : [],
     ),
   };
 }
@@ -127,6 +141,7 @@ export class ServiceRepository {
     assessment: Assessment,
     input: unknown,
     userId: string,
+    menuVersionId: string | null = null,
   ): Promise<string> {
     return this.prisma.forTenant(ctx, async (tx) => {
       const guestId = await ensureGuest(tx, locationId, tableId, seat, userId);
@@ -137,6 +152,7 @@ export class ServiceRepository {
           visitId: guest.visitId,
           guestId,
           dishId: dish.id,
+          menuVersionId,
           course: dish.course,
           status: 'ASSESSED',
           qrToken: randomBytes(12).toString('base64url'),
@@ -150,6 +166,7 @@ export class ServiceRepository {
           reasons: assessment.reasons as unknown as Prisma.InputJsonValue,
           input: input as Prisma.InputJsonValue,
           engineVersion: assessment.engineVersion,
+          menuVersionId,
           inputHash: assessment.inputHash,
         },
       });

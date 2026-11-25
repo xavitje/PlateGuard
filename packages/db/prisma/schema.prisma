@@ -386,6 +386,7 @@ model Dish {
   location     Location          @relation(fields: [locationId], references: [id])
   components   DishComponent[]
   translations DishTranslation[]
+  menuItems    MenuItem[]
 
   @@index([locationId])
   @@map("dish")
@@ -424,9 +425,24 @@ model Menu {
 
   location Location      @relation(fields: [locationId], references: [id])
   versions MenuVersion[]
+  items    MenuItem[]
 
   @@index([locationId])
   @@map("menu")
+}
+
+/// The draft: which dishes are on the menu, in which order. Service sees them only after publishing.
+model MenuItem {
+  menuId     String @map("menu_id") @db.Uuid
+  dishId     String @map("dish_id") @db.Uuid
+  locationId String @map("location_id") @db.Uuid
+  sortOrder  Int    @default(0) @map("sort_order")
+
+  menu Menu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  dish Dish @relation(fields: [dishId], references: [id], onDelete: Cascade)
+
+  @@id([menuId, dishId])
+  @@map("menu_item")
 }
 
 /// Publishing freezes a snapshot of every recipe on the menu; assessments point at it.

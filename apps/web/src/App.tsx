@@ -1,4 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router';
+import { MenuPage } from './admin/MenuPage';
+import { RecipesPage } from './admin/RecipesPage';
 import { AdminLayout, AdminSection } from './routes/AdminPage';
 import { AlertsPage } from './routes/AlertsPage';
 import { GuestMenuPage } from './routes/GuestMenuPage';
@@ -34,6 +36,8 @@ export const router = createBrowserRouter([
     element: <AdminLayout />,
     children: [
       { index: true, element: <Navigate to="recipes" replace /> },
+      { path: 'recipes', element: <RecipesPage /> },
+      { path: 'menus', element: <MenuPage /> },
       { path: ':section', element: <AdminSection /> },
     ],
   },

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { NavLink, Outlet, useParams } from 'react-router';
+import { Navigate, NavLink, Outlet, useParams } from 'react-router';
 import { Logo } from '../components/icons';
+import { useSession } from '../service/ServiceProvider';
 
 const SECTIONS = [
   { slug: 'recipes', key: 'admin:nav.recipes' },
@@ -15,6 +16,8 @@ const SECTIONS = [
 /** Admin: a separate desktop environment with a sidebar, not part of the three tabs. */
 export function AdminLayout() {
   const { t } = useTranslation();
+  const { signedIn } = useSession();
+  if (!signedIn) return <Navigate to="/login" replace />;
   return (
     <div className="grid min-h-dvh bg-bg md:grid-cols-[220px_minmax(0,1fr)]">
       <aside className="border-line bg-mist p-4 md:border-r">

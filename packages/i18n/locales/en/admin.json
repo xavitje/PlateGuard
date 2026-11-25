@@ -9,5 +9,93 @@
     "staff": "Staff",
     "dashboard": "Dashboard"
   },
-  "comingSoon": "This section is built in a later phase."
+  "comingSoon": "This section is built in a later phase.",
+  "filter": "Filter",
+  "none": "Nothing here yet.",
+  "pick": "Pick one on the left, or add a new one.",
+  "save": "Save",
+  "add": "Add",
+  "cancel": "Cancel",
+  "moveUp": "Move {name} up",
+  "moveDown": "Move {name} down",
+  "remove": "Remove {name}",
+  "errors": {
+    "FORBIDDEN": "You are not allowed to do this.",
+    "COMPONENT_CYCLE": "A component cannot contain itself, also not through another component.",
+    "UNKNOWN_INGREDIENT": "One of the ingredients no longer exists. Reload and try again.",
+    "UNKNOWN_EQUIPMENT": "One of the equipment items no longer exists. Reload and try again.",
+    "UNKNOWN_COMPONENT": "One of the components no longer exists. Reload and try again.",
+    "DISH_NOT_FOUND": "This dish no longer exists. Reload and try again.",
+    "MENU_EMPTY": "Put at least one dish on the menu before publishing."
+  },
+  "fields": {
+    "name": "Name",
+    "nameNl": "Name in Dutch"
+  },
+  "recipes": {
+    "intro": "Changes here stay in the draft. Service keeps working from the published menu until you publish again under Menus.",
+    "tabs": {
+      "ingredients": "Ingredients",
+      "components": "Components",
+      "dishes": "Dishes"
+    }
+  },
+  "ingredients": {
+    "new": "New ingredient",
+    "unverified": "Unverified",
+    "usedIn": "{count, plural, one {Used in # component} other {Used in # components}}",
+    "synonyms": "Other names",
+    "synonymsHint": "Separated by commas. Waiters find the ingredient by these too.",
+    "contains": "Contains",
+    "mayContain": "May contain (traces)",
+    "supplier": "Supplier",
+    "brand": "Brand",
+    "articleNumber": "Article number",
+    "verified": "Verified against the label or spec sheet",
+    "verifiedHint": "Unverified ingredients make every dish with them “unknown” for allergy guests.",
+    "verifyNotAllowed": "Only a chef, manager or owner can verify ingredients.",
+    "reverify": "The allergens changed. Saving with this checked records a new check, by you, now."
+  },
+  "components": {
+    "new": "New component",
+    "omittable": "Can be left off",
+    "omittableHint": "The kitchen can serve the dish without it.",
+    "premixed": "Mixed in before service",
+    "premixedHint": "Already in its parent or the dish, so it cannot be left off or swapped.",
+    "suitableForSevere": "Made separately, without cross-contact",
+    "suitableForSevereHint": "Lets it replace another component for a severe allergy.",
+    "ingredients": "Ingredients",
+    "children": "Made with these components",
+    "substitutes": "Can be replaced by",
+    "substituteSevere": "Safe for severe",
+    "equipment": "Prepared with"
+  },
+  "dishes": {
+    "new": "New dish",
+    "course": "Course",
+    "price": "Price (€)",
+    "components": "Components, in plate order",
+    "addComponent": "Add a component"
+  },
+  "menu": {
+    "intro": "Choose the dishes and their order, then publish. Waiters and the kitchen only see the published version.",
+    "publishedVersion": "Version {version} is live, published {date}",
+    "neverPublished": "Nothing published yet: service uses the recipes as they are.",
+    "changed": "The draft or a recipe on it differs from what is live.",
+    "upToDate": "The live menu matches the draft.",
+    "publish": "Publish",
+    "confirmPublish": "Yes, publish now",
+    "publishNote": "{count, plural, one {# dish goes live for service at once. Orders already placed keep the recipe they were ordered from.} other {# dishes go live for service at once. Orders already placed keep the recipe they were ordered from.}}",
+    "publishNotAllowed": "Only a manager or owner can publish.",
+    "warnings": "{count, plural, one {# thing to check before publishing} other {# things to check before publishing}}",
+    "warning": {
+      "UNVERIFIED_INGREDIENT": "{dish}: {name} is not verified, so the dish shows as unknown for allergy guests.",
+      "EMPTY_COMPONENT": "{dish}: {name} has no ingredients."
+    },
+    "dishes": "Dishes",
+    "history": "Published versions",
+    "version": "Version {version}",
+    "live": "live",
+    "dishCount": "{count, plural, one {# dish} other {# dishes}}"
+  }
 }

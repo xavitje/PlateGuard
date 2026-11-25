@@ -9,5 +9,93 @@
     "staff": "Personeel",
     "dashboard": "Dashboard"
   },
-  "comingSoon": "Dit onderdeel komt in een latere fase."
+  "comingSoon": "Dit onderdeel komt in een latere fase.",
+  "filter": "Filteren",
+  "none": "Nog niets.",
+  "pick": "Kies er links een, of voeg een nieuwe toe.",
+  "save": "Opslaan",
+  "add": "Toevoegen",
+  "cancel": "Annuleren",
+  "moveUp": "{name} omhoog",
+  "moveDown": "{name} omlaag",
+  "remove": "{name} verwijderen",
+  "errors": {
+    "FORBIDDEN": "Dit mag je niet doen.",
+    "COMPONENT_CYCLE": "Een component kan zichzelf niet bevatten, ook niet via een ander component.",
+    "UNKNOWN_INGREDIENT": "Een van de ingrediënten bestaat niet meer. Laad opnieuw en probeer het nog eens.",
+    "UNKNOWN_EQUIPMENT": "Een van de apparaten bestaat niet meer. Laad opnieuw en probeer het nog eens.",
+    "UNKNOWN_COMPONENT": "Een van de componenten bestaat niet meer. Laad opnieuw en probeer het nog eens.",
+    "DISH_NOT_FOUND": "Dit gerecht bestaat niet meer. Laad opnieuw en probeer het nog eens.",
+    "MENU_EMPTY": "Zet minstens één gerecht op de kaart voordat je publiceert."
+  },
+  "fields": {
+    "name": "Naam",
+    "nameNl": "Naam in het Nederlands"
+  },
+  "recipes": {
+    "intro": "Wijzigingen hier blijven in het concept. De bediening werkt met de gepubliceerde kaart tot je opnieuw publiceert onder Kaarten.",
+    "tabs": {
+      "ingredients": "Ingrediënten",
+      "components": "Componenten",
+      "dishes": "Gerechten"
+    }
+  },
+  "ingredients": {
+    "new": "Nieuw ingrediënt",
+    "unverified": "Niet gecontroleerd",
+    "usedIn": "{count, plural, one {Gebruikt in # component} other {Gebruikt in # componenten}}",
+    "synonyms": "Andere namen",
+    "synonymsHint": "Gescheiden door komma's. Bediening vindt het ingrediënt ook hierop.",
+    "contains": "Bevat",
+    "mayContain": "Kan sporen bevatten",
+    "supplier": "Leverancier",
+    "brand": "Merk",
+    "articleNumber": "Artikelnummer",
+    "verified": "Gecontroleerd op etiket of specificatieblad",
+    "verifiedHint": "Een niet-gecontroleerd ingrediënt maakt elk gerecht ermee “onbekend” voor allergiegasten.",
+    "verifyNotAllowed": "Alleen een chef, manager of eigenaar kan ingrediënten controleren.",
+    "reverify": "De allergenen zijn gewijzigd. Opslaan met dit vinkje legt een nieuwe controle vast, door jou, nu."
+  },
+  "components": {
+    "new": "Nieuw component",
+    "omittable": "Kan weggelaten worden",
+    "omittableHint": "De keuken kan het gerecht zonder serveren.",
+    "premixed": "Vooraf doorgemengd",
+    "premixedHint": "Zit al in het bovenliggende component of gerecht, dus weglaten of vervangen kan niet.",
+    "suitableForSevere": "Apart bereid, zonder kruisbesmetting",
+    "suitableForSevereHint": "Dan kan het een ander component vervangen bij een ernstige allergie.",
+    "ingredients": "Ingrediënten",
+    "children": "Gemaakt met deze componenten",
+    "substitutes": "Kan vervangen worden door",
+    "substituteSevere": "Veilig bij ernstig",
+    "equipment": "Bereid met"
+  },
+  "dishes": {
+    "new": "Nieuw gerecht",
+    "course": "Gang",
+    "price": "Prijs (€)",
+    "components": "Componenten, in volgorde op het bord",
+    "addComponent": "Component toevoegen"
+  },
+  "menu": {
+    "intro": "Kies de gerechten en hun volgorde, en publiceer. Bediening en keuken zien alleen de gepubliceerde versie.",
+    "publishedVersion": "Versie {version} is live, gepubliceerd {date}",
+    "neverPublished": "Nog niets gepubliceerd: de bediening gebruikt de recepten zoals ze zijn.",
+    "changed": "Het concept of een recept erop wijkt af van wat live staat.",
+    "upToDate": "De live kaart is gelijk aan het concept.",
+    "publish": "Publiceren",
+    "confirmPublish": "Ja, nu publiceren",
+    "publishNote": "{count, plural, one {# gerecht gaat direct live voor de bediening. Al geplaatste bestellingen houden het recept waarmee ze besteld zijn.} other {# gerechten gaan direct live voor de bediening. Al geplaatste bestellingen houden het recept waarmee ze besteld zijn.}}",
+    "publishNotAllowed": "Alleen een manager of eigenaar kan publiceren.",
+    "warnings": "{count, plural, one {# punt om te controleren voor publiceren} other {# punten om te controleren voor publiceren}}",
+    "warning": {
+      "UNVERIFIED_INGREDIENT": "{dish}: {name} is niet gecontroleerd, dus het gerecht staat op onbekend voor allergiegasten.",
+      "EMPTY_COMPONENT": "{dish}: {name} heeft geen ingrediënten."
+    },
+    "dishes": "Gerechten",
+    "history": "Gepubliceerde versies",
+    "version": "Versie {version}",
+    "live": "live",
+    "dishCount": "{count, plural, one {# gerecht} other {# gerechten}}"
+  }
 }

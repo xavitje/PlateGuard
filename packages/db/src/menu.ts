@@ -10,10 +10,12 @@ export async function loadDishes(
   tx: Pick<TenantTx, 'dish' | 'component'>,
   locationId: string,
   locale: string,
+  /** Only these dishes, in this order. All of the location's dishes when left out. */
+  dishIds?: string[],
 ): Promise<ResolvedDish[]> {
   const [dishes, components] = await Promise.all([
     tx.dish.findMany({
-      where: { locationId },
+      where: { locationId, ...(dishIds ? { id: { in: dishIds } } : {}) },
       include: {
         components: { orderBy: { sortOrder: 'asc' } },
         translations: { where: { locale } },
@@ -68,6 +70,7 @@ export async function loadDishes(
     return resolved;
   };
 
+  if (dishIds) dishes.sort((a, b) => dishIds.indexOf(a.id) - dishIds.indexOf(b.id));
   return dishes.map((d) => ({
     kind: 'dish',
     id: d.id,

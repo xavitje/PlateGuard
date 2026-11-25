@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { LoginResponse, MeResponse, PinLogin, StaffListResponse } from '@plateguard/contracts';
-import { allowedLocationIds, type Principal } from '@plateguard/domain';
+import { allowedLocationIds, can, PERMISSIONS, type Principal } from '@plateguard/domain';
 import { AuthRepository } from './auth.repository.js';
 import { issueToken } from './token.js';
 
@@ -32,7 +32,13 @@ export class AuthService {
         (!sessionLocation || l.id === sessionLocation) &&
         allowedLocationIds(full, l.organizationId, [l.id]).includes(l.id),
     );
-    return { user: { id: full.userId, name: full.name, locale: full.locale }, locations };
+    return {
+      user: { id: full.userId, name: full.name, locale: full.locale },
+      locations: locations.map((l) => ({
+        ...l,
+        permissions: PERMISSIONS.filter((p) => can(full, p, l)),
+      })),
+    };
   }
 
   async staff(slug: string): Promise<StaffListResponse> {

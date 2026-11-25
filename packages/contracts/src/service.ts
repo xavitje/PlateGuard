@@ -3,6 +3,7 @@ import type {
   Assessment,
   GuestAllergy,
   Outcome,
+  Permission,
   ResolvedDish,
   SearchableIngredient,
 } from '@plateguard/domain';
@@ -28,7 +29,14 @@ export const SeatParamZ = z.coerce.number().int().min(1).max(99);
 
 export interface MeResponse {
   user: { id: string; name: string; locale: string };
-  locations: { id: string; organizationId: string; name: string; slug: string }[];
+  locations: {
+    id: string;
+    organizationId: string;
+    name: string;
+    slug: string;
+    /** What this user may do here. The UI hides what is not allowed; the API enforces it. */
+    permissions: Permission[];
+  }[];
 }
 
 export interface TableSummary {

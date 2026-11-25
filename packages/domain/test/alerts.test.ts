@@ -39,4 +39,13 @@ describe('orderAlerts', () => {
       ['o1', 'warn', 'ADAPTABLE'],
     ]);
   });
+
+  it('judges an order with the recipe as it was ordered, not the current menu', () => {
+    const oldSalad = dish('Salad', [simple('Leaves', {})]);
+    const s = {
+      ...seat(severeGluten, []),
+      orders: [{ id: 'o1', dishId: salad.id, dish: oldSalad }],
+    };
+    expect(orderAlerts([s], dishes)).toEqual([]);
+  });
 });
