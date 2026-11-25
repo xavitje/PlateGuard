@@ -493,3 +493,86 @@ describe('custom allergies typed by the waiter', () => {
     );
   });
 });
+
+describe('ingredient allergies picked from the restaurant list', () => {
+  const tomato = { id: 'ing-tomato', name: 'Tomato' };
+  const sauce = () =>
+    component('Tomato sauce', {
+      ingredients: [ingredient('Tomato', { id: tomato.id }), ingredient('Olive oil')],
+      substitutions: [substitute(simple('Pesto', {}, { suitableForSevere: true }))],
+    });
+
+  it('is matched against the recipes like an allergen, and resolved by a substitute', () => {
+    const a = assess({
+      dish: dish('Pasta', [sauce()]),
+      guest: [{ ingredient: tomato, severity: 'ALLERGY' }],
+    });
+    expect(a.outcome).toBe('ADAPTABLE');
+    expect(a.manualChecks).toEqual([]);
+    expect(a.modifications).toMatchObject([
+      {
+        componentName: 'Tomato sauce',
+        action: 'SUBSTITUTE',
+        reasonAllergens: [],
+        reasonIngredients: [tomato.id],
+      },
+    ]);
+    expect(a.perAllergy).toMatchObject([{ ingredient: tomato, outcome: 'ADAPTABLE' }]);
+  });
+
+  it('finds the ingredient in nested components', () => {
+    const base = component('Base', {
+      premixed: true,
+      ingredients: [ingredient('Tomato', { id: tomato.id })],
+    });
+    const plate = dish('Stew', [component('Stew', { components: [base] })]);
+    expect(assess({ dish: plate, guest: [{ ingredient: tomato }] }).outcome).toBe('DO_NOT_SERVE');
+  });
+
+  it('is clear when the dish does not use the ingredient', () => {
+    const plate = dish('Steak', [simple('Steak', {})]);
+    expect(
+      assess({ dish: plate, guest: [{ ingredient: tomato, severity: 'SEVERE' }] }).outcome,
+    ).toBe('CLEAR');
+  });
+
+  it('a substitute must be free of the ingredient too', () => {
+    const s = component('Sauce', {
+      ingredients: [ingredient('Tomato', { id: tomato.id })],
+      substitutions: [
+        substitute(
+          component('Ketchup sauce', { ingredients: [ingredient('Tomato', { id: tomato.id })] }),
+        ),
+      ],
+    });
+    expect(
+      assess({ dish: dish('Fries', [s]), guest: [{ ingredient: tomato, severity: 'ALLERGY' }] })
+        .outcome,
+    ).toBe('DO_NOT_SERVE');
+  });
+
+  it('combines with known allergens on one component', () => {
+    const s = component('Sauce', {
+      omittable: true,
+      ingredients: [
+        ingredient('Tomato', { id: tomato.id }),
+        ingredient('Cream', { contains: ['MILK'] }),
+      ],
+    });
+    const a = assess({
+      dish: dish('Pasta', [simple('Pasta', {}), s]),
+      guest: [
+        { ingredient: tomato, severity: 'INTOLERANCE' },
+        { allergen: 'MILK', severity: 'ALLERGY' },
+      ],
+    });
+    expect(a.modifications).toMatchObject([
+      {
+        componentName: 'Sauce',
+        action: 'OMIT',
+        reasonAllergens: ['MILK'],
+        reasonIngredients: [tomato.id],
+      },
+    ]);
+  });
+});

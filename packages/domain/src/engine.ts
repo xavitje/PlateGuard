@@ -19,6 +19,7 @@ import {
   type Assessment,
   type Component,
   type GuestAllergy,
+  type IngredientRef,
   type Modification,
   type Outcome,
   type Reason,
@@ -30,8 +31,12 @@ export const ENGINE_VERSION = '0.1.0';
 
 type Level = 'none' | 'traces' | 'contains';
 
+/** A known allergen or an ingredient allergy: both are matched against the recipe data. */
 interface NormalizedAllergy {
-  allergen: AllergenCode;
+  /** The allergen code, or "ingredient:<id>". */
+  key: string;
+  allergen?: AllergenCode;
+  ingredient?: IngredientRef;
   severity: Severity;
 }
 
@@ -71,7 +76,7 @@ export function normalizeGuest(guest: GuestAllergy[]): {
   known: NormalizedAllergy[];
   custom: CustomAllergy[];
 } {
-  const known = new Map<AllergenCode, NormalizedAllergy>();
+  const known = new Map<string, NormalizedAllergy>();
   const custom = new Map<string, CustomAllergy>();
   for (const g of guest) {
     const severity = g.severity ?? DEFAULT_SEVERITY;
@@ -84,14 +89,22 @@ export function normalizeGuest(guest: GuestAllergy[]): {
       }
       continue;
     }
-    const existing = known.get(g.allergen);
-    // The same allergen twice: keep the stricter severity.
+    const entry: NormalizedAllergy =
+      g.ingredient !== undefined
+        ? {
+            key: `ingredient:${g.ingredient.id}`,
+            ingredient: { id: g.ingredient.id, name: g.ingredient.name },
+            severity,
+          }
+        : { key: g.allergen, allergen: g.allergen, severity };
+    const existing = known.get(entry.key);
+    // The same allergy twice: keep the stricter severity.
     if (!existing || severityRank(severity) > severityRank(existing.severity)) {
-      known.set(g.allergen, { allergen: g.allergen, severity });
+      known.set(entry.key, entry);
     }
   }
   return {
-    known: [...known.values()].sort((a, b) => a.allergen.localeCompare(b.allergen)),
+    known: [...known.values()].sort((a, b) => a.key.localeCompare(b.key)),
     custom: [...custom.values()].sort((a, b) =>
       normalizeLabel(a.label).localeCompare(normalizeLabel(b.label)),
     ),
@@ -108,8 +121,17 @@ function maxLevel(a: Level, b: Level): Level {
 }
 
 /** Hits from the component's own ingredients and its preparation equipment, not its children. */
-function ownHits(c: Component, allergen: AllergenCode, ctx: Ctx): Hit[] {
+function ownHits(c: Component, a: NormalizedAllergy, ctx: Ctx): Hit[] {
   const hits: Hit[] = [];
+  if (a.ingredient) {
+    // An ingredient allergy hits where that ingredient is used. Traces of it are not recorded.
+    for (const ing of c.ingredients) {
+      if (ing.id === a.ingredient.id)
+        hits.push({ level: 'contains', componentId: c.id, ingredientId: ing.id });
+    }
+    return hits;
+  }
+  const allergen = a.allergen!;
   const match = (code: AllergenCode) => allergenMatches(allergen, code, ctx.taxonomy);
   for (const ing of c.ingredients) {
     if (ing.contains.some(match)) {
@@ -124,11 +146,8 @@ function ownHits(c: Component, allergen: AllergenCode, ctx: Ctx): Hit[] {
   return hits;
 }
 
-function deepHits(c: Component, allergen: AllergenCode, ctx: Ctx): Hit[] {
-  return [
-    ...ownHits(c, allergen, ctx),
-    ...c.components.flatMap((sub) => deepHits(sub, allergen, ctx)),
-  ];
+function deepHits(c: Component, a: NormalizedAllergy, ctx: Ctx): Hit[] {
+  return [...ownHits(c, a, ctx), ...c.components.flatMap((sub) => deepHits(sub, a, ctx))];
 }
 
 function levelOf(hits: Hit[]): Level {
@@ -148,14 +167,14 @@ function hasUnverified(c: Component): boolean {
 function isCleanFor(c: Component, ctx: Ctx): boolean {
   if (hasUnverified(c)) return false;
   return ctx.allergies.every((a) => {
-    const level = levelOf(deepHits(c, a.allergen, ctx));
+    const level = levelOf(deepHits(c, a, ctx));
     return level === 'none' || (level === 'traces' && a.severity === 'INTOLERANCE');
   });
 }
 
 type Resolution =
   | { ok: true; modifications: Modification[] }
-  | { ok: false; unresolved: { allergen: AllergenCode; componentId: string }[] };
+  | { ok: false; unresolved: { key: string; componentId: string }[] };
 
 /**
  * Finds one action per component that satisfies all of the guest's allergies at once.
@@ -165,14 +184,10 @@ type Resolution =
  */
 function resolveComponent(c: Component, parentPath: string[], ctx: Ctx): Resolution {
   const path = [...parentPath, c.id];
-  const needs = ctx.allergies.filter((a) =>
-    needsAction(levelOf(deepHits(c, a.allergen, ctx)), a.severity),
-  );
+  const needs = ctx.allergies.filter((a) => needsAction(levelOf(deepHits(c, a, ctx)), a.severity));
   if (needs.length === 0) return { ok: true, modifications: [] };
 
-  const ownNeeds = needs.filter((a) =>
-    needsAction(levelOf(ownHits(c, a.allergen, ctx)), a.severity),
-  );
+  const ownNeeds = needs.filter((a) => needsAction(levelOf(ownHits(c, a, ctx)), a.severity));
   if (ownNeeds.length === 0 && c.components.length > 0) {
     const children = c.components.map((sub) => resolveComponent(sub, path, ctx));
     if (children.every((r) => r.ok)) {
@@ -181,7 +196,8 @@ function resolveComponent(c: Component, parentPath: string[], ctx: Ctx): Resolut
   }
 
   const anySevere = needs.some((a) => a.severity === 'SEVERE');
-  const reasonAllergens = needs.map((a) => a.allergen);
+  const reasonAllergens = needs.flatMap((a) => (a.allergen ? [a.allergen] : []));
+  const reasonIngredients = needs.flatMap((a) => (a.ingredient ? [a.ingredient.id] : []));
 
   if (!c.premixed) {
     for (const sub of c.substitutions) {
@@ -197,6 +213,7 @@ function resolveComponent(c: Component, parentPath: string[], ctx: Ctx): Resolut
               action: 'SUBSTITUTE',
               substitute: { id: sub.replacement.id, name: sub.replacement.name },
               reasonAllergens,
+              reasonIngredients,
             },
           ],
         };
@@ -215,12 +232,13 @@ function resolveComponent(c: Component, parentPath: string[], ctx: Ctx): Resolut
           componentName: c.name,
           action: 'OMIT',
           reasonAllergens,
+          reasonIngredients,
         },
       ],
     };
   }
 
-  return { ok: false, unresolved: needs.map((a) => ({ allergen: a.allergen, componentId: c.id })) };
+  return { ok: false, unresolved: needs.map((a) => ({ key: a.key, componentId: c.id })) };
 }
 
 /** The plate as it will be served: modifications applied. */
@@ -261,9 +279,23 @@ function unverifiedReasons(components: Component[]): Reason[] {
   ]);
 }
 
+function subjectOf(a: NormalizedAllergy): Pick<Reason, 'allergen' | 'guestIngredientId'> {
+  return a.ingredient ? { guestIngredientId: a.ingredient.id } : { allergen: a.allergen! };
+}
+
+function resultSubject(a: NormalizedAllergy): Pick<AllergyResult, 'allergen' | 'ingredient'> {
+  return a.ingredient ? { ingredient: a.ingredient } : { allergen: a.allergen! };
+}
+
+function causedBy(m: Modification, a: NormalizedAllergy): boolean {
+  return a.ingredient
+    ? m.reasonIngredients.includes(a.ingredient.id)
+    : m.reasonAllergens.includes(a.allergen!);
+}
+
 function assessDish(dish: ResolvedDish, ctx: Ctx) {
   const modifications: Modification[] = [];
-  const unresolved: { allergen: AllergenCode; componentId: string }[] = [];
+  const unresolved: { key: string; componentId: string }[] = [];
   for (const c of dish.components) {
     const r = resolveComponent(c, [], ctx);
     if (r.ok) modifications.push(...r.modifications);
@@ -276,23 +308,20 @@ function assessDish(dish: ResolvedDish, ctx: Ctx) {
   const perAllergy: AllergyResult[] = ctx.allergies.map((a) => {
     const reasons: Reason[] = [];
     const outcomes: Outcome[] = ['CLEAR'];
+    const who = subjectOf(a);
 
-    for (const u of unresolved.filter((u) => u.allergen === a.allergen)) {
-      reasons.push({
-        code: 'CONTAINS_UNRESOLVED',
-        allergen: a.allergen,
-        componentId: u.componentId,
-      });
+    for (const u of unresolved.filter((u) => u.key === a.key)) {
+      reasons.push({ code: 'CONTAINS_UNRESOLVED', ...who, componentId: u.componentId });
       outcomes.push('DO_NOT_SERVE');
     }
-    for (const m of modifications.filter((m) => m.reasonAllergens.includes(a.allergen))) {
-      reasons.push({ code: 'CONTAINS_RESOLVED', allergen: a.allergen, componentId: m.componentId });
+    for (const m of modifications.filter((m) => causedBy(m, a))) {
+      reasons.push({ code: 'CONTAINS_RESOLVED', ...who, componentId: m.componentId });
       outcomes.push('ADAPTABLE');
     }
 
-    for (const hit of served.flatMap((c) => deepHits(c, a.allergen, ctx))) {
+    for (const hit of served.flatMap((c) => deepHits(c, a, ctx))) {
       const base = {
-        allergen: a.allergen,
+        ...who,
         componentId: hit.componentId,
         ...(hit.ingredientId ? { ingredientId: hit.ingredientId } : {}),
       };
@@ -316,9 +345,9 @@ function assessDish(dish: ResolvedDish, ctx: Ctx) {
       reasons.push(...unverified);
       outcomes.push('UNKNOWN');
     }
-    if (reasons.length === 0) reasons.push({ code: 'NOT_FOUND', allergen: a.allergen });
+    if (reasons.length === 0) reasons.push({ code: 'NOT_FOUND', ...who });
 
-    return { allergen: a.allergen, severity: a.severity, outcome: worstOutcome(outcomes), reasons };
+    return { ...resultSubject(a), severity: a.severity, outcome: worstOutcome(outcomes), reasons };
   });
 
   return { modifications, perAllergy };
@@ -372,10 +401,10 @@ export function assess(input: AssessInput, options: EngineOptions = {}): Assessm
   if (input.dish.kind === 'unmapped') {
     perAllergy = [
       ...ctx.allergies.map((a): AllergyResult => ({
-        allergen: a.allergen,
+        ...resultSubject(a),
         severity: a.severity,
         outcome: 'UNKNOWN',
-        reasons: [{ code: 'UNMAPPED_ITEM', allergen: a.allergen }],
+        reasons: [{ code: 'UNMAPPED_ITEM', ...subjectOf(a) }],
       })),
       ...guest.custom.map((c): AllergyResult => ({
         custom: c.label,

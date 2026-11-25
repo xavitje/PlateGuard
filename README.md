@@ -59,10 +59,13 @@ data never gives "no allergen found".
 - Outcomes, worst counts: do not serve > unknown > caution > adaptable > none found (with note) > none found.
 - Unverified ingredients and unmapped POS items are unknown, never overridable. An override exists only
   for intolerance.
-- **Custom allergies.** Besides known allergens a waiter can add any number of free-text allergies (tomato,
-  sunflower oil), each with its own severity. Recipes do not record those, so a custom allergy is always
-  unknown for that guest and listed under `manualChecks` for the cook to check by hand. Ingredients whose
-  name looks like the label are returned as hints. Changes required by known allergens stay on the ticket.
+- **Other allergies.** Besides the known allergens a waiter can add any number of other allergies, each
+  with its own severity. Typing searches the restaurant's own ingredients, synonyms and other languages
+  included ("tomaat" finds Tomato). A picked ingredient is judged against the recipes like an allergen:
+  the engine finds it in every component, and fixes, swaps or omits it. Text the waiter keeps as typed is
+  not in the recipe data, so it is always unknown for that guest and listed under `manualChecks` for the
+  cook to check by hand; ingredients whose name looks like the label are returned as hints. Changes
+  required by known allergens stay on the ticket.
 - Every assessment carries the engine version and a sha256 hash of its canonical input, for the audit trail.
 
 There is a test for every cell of the decision table in `packages/domain/test/engine.test.ts`.

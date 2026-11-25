@@ -108,6 +108,7 @@ async function seedDemo() {
     data: {
       ...org,
       name: 'Veal stock',
+      synonyms: ['kalfsfond', 'fond'],
       contains: ['CELERY'],
       verifiedAt: new Date(),
       verifiedSource: 'demo',
@@ -117,7 +118,13 @@ async function seedDemo() {
     data: { ...org, name: 'Corn starch', verifiedAt: new Date(), verifiedSource: 'demo' },
   });
   const potato = await prisma.ingredient.create({
-    data: { ...org, name: 'Potato', verifiedAt: new Date(), verifiedSource: 'demo' },
+    data: {
+      ...org,
+      name: 'Potato',
+      synonyms: ['aardappel', 'patat'],
+      verifiedAt: new Date(),
+      verifiedSource: 'demo',
+    },
   });
   const fryer = await prisma.equipment.create({
     data: { ...org, name: 'Fryer 1', allergens: ['FISH', 'CRUSTACEANS'] },

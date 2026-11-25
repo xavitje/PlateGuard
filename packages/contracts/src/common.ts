@@ -8,9 +8,20 @@ export const AllergenCodeZ = z
   .regex(/^[A-Z][A-Z0-9_]*$/, 'Allergen codes are UPPER_SNAKE_CASE');
 export const IdZ = z.uuid();
 
-/** A known allergen code, or a custom label the waiter typed ("tomato"). As many of each as needed. */
+/**
+ * A guest allergy: a known allergen code, an ingredient picked from the restaurant's list
+ * ("Other allergy" search), or free text when nothing fits. As many of each as needed.
+ */
 export const GuestAllergyZ = z.union([
   z.object({ allergen: AllergenCodeZ, severity: SeverityZ.default('SEVERE') }).strict(),
+  z
+    .object({
+      ingredient: z
+        .object({ id: z.string().min(1), name: z.string().trim().min(1).max(120) })
+        .strict(),
+      severity: SeverityZ.default('SEVERE'),
+    })
+    .strict(),
   z
     .object({ custom: z.string().trim().min(1).max(60), severity: SeverityZ.default('SEVERE') })
     .strict(),

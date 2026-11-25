@@ -251,6 +251,8 @@ model Ingredient {
   id             String    @id @default(uuid()) @db.Uuid
   organizationId String    @map("organization_id") @db.Uuid
   name           String
+  /// Other names for the allergy search: "tomaat", "tomatoes", "cherry tomato".
+  synonyms       String[]  @default([])
   supplier       String?
   brand          String?
   articleNumber  String?   @map("article_number")
@@ -260,8 +262,9 @@ model Ingredient {
   verifiedAt     DateTime? @map("verified_at")
   verifiedSource String?   @map("verified_source")
 
-  organization Organization          @relation(fields: [organizationId], references: [id])
-  components   ComponentIngredient[]
+  organization   Organization          @relation(fields: [organizationId], references: [id])
+  components     ComponentIngredient[]
+  guestAllergies GuestAllergy[]
 
   @@index([organizationId])
   @@map("ingredient")
@@ -547,15 +550,18 @@ model Guest {
   @@map("guest")
 }
 
-/// One row per allergy, each with its own severity. A row is either a known allergen
-/// (allergenCode) or a custom label the waiter typed, such as "tomato" (customLabel).
-/// Exactly one of the two is set (check constraint in the init migration). Custom allergies
-/// always come out UNKNOWN in the engine and are checked by hand in the kitchen.
+/// One row per allergy, each with its own severity. Exactly one of these is set (check constraint
+/// in the init migration):
+/// - allergenCode: a known allergen,
+/// - ingredientId: an ingredient from the organization's list, picked from the search under
+///   "Other allergy"; the engine matches it against the recipes,
+/// - customLabel: free text when nothing in the list fits; always UNKNOWN, checked by hand.
 model GuestAllergy {
   id           String    @id @default(uuid()) @db.Uuid
   guestId      String    @map("guest_id") @db.Uuid
   locationId   String    @map("location_id") @db.Uuid
   allergenCode String?   @map("allergen_code")
+  ingredientId String?   @map("ingredient_id") @db.Uuid
   customLabel  String?   @map("custom_label")
   /// Lower case, no accents (normalizeLabel in @plateguard/domain), so "Tomaat" and "tomaat" are one row.
   customKey    String?   @map("custom_key")
@@ -564,9 +570,11 @@ model GuestAllergy {
   changedById  String?   @map("changed_by_id") @db.Uuid
   changedAt    DateTime? @map("changed_at")
 
-  guest Guest @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  guest      Guest       @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  ingredient Ingredient? @relation(fields: [ingredientId], references: [id])
 
   @@unique([guestId, allergenCode])
+  @@unique([guestId, ingredientId])
   @@unique([guestId, customKey])
   @@map("guest_allergy")
 }

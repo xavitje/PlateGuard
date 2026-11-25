@@ -2,7 +2,12 @@
  * Demo data for the app shell until the API serves real data. Invented: Brasserie De Haven does not exist.
  * Allergen names come from the database per locale in production (AllergenTranslation).
  */
-import type { Component, GuestAllergy, ResolvedDish } from '@plateguard/domain';
+import type {
+  Component,
+  GuestAllergy,
+  ResolvedDish,
+  SearchableIngredient,
+} from '@plateguard/domain';
 
 export interface DemoTable {
   label: string;
@@ -167,7 +172,7 @@ export const DEMO_SEAT_ALLERGIES: Record<string, Record<number, GuestAllergy[]>>
       { allergen: 'MILK', severity: 'INTOLERANCE' },
     ],
   },
-  '7': { 2: [{ custom: 'Tomato', severity: 'ALLERGY' }] },
+  '7': { 2: [{ ingredient: { id: 'i-tomato', name: 'Tomato' }, severity: 'ALLERGY' }] },
 };
 
 export interface DemoAlert {
@@ -210,3 +215,31 @@ export const DEMO_ALERTS: DemoAlert[] = [
     minutesAgo: 31,
   },
 ];
+
+const SYNONYMS: Record<string, string[]> = {
+  'i-tomato': ['tomaat', 'tomaten', 'tomatoes'],
+  'i-potato': ['aardappel', 'patat'],
+  'i-butter': ['boter'],
+  'i-flour': ['tarwebloem', 'bloem'],
+  'i-stock': ['kalfsfond', 'fond'],
+  'i-anchovy': ['ansjovis'],
+  'i-egg': ['eidooier', 'egg'],
+  'i-lettuce': ['sla', 'lettuce'],
+  'i-bass': ['zeebaars'],
+  'i-rice': ['rijst'],
+  'i-beef': ['rundvlees', 'biefstuk'],
+  'i-starch': ['maizena', 'maiszetmeel'],
+};
+
+/** Every ingredient the demo restaurant uses, for the "Other allergy" search. */
+export const DEMO_INGREDIENTS: SearchableIngredient[] = (() => {
+  const seen = new Map<string, SearchableIngredient>();
+  const walk = (c: Component) => {
+    for (const i of c.ingredients)
+      seen.set(i.id, { id: i.id, name: i.name, synonyms: SYNONYMS[i.id] ?? [] });
+    c.components.forEach(walk);
+    c.substitutions.forEach((s) => walk(s.replacement));
+  };
+  DEMO_DISHES.forEach((d) => d.components.forEach(walk));
+  return [...seen.values()];
+})();

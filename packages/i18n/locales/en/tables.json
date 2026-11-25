@@ -14,5 +14,9 @@
   "menuForSeat": "Menu for seat {seat}",
   "addCustom": "Other allergy",
   "customPlaceholder": "For example tomato or sunflower oil",
-  "customHint": "Not in the recipe data: the kitchen checks it by hand"
+  "customHint": "Not in the recipe data: the kitchen checks it by hand",
+  "suggestions": "Ingredients this restaurant uses",
+  "inRecipes": "In the recipes",
+  "useTyped": "Use “{text}” as typed (checked by hand)",
+  "ingredientHint": "Checked against the recipes, like the allergens"
 }

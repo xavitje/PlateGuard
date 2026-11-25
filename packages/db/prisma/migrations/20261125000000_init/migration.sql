@@ -135,6 +135,7 @@ CREATE TABLE "ingredient" (
     "id" UUID NOT NULL,
     "organization_id" UUID NOT NULL,
     "name" TEXT NOT NULL,
+    "synonyms" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "supplier" TEXT,
     "brand" TEXT,
     "article_number" TEXT,
@@ -356,6 +357,7 @@ CREATE TABLE "guest_allergy" (
     "guest_id" UUID NOT NULL,
     "location_id" UUID NOT NULL,
     "allergen_code" TEXT,
+    "ingredient_id" UUID,
     "custom_label" TEXT,
     "custom_key" TEXT,
     "severity" "Severity" NOT NULL DEFAULT 'SEVERE',
@@ -611,6 +613,9 @@ CREATE UNIQUE INDEX "guest_visit_id_seat_key" ON "guest"("visit_id", "seat");
 CREATE UNIQUE INDEX "guest_allergy_guest_id_allergen_code_key" ON "guest_allergy"("guest_id", "allergen_code");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "guest_allergy_guest_id_ingredient_id_key" ON "guest_allergy"("guest_id", "ingredient_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "guest_allergy_guest_id_custom_key_key" ON "guest_allergy"("guest_id", "custom_key");
 
 -- CreateIndex
@@ -761,6 +766,9 @@ ALTER TABLE "guest" ADD CONSTRAINT "guest_visit_id_fkey" FOREIGN KEY ("visit_id"
 ALTER TABLE "guest_allergy" ADD CONSTRAINT "guest_allergy_guest_id_fkey" FOREIGN KEY ("guest_id") REFERENCES "guest"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "guest_allergy" ADD CONSTRAINT "guest_allergy_ingredient_id_fkey" FOREIGN KEY ("ingredient_id") REFERENCES "ingredient"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "plate_order" ADD CONSTRAINT "plate_order_visit_id_fkey" FOREIGN KEY ("visit_id") REFERENCES "visit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -800,8 +808,9 @@ ALTER TABLE "webhook_delivery" ADD CONSTRAINT "webhook_delivery_subscription_id_
 ALTER TABLE "webhook_delivery" ADD CONSTRAINT "webhook_delivery_outbox_event_id_fkey" FOREIGN KEY ("outbox_event_id") REFERENCES "outbox_event"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 
--- A guest allergy is either a known allergen or a custom label, never both or neither.
-ALTER TABLE "guest_allergy" ADD CONSTRAINT "guest_allergy_known_xor_custom" CHECK (
-  ("allergen_code" IS NOT NULL AND "custom_label" IS NULL AND "custom_key" IS NULL)
-  OR ("allergen_code" IS NULL AND "custom_label" IS NOT NULL AND "custom_key" IS NOT NULL AND length(trim("custom_label")) > 0)
+-- A guest allergy is exactly one of: a known allergen, an ingredient from the list, or a custom label.
+ALTER TABLE "guest_allergy" ADD CONSTRAINT "guest_allergy_exactly_one_kind" CHECK (
+  num_nonnulls("allergen_code", "ingredient_id", "custom_label") = 1
+  AND ("custom_label" IS NULL) = ("custom_key" IS NULL)
+  AND ("custom_label" IS NULL OR length(trim("custom_label")) > 0)
 );

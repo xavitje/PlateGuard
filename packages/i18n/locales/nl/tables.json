@@ -14,5 +14,9 @@
   "menuForSeat": "Kaart voor stoel {seat}",
   "addCustom": "Andere allergie",
   "customPlaceholder": "Bijvoorbeeld tomaat of zonnebloemolie",
-  "customHint": "Staat niet in de receptuur: de keuken controleert het met de hand"
+  "customHint": "Staat niet in de receptuur: de keuken controleert het met de hand",
+  "suggestions": "Ingrediënten die dit restaurant gebruikt",
+  "inRecipes": "In de receptuur",
+  "useTyped": "Gebruik “{text}” zoals getypt (handmatige controle)",
+  "ingredientHint": "Gecontroleerd tegen de receptuur, net als de allergenen"
 }

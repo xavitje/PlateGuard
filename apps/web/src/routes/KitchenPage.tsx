@@ -31,7 +31,8 @@ const TICKETS: Ticket[] = [
     dishId: 'd-salad',
     guest: [
       { allergen: 'GLUTEN', severity: 'ALLERGY' },
-      { custom: 'Tomato', severity: 'ALLERGY' },
+      { ingredient: { id: 'i-egg', name: 'Egg yolk' }, severity: 'INTOLERANCE' },
+      { custom: 'Sesame oil', severity: 'ALLERGY' },
     ],
   },
 ];
@@ -102,15 +103,18 @@ export function KitchenPage() {
           <div className="flex flex-wrap gap-1.5">
             {result.perAllergy.map((a) => (
               <span
-                key={a.allergen ?? a.custom}
+                key={a.allergen ?? a.ingredient?.id ?? a.custom}
                 className={`rounded-full px-3 py-1 text-sm font-semibold ${
                   a.severity === 'SEVERE'
                     ? 'bg-[rgba(229,72,77,0.18)] text-[#ff8f92]'
                     : 'bg-[#2a2e36]'
                 }`}
               >
-                {a.custom ?? DEMO_ALLERGEN_NAMES[a.allergen ?? '']?.[lang] ?? a.allergen} ·{' '}
-                {t(`common:severity.${a.severity}`)}
+                {a.custom ??
+                  a.ingredient?.name ??
+                  DEMO_ALLERGEN_NAMES[a.allergen ?? '']?.[lang] ??
+                  a.allergen}{' '}
+                · {t(`common:severity.${a.severity}`)}
               </span>
             ))}
           </div>

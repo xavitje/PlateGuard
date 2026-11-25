@@ -1,4 +1,10 @@
-import { assess, normalizeLabel, type GuestAllergy, type Severity } from '@plateguard/domain';
+import {
+  assess,
+  normalizeLabel,
+  searchIngredients,
+  type GuestAllergy,
+  type Severity,
+} from '@plateguard/domain';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -8,17 +14,23 @@ import { SeveritySegment } from '../components/SeveritySegment';
 import {
   DEMO_ALLERGEN_NAMES,
   DEMO_DISHES,
+  DEMO_INGREDIENTS,
   DEMO_SEAT_ALLERGIES,
   DEMO_TABLES,
   QUICK_ALLERGENS,
 } from '../demo';
 
 const keyOf = (a: GuestAllergy) =>
-  a.custom !== undefined ? `custom:${normalizeLabel(a.custom)}` : a.allergen;
+  a.custom !== undefined
+    ? `custom:${normalizeLabel(a.custom)}`
+    : a.ingredient !== undefined
+      ? `ingredient:${a.ingredient.id}`
+      : a.allergen;
 
 /**
  * One table: seats, the allergies per seat (each with its own severity), and the menu judged live
- * by the same engine the server uses. Waiters can add custom allergies, as many as needed.
+ * by the same engine the server uses. Under "Other allergy" the waiter types and picks one of the
+ * restaurant's ingredients (checked against the recipes), or keeps their own text (checked by hand).
  */
 export function TableDetailPage() {
   const { label = '' } = useParams();
@@ -36,7 +48,11 @@ export function TableDetailPage() {
   const lang = i18n.language === 'nl' ? 'nl' : 'en';
 
   const nameOf = (a: GuestAllergy) =>
-    a.custom !== undefined ? a.custom : (DEMO_ALLERGEN_NAMES[a.allergen]?.[lang] ?? a.allergen);
+    a.custom !== undefined
+      ? a.custom
+      : a.ingredient !== undefined
+        ? a.ingredient.name
+        : (DEMO_ALLERGEN_NAMES[a.allergen]?.[lang] ?? a.allergen);
 
   const update = (next: GuestAllergy[]) => setAllergies((prev) => ({ ...prev, [seat]: next }));
   const add = (a: GuestAllergy) => {
@@ -47,12 +63,27 @@ export function TableDetailPage() {
     update(current.map((c) => (keyOf(c) === key ? { ...c, severity } : c)));
   const remove = (key: string) => update(current.filter((c) => keyOf(c) !== key));
 
-  const addCustom = (e: FormEvent) => {
-    e.preventDefault();
-    const text = customText.trim();
-    if (!text) return;
-    add({ custom: text, severity: 'SEVERE' });
+  const typed = customText.trim();
+  const suggestions = useMemo(
+    () => searchIngredients(customText, DEMO_INGREDIENTS, 6),
+    [customText],
+  );
+  // An exact match is the same thing as the typed text, so Enter picks the ingredient.
+  const exact = suggestions.find((m) => m.score === 3);
+
+  const pickIngredient = (id: string, name: string) => {
+    add({ ingredient: { id, name }, severity: 'SEVERE' });
     setCustomText('');
+  };
+  const addTyped = () => {
+    if (!typed) return;
+    add({ custom: typed, severity: 'SEVERE' });
+    setCustomText('');
+  };
+  const submitOther = (e: FormEvent) => {
+    e.preventDefault();
+    if (exact) pickIngredient(exact.id, exact.name);
+    else addTyped();
   };
 
   const verdicts = useMemo(
@@ -130,6 +161,9 @@ export function TableDetailPage() {
               {a.custom !== undefined && (
                 <span className="text-[12.5px] text-soft">{t('tables:customHint')}</span>
               )}
+              {a.ingredient !== undefined && (
+                <span className="text-[12.5px] text-soft">{t('tables:ingredientHint')}</span>
+              )}
             </div>
           );
         })}
@@ -147,25 +181,65 @@ export function TableDetailPage() {
             ),
           )}
         </div>
-        <form onSubmit={addCustom} className="flex gap-2 pb-3">
-          <label className="sr-only" htmlFor="custom-allergy">
-            {t('tables:addCustom')}
-          </label>
-          <input
-            id="custom-allergy"
-            value={customText}
-            onChange={(e) => setCustomText(e.target.value)}
-            placeholder={t('tables:customPlaceholder')}
-            maxLength={60}
-            className="min-h-10 min-w-0 flex-1 rounded-full border border-line bg-bg px-3.5 text-sm"
-          />
-          <button
-            type="submit"
-            className="press inline-flex min-h-10 items-center gap-1 rounded-full bg-brand px-3.5 text-[13px] font-semibold text-white"
-          >
-            <Plus width={16} height={16} />
-            {t('tables:addCustom')}
-          </button>
+        <form onSubmit={submitOther} className="pb-3">
+          <div className="flex gap-2">
+            <label className="sr-only" htmlFor="custom-allergy">
+              {t('tables:addCustom')}
+            </label>
+            <input
+              id="custom-allergy"
+              value={customText}
+              onChange={(e) => setCustomText(e.target.value)}
+              placeholder={t('tables:customPlaceholder')}
+              maxLength={60}
+              autoComplete="off"
+              role="combobox"
+              aria-expanded={typed.length > 0}
+              aria-controls="ingredient-suggestions"
+              className="min-h-10 min-w-0 flex-1 rounded-full border border-line bg-bg px-3.5 text-sm"
+            />
+            {!typed && (
+              <span className="inline-flex min-h-10 items-center gap-1 rounded-full bg-mist px-3.5 text-[13px] font-semibold text-soft">
+                <Plus width={16} height={16} />
+                {t('tables:addCustom')}
+              </span>
+            )}
+          </div>
+          {typed && (
+            <ul
+              id="ingredient-suggestions"
+              aria-label={t('tables:suggestions')}
+              className="mt-2 grid gap-1 rounded-[14px] border border-line bg-bg p-1"
+            >
+              {suggestions.map((m) => (
+                <li key={m.id}>
+                  <button
+                    type="button"
+                    onClick={() => pickIngredient(m.id, m.name)}
+                    className="press flex min-h-10 w-full items-center justify-between gap-2 rounded-[10px] px-3 text-left text-sm hover:bg-mist"
+                  >
+                    <span>
+                      <b className="font-semibold">{m.name}</b>
+                      {m.matched !== m.name && <span className="text-soft"> · {m.matched}</span>}
+                    </span>
+                    <span className="text-[12px] text-soft">{t('tables:inRecipes')}</span>
+                  </button>
+                </li>
+              ))}
+              {!exact && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={addTyped}
+                    className="press flex min-h-10 w-full items-center gap-1.5 rounded-[10px] px-3 text-left text-sm hover:bg-mist"
+                  >
+                    <Plus width={16} height={16} />
+                    {t('tables:useTyped', { text: typed })}
+                  </button>
+                </li>
+              )}
+            </ul>
+          )}
         </form>
         <p className="pb-3 text-[12.5px] text-soft">{t('tables:addAllergenHint')}</p>
       </section>

@@ -82,14 +82,25 @@ export interface UnmappedItem {
 }
 
 /**
- * One allergy of one guest: either a known allergen code (EU-14, subtype or the organization's own),
- * or a free-text label the waiter typed ("tomato", "sunflower oil"). A guest can have any number of each.
- * A custom label has no reliable link to the recipe data, so it always comes out UNKNOWN and the kitchen
- * checks it by hand; the engine lists ingredients whose name looks like the label as hints.
+ * One allergy of one guest. Three kinds, as many of each as needed, each with its own severity:
+ * - a known allergen code (EU-14, a subtype or the organization's own),
+ * - an ingredient from the restaurant's own list, picked by the waiter from the search under
+ *   "Other allergy" (tomato, sunflower oil). The engine matches it against the recipes like an allergen,
+ * - free text the waiter typed when nothing in the list fits. That has no link to the recipe data,
+ *   so it always comes out UNKNOWN and the kitchen checks it by hand; the engine lists ingredients
+ *   whose name looks like the label as hints.
  */
 export type GuestAllergy =
-  | { allergen: AllergenCode; custom?: undefined; /** Omitted means SEVERE. */ severity?: Severity }
-  | { custom: string; allergen?: undefined; /** Omitted means SEVERE. */ severity?: Severity };
+  | { allergen: AllergenCode; ingredient?: undefined; custom?: undefined; severity?: Severity }
+  | { ingredient: IngredientRef; allergen?: undefined; custom?: undefined; severity?: Severity }
+  | { custom: string; allergen?: undefined; ingredient?: undefined; severity?: Severity };
+
+/** An ingredient from the organization's ingredient list, as a guest allergy. */
+export interface IngredientRef {
+  id: string;
+  /** Display name, for the ticket. Matching uses the id only. */
+  name: string;
+}
 
 export type ModificationAction = 'OMIT' | 'SUBSTITUTE';
 
@@ -102,6 +113,8 @@ export interface Modification {
   substitute?: { id: string; name: string };
   /** The guest allergens that make this change mandatory. */
   reasonAllergens: AllergenCode[];
+  /** The guest's ingredient allergies (ingredient ids) that make this change mandatory. */
+  reasonIngredients: string[];
 }
 
 export type ReasonCode =
@@ -122,6 +135,8 @@ export interface Reason {
   allergen?: AllergenCode;
   /** The waiter's label, for a custom allergy. */
   custom?: string;
+  /** The guest's ingredient allergy this reason is about. */
+  guestIngredientId?: string;
   componentId?: string;
   ingredientId?: string;
 }
@@ -129,6 +144,8 @@ export interface Reason {
 export interface AllergyResult {
   /** Set for a known allergen. */
   allergen?: AllergenCode;
+  /** Set for an ingredient allergy. */
+  ingredient?: IngredientRef;
   /** Set for a custom allergy. */
   custom?: string;
   severity: Severity;

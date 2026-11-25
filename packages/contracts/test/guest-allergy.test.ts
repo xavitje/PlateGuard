@@ -16,7 +16,17 @@ describe('GuestAllergyZ', () => {
     });
   });
 
+  it('accepts an ingredient from the list', () => {
+    expect(GuestAllergyZ.parse({ ingredient: { id: 'i1', name: 'Tomato' } })).toEqual({
+      ingredient: { id: 'i1', name: 'Tomato' },
+      severity: 'SEVERE',
+    });
+  });
+
   it('rejects an empty label, and both at once', () => {
+    expect(() =>
+      GuestAllergyZ.parse({ ingredient: { id: 'i1', name: 'Tomato' }, custom: 'tomato' }),
+    ).toThrow();
     expect(() => GuestAllergyZ.parse({ custom: '  ' })).toThrow();
     expect(() => GuestAllergyZ.parse({ allergen: 'MILK', custom: 'milk' })).toThrow();
   });

@@ -164,8 +164,11 @@ describe.skipIf(!hasDb)('row-level security', () => {
     ).rejects.toThrow(/append-only/);
   });
 
-  it('stores several custom allergies per guest, each with its own severity', async () => {
+  it('stores known, ingredient and custom allergies per guest, each with its own severity', async () => {
     const guest = await prisma.guest.findFirstOrThrow({ where: { locationId: locA2 } });
+    const tomato = await prisma.ingredient.create({
+      data: { organizationId: orgA, name: 'Tomato', synonyms: ['tomaat'], contains: [] },
+    });
     await withTenant(prisma, ctxA, (tx) =>
       tx.guestAllergy.createMany({
         data: [
@@ -179,8 +182,7 @@ describe.skipIf(!hasDb)('row-level security', () => {
           {
             guestId: guest.id,
             locationId: locA2,
-            customLabel: 'Tomato',
-            customKey: 'tomato',
+            ingredientId: tomato.id,
             severity: 'ALLERGY',
             recordedById: userA,
           },
@@ -197,16 +199,24 @@ describe.skipIf(!hasDb)('row-level security', () => {
     );
     const rows = await prisma.guestAllergy.findMany({ where: { guestId: guest.id } });
     expect(rows).toHaveLength(3);
+    // Search the organization's ingredients by synonym, inside the tenant.
+    const found = await withTenant(prisma, ctxA, (tx) =>
+      tx.ingredient.findMany({ where: { synonyms: { has: 'tomaat' } }, select: { id: true } }),
+    );
+    expect(found).toEqual([{ id: tomato.id }]);
   });
 
-  it('a guest allergy must be a known allergen or a custom label, not both or neither', async () => {
+  it('a guest allergy is exactly one of allergen, ingredient or custom label', async () => {
     const guest = await prisma.guest.findFirstOrThrow({ where: { locationId: locA1 } });
     const base = { guestId: guest.id, locationId: locA1, recordedById: userA };
-    await expect(prisma.guestAllergy.create({ data: base })).rejects.toThrow(/known_xor_custom/);
+    await expect(prisma.guestAllergy.create({ data: base })).rejects.toThrow(/exactly_one_kind/);
     await expect(
       prisma.guestAllergy.create({
         data: { ...base, allergenCode: 'MILK', customLabel: 'milk', customKey: 'milk' },
       }),
-    ).rejects.toThrow(/known_xor_custom/);
+    ).rejects.toThrow(/exactly_one_kind/);
+    await expect(
+      prisma.guestAllergy.create({ data: { ...base, customLabel: 'milk' } }),
+    ).rejects.toThrow(/exactly_one_kind/);
   });
 });
