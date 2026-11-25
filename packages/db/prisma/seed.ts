@@ -9,6 +9,7 @@ import { assess, type GuestAllergy } from '@plateguard/domain';
 import { loadDishes } from '../src/menu.js';
 import { hashPin } from '../src/pin.js';
 import { ALLERGEN_NAMES } from './seed-data/allergens.js';
+import { COMPONENTS, DISHES, FRYER, INGREDIENTS } from './seed-data/menu.js';
 
 const prisma = new PrismaClient();
 
@@ -102,207 +103,14 @@ async function seedDemo() {
     });
   }
 
-  if ((await prisma.floor.count({ where: { locationId: DEMO_LOCATION } })) > 0) return;
-
-  // Floors and tables, as in the app's demo.
-  const floors = [
-    {
-      name: 'Inside',
-      tables: [
-        ['1', 2],
-        ['2', 4],
-        ['3', 4],
-        ['4', 2],
-        ['5', 4],
-        ['6', 6],
-        ['7', 4],
-        ['8', 2],
-        ['9', 4],
-      ],
-    },
-    {
-      name: 'Terrace',
-      tables: [
-        ['10', 4],
-        ['11', 2],
-        ['12', 4],
-      ],
-    },
-  ] as const;
+  // Floors, tables and the open tables in service only go into a new demo location; the menu
+  // below also tops up an existing one.
+  const fresh = (await prisma.floor.count({ where: { locationId: DEMO_LOCATION } })) === 0;
   const tableIds = new Map<string, string>();
-  for (const [sortOrder, f] of floors.entries()) {
-    const floor = await prisma.floor.create({
-      data: { locationId: DEMO_LOCATION, name: f.name, sortOrder, versionStatus: 'PUBLISHED' },
-    });
-    for (const [i, [label, seats]] of f.tables.entries()) {
-      const point = await prisma.servicePoint.create({
-        data: {
-          locationId: DEMO_LOCATION,
-          floorId: floor.id,
-          label,
-          seats,
-          shape: seats === 2 ? 'ROUND' : 'SQUARE',
-          x: 8 + (i % 3) * 30,
-          y: 8 + Math.floor(i / 3) * 30,
-          w: 18,
-          h: 18,
-          qrToken: `demo-${label}`,
-        },
-      });
-      tableIds.set(label, point.id);
-    }
-  }
+  if (fresh) await seedFloors(tableIds);
 
-  // Ingredients, with the other names waiters type.
-  const org = { organizationId: DEMO_ORG };
-  const verified = { verifiedAt: new Date(), verifiedSource: 'demo' };
-  const ing = (
-    name: string,
-    contains: string[] = [],
-    opts: { mayContain?: string[]; synonyms?: string[]; unverified?: boolean } = {},
-  ) =>
-    prisma.ingredient.create({
-      data: {
-        ...org,
-        name,
-        contains,
-        mayContain: opts.mayContain ?? [],
-        synonyms: opts.synonyms ?? [],
-        ...(opts.unverified ? {} : verified),
-      },
-    });
-  const beef = await ing('Beef', [], { synonyms: ['rundvlees', 'biefstuk'] });
-  const flour = await ing('Wheat flour', ['GLUTEN_WHEAT'], { synonyms: ['tarwebloem', 'bloem'] });
-  const stock = await ing('Veal stock', ['CELERY'], { synonyms: ['kalfsfond', 'fond'] });
-  const starch = await ing('Corn starch', [], { synonyms: ['maizena', 'maiszetmeel'] });
-  const potato = await ing('Potato', [], { synonyms: ['aardappel', 'patat'] });
-  const rice = await ing('Rice', [], { synonyms: ['rijst'] });
-  const butter = await ing('Butter', ['MILK'], { synonyms: ['boter'] });
-  const tomato = await ing('Tomato', [], {
-    mayContain: ['CELERY'],
-    synonyms: ['tomaat', 'tomaten', 'tomatoes'],
-  });
-  const lettuce = await ing('Romaine', [], { synonyms: ['sla', 'lettuce'] });
-  const bread = await ing('Bread', ['GLUTEN_WHEAT'], { synonyms: ['brood'] });
-  const anchovy = await ing('Anchovy', ['FISH'], { synonyms: ['ansjovis'] });
-  const egg = await ing('Egg yolk', ['EGGS'], { synonyms: ['eidooier', 'egg'] });
-  const bass = await ing('Sea bass', ['FISH'], { synonyms: ['zeebaars'], unverified: true });
-  const fryer = await prisma.equipment.create({
-    data: { ...org, name: 'Fryer 1', allergens: ['FISH', 'CRUSTACEANS'] },
-  });
-
-  const component = async (
-    name: string,
-    nl: string,
-    ingredients: { id: string }[],
-    opts: { omittable?: boolean; premixed?: boolean; suitableForSevere?: boolean } = {},
-  ) => {
-    const c = await prisma.component.create({ data: { ...org, name, ...opts } });
-    if (ingredients.length > 0) {
-      await prisma.componentIngredient.createMany({
-        data: ingredients.map((i) => ({ ...org, componentId: c.id, ingredientId: i.id })),
-      });
-    }
-    await prisma.componentTranslation.createMany({
-      data: [
-        { ...org, componentId: c.id, locale: 'en', name },
-        { ...org, componentId: c.id, locale: 'nl', name: nl },
-      ],
-    });
-    return c;
-  };
-  const steakC = await component('Steak', 'Biefstuk', [beef]);
-  const jus = await component('Jus', 'Jus', [flour, stock]);
-  const gfJus = await component('GF jus', 'Glutenvrije jus', [starch], { suitableForSevere: true });
-  const fries = await component('Fries', 'Friet', [potato], { omittable: true });
-  const risotto = await component('Risotto', 'Risotto', [rice, butter], { premixed: true });
-  const soup = await component('Soup', 'Soep', [tomato]);
-  const lettuceC = await component('Lettuce', 'Sla', [lettuce]);
-  const croutons = await component('Croutons', 'Croutons', [bread], { omittable: true });
-  const dressing = await component('Dressing', 'Dressing', [anchovy, egg]);
-  const bassC = await component('Sea bass', 'Zeebaars', [bass]);
-  await prisma.componentEquipment.create({
-    data: { ...org, componentId: fries.id, equipmentId: fryer.id },
-  });
-  await prisma.substitution.create({
-    data: { ...org, componentId: jus.id, replacementId: gfJus.id, suitableForSevere: true },
-  });
-
-  const dishes = [
-    [
-      'Steak, jus and fries',
-      'Biefstuk met jus en friet',
-      2,
-      2650,
-      [steakC, jus, fries],
-      ['Hoofdgerechten', 'Vlees'],
-    ],
-    [
-      'Mushroom risotto',
-      'Paddenstoelenrisotto',
-      2,
-      2150,
-      [risotto],
-      ['Hoofdgerechten', 'Vegetarisch'],
-    ],
-    ['Tomato soup', 'Tomatensoep', 1, 850, [soup], ['Voorgerechten', null]],
-    [
-      'Caesar salad',
-      'Caesarsalade',
-      1,
-      1250,
-      [lettuceC, croutons, dressing],
-      ['Voorgerechten', null],
-    ],
-    ['Special: sea bass', 'Special: zeebaars', 2, 2800, [bassC], ['Hoofdgerechten', 'Vis']],
-  ] as const;
-  const dishIds = new Map<string, string>();
-  for (const [name, nl, course, priceCents, parts, [category, subcategory]] of dishes) {
-    const d = await prisma.dish.create({
-      data: { locationId: DEMO_LOCATION, name, course, priceCents, category, subcategory },
-    });
-    dishIds.set(name, d.id);
-    await prisma.dishComponent.createMany({
-      data: parts.map((c, sortOrder) => ({
-        locationId: DEMO_LOCATION,
-        dishId: d.id,
-        componentId: c.id,
-        sortOrder,
-      })),
-    });
-    await prisma.dishTranslation.createMany({
-      data: [
-        { locationId: DEMO_LOCATION, dishId: d.id, locale: 'en', name },
-        { locationId: DEMO_LOCATION, dishId: d.id, locale: 'nl', name: nl },
-      ],
-    });
-  }
-
-  // Every dish on the menu, published as version 1: service works from the published menu.
-  const menu = await prisma.menu.create({ data: { locationId: DEMO_LOCATION, name: 'Menu' } });
-  const onMenu = [...dishIds.values()];
-  await prisma.menuItem.createMany({
-    data: onMenu.map((dishId, sortOrder) => ({
-      menuId: menu.id,
-      dishId,
-      locationId: DEMO_LOCATION,
-      sortOrder,
-    })),
-  });
-  const resolved = await loadDishes(prisma, DEMO_LOCATION, 'en', onMenu);
-  const published = await prisma.menuVersion.create({
-    data: {
-      menuId: menu.id,
-      locationId: DEMO_LOCATION,
-      version: 1,
-      status: 'PUBLISHED',
-      snapshot: {
-        dishes: { en: resolved, nl: await loadDishes(prisma, DEMO_LOCATION, 'nl', onMenu) },
-      } as unknown as Prisma.InputJsonValue,
-      publishedAt: new Date(),
-      publishedBy: DEMO_OWNER,
-    },
-  });
+  const { published, dishIds, ingredientIds, resolved } = await seedMenu();
+  if (!fresh) return;
 
   // Two tables in service, with what the waiter recorded and ordered. The API derives the
   // alerts from these orders: table 12 seat 3 gets "modify", table 7 seat 2 "do not serve".
@@ -323,7 +131,7 @@ async function seedDemo() {
     [
       '7',
       2,
-      [{ ingredient: { id: tomato.id, name: 'Tomato' }, severity: 'ALLERGY' }],
+      [{ ingredient: { id: ingredientIds.get('tomato')!, name: 'Tomato' }, severity: 'ALLERGY' }],
       ['Tomato soup'],
     ],
     ['7', 3, [], ['Caesar salad']],
@@ -367,7 +175,7 @@ async function seedDemo() {
           guestId: guest.id,
           dishId: dish.id,
           menuVersionId: published.id,
-          course: dishes.find((d) => d[0] === name)![2],
+          course: DISHES.find((d) => d.name === name)!.course,
           status: 'ASSESSED',
           qrToken: `demo-${label}-${seat}-${dish.id.slice(0, 8)}`,
         },
@@ -384,6 +192,239 @@ async function seedDemo() {
           inputHash: result.inputHash,
         },
       });
+    }
+  }
+}
+
+/**
+ * Adds whatever of the demo menu (seed-data/menu.ts) the demo location lacks: ingredients,
+ * components and their recipes, dishes, and their place on the menu. When anything changed,
+ * the menu is published as a new version, so service sees it straight away. Matches by name,
+ * so it can run again on a location that already has the menu.
+ */
+async function seedMenu() {
+  const org = { organizationId: DEMO_ORG };
+  const loc = { locationId: DEMO_LOCATION };
+  let changed = false;
+
+  const ingredientIds = new Map<string, string>();
+  for (const [key, i] of Object.entries(INGREDIENTS)) {
+    let row = await prisma.ingredient.findFirst({ where: { ...org, name: i.name } });
+    if (!row) {
+      row = await prisma.ingredient.create({
+        data: {
+          ...org,
+          name: i.name,
+          contains: i.contains ?? [],
+          mayContain: i.mayContain ?? [],
+          synonyms: i.synonyms ?? [],
+          ...(i.unverified ? {} : { verifiedAt: new Date(), verifiedSource: 'demo' }),
+        },
+      });
+      changed = true;
+    }
+    ingredientIds.set(key, row.id);
+  }
+
+  const fryer =
+    (await prisma.equipment.findFirst({ where: { ...org, name: FRYER.name } })) ??
+    (await prisma.equipment.create({ data: { ...org, ...FRYER } }));
+
+  const componentIds = new Map<string, string>();
+  for (const [key, c] of Object.entries(COMPONENTS)) {
+    let row = await prisma.component.findFirst({ where: { ...org, name: c.name } });
+    if (!row) {
+      row = await prisma.component.create({
+        data: {
+          ...org,
+          name: c.name,
+          omittable: c.omittable ?? false,
+          premixed: c.premixed ?? false,
+          suitableForSevere: c.suitableForSevere ?? false,
+        },
+      });
+      await prisma.componentTranslation.createMany({
+        data: [
+          { ...org, componentId: row.id, locale: 'en', name: c.name },
+          { ...org, componentId: row.id, locale: 'nl', name: c.nl },
+        ],
+      });
+      changed = true;
+    }
+    componentIds.set(key, row.id);
+    // The full recipe: adds the ingredients an older seed left out, keeps any added since.
+    const added = await prisma.componentIngredient.createMany({
+      data: c.ingredients.map((k) => ({
+        ...org,
+        componentId: row.id,
+        ingredientId: ingredientIds.get(k)!,
+      })),
+      skipDuplicates: true,
+    });
+    if (c.fryer) {
+      const fried = await prisma.componentEquipment.createMany({
+        data: [{ ...org, componentId: row.id, equipmentId: fryer.id }],
+        skipDuplicates: true,
+      });
+      changed ||= fried.count > 0;
+    }
+    changed ||= added.count > 0;
+  }
+  for (const [key, c] of Object.entries(COMPONENTS)) {
+    for (const r of c.substitutions ?? []) {
+      const swap = await prisma.substitution.createMany({
+        data: [
+          {
+            ...org,
+            componentId: componentIds.get(key)!,
+            replacementId: componentIds.get(r)!,
+            suitableForSevere: COMPONENTS[r]!.suitableForSevere ?? false,
+          },
+        ],
+        skipDuplicates: true,
+      });
+      changed ||= swap.count > 0;
+    }
+  }
+
+  const dishIds = new Map<string, string>();
+  for (const d of DISHES) {
+    const row = await prisma.dish.findFirst({ where: { ...loc, name: d.name } });
+    if (row) {
+      dishIds.set(d.name, row.id);
+      // Places an older dish in the grid, unless someone already placed it differently.
+      if (!row.subcategory && (!row.category || row.category === d.category)) {
+        await prisma.dish.update({
+          where: { id: row.id },
+          data: { category: d.category, subcategory: d.subcategory },
+        });
+      }
+      continue;
+    }
+    const dish = await prisma.dish.create({
+      data: {
+        ...loc,
+        name: d.name,
+        course: d.course,
+        priceCents: d.priceCents,
+        category: d.category,
+        subcategory: d.subcategory,
+      },
+    });
+    await prisma.dishComponent.createMany({
+      data: d.components.map((k, sortOrder) => ({
+        ...loc,
+        dishId: dish.id,
+        componentId: componentIds.get(k)!,
+        sortOrder,
+      })),
+    });
+    await prisma.dishTranslation.createMany({
+      data: [
+        { ...loc, dishId: dish.id, locale: 'en', name: d.name },
+        { ...loc, dishId: dish.id, locale: 'nl', name: d.nl },
+      ],
+    });
+    dishIds.set(d.name, dish.id);
+    changed = true;
+  }
+
+  // Every demo dish on the menu, after what is on it already.
+  const menu =
+    (await prisma.menu.findFirst({ where: loc, orderBy: { name: 'asc' } })) ??
+    (await prisma.menu.create({ data: { ...loc, name: 'Menu' } }));
+  const items = await prisma.menuItem.findMany({
+    where: { menuId: menu.id },
+    orderBy: { sortOrder: 'asc' },
+  });
+  const onMenu = items.map((i) => i.dishId);
+  const missing = DISHES.map((d) => dishIds.get(d.name)!).filter((id) => !onMenu.includes(id));
+  if (missing.length > 0) {
+    const from = items.reduce((max, i) => Math.max(max, i.sortOrder + 1), 0);
+    await prisma.menuItem.createMany({
+      data: missing.map((dishId, i) => ({ ...loc, menuId: menu.id, dishId, sortOrder: from + i })),
+    });
+    onMenu.push(...missing);
+    changed = true;
+  }
+
+  let published = await prisma.menuVersion.findFirst({
+    where: { menuId: menu.id, status: 'PUBLISHED' },
+    orderBy: { version: 'desc' },
+  });
+  const resolved = await loadDishes(prisma, DEMO_LOCATION, 'en', onMenu);
+  if (changed || !published) {
+    const last = await prisma.menuVersion.findFirst({
+      where: { menuId: menu.id },
+      orderBy: { version: 'desc' },
+    });
+    await prisma.menuVersion.updateMany({
+      where: { menuId: menu.id, status: 'PUBLISHED' },
+      data: { status: 'ARCHIVED' },
+    });
+    published = await prisma.menuVersion.create({
+      data: {
+        ...loc,
+        menuId: menu.id,
+        version: (last?.version ?? 0) + 1,
+        status: 'PUBLISHED',
+        snapshot: {
+          dishes: { en: resolved, nl: await loadDishes(prisma, DEMO_LOCATION, 'nl', onMenu) },
+        } as unknown as Prisma.InputJsonValue,
+        publishedAt: new Date(),
+        publishedBy: DEMO_OWNER,
+      },
+    });
+  }
+  return { published, dishIds, ingredientIds, resolved };
+}
+
+async function seedFloors(tableIds: Map<string, string>) {
+  // Floors and tables, as in the app's demo.
+  const floors = [
+    {
+      name: 'Inside',
+      tables: [
+        ['1', 2],
+        ['2', 4],
+        ['3', 4],
+        ['4', 2],
+        ['5', 4],
+        ['6', 6],
+        ['7', 4],
+        ['8', 2],
+        ['9', 4],
+      ],
+    },
+    {
+      name: 'Terrace',
+      tables: [
+        ['10', 4],
+        ['11', 2],
+        ['12', 4],
+      ],
+    },
+  ] as const;
+  for (const [sortOrder, f] of floors.entries()) {
+    const floor = await prisma.floor.create({
+      data: { locationId: DEMO_LOCATION, name: f.name, sortOrder, versionStatus: 'PUBLISHED' },
+    });
+    for (const [i, [label, seats]] of f.tables.entries()) {
+      const point = await prisma.servicePoint.create({
+        data: {
+          locationId: DEMO_LOCATION,
+          floorId: floor.id,
+          label,
+          seats,
+          shape: seats === 2 ? 'ROUND' : 'SQUARE',
+          x: 8 + (i % 3) * 30,
+          y: 8 + Math.floor(i / 3) * 30,
+          w: 18,
+          h: 18,
+          qrToken: `demo-${label}`,
+        },
+      });
+      tableIds.set(label, point.id);
     }
   }
 }

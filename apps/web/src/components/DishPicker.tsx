@@ -196,15 +196,17 @@ function DishList({ dishes, judged, verdictOf, groupOf, onOrder }: Inner) {
               return (
                 <div
                   key={dish.id}
-                  className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2.5 gap-y-0.5 border-b border-line py-3 last:border-b-0"
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2.5 gap-y-0.5 border-b border-line py-3 last:border-b-0"
                 >
-                  <span className="min-w-0 [overflow-wrap:anywhere]">
-                    <b className="text-[15px] font-semibold">{dish.name}</b>
-                    {dish.subcategory && (
-                      <span className="ml-1.5 text-[12.5px] text-soft">{dish.subcategory}</span>
-                    )}
+                  <span className="grid min-w-0 justify-items-start gap-1">
+                    <span className="break-words">
+                      <b className="text-[15px] font-semibold">{dish.name}</b>
+                      {dish.subcategory && (
+                        <span className="ml-1.5 text-[12.5px] text-soft">{dish.subcategory}</span>
+                      )}
+                    </span>
+                    {judged && <OutcomeBadge outcome={result.outcome} />}
                   </span>
-                  {judged ? <OutcomeBadge outcome={result.outcome} /> : <span />}
                   <button
                     type="button"
                     onClick={() => onOrder(dish)}
