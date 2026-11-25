@@ -127,3 +127,76 @@ export interface AllergenResponse {
   parent: string | null;
   name: string;
 }
+
+// ─── Floor plan ─────────────────────────────────────────────────────────────
+
+export const FloorInputZ = z.strictObject({
+  name: Name,
+  /** Hidden floors (a closed terrace) disappear from service without losing their tables. */
+  hidden: z.boolean().default(false),
+});
+export type FloorInput = z.infer<typeof FloorInputZ>;
+export type FloorDraft = z.input<typeof FloorInputZ>;
+
+export const FloorOrderZ = z.strictObject({ floorIds: z.array(IdZ).max(50) });
+
+export const TableInputZ = z.strictObject({
+  floorId: IdZ,
+  /** What waiters call it, and the address in the app. Unique among the location's tables. */
+  label: z.string().trim().min(1).max(12),
+  seats: z.number().int().min(1).max(40),
+  shape: z.enum(['ROUND', 'SQUARE', 'RECT']).default('SQUARE'),
+  /** Table number in the POS, when it differs from the label. */
+  externalRef: OptionalText,
+  /** Removed tables stay in the history of past visits. */
+  active: z.boolean().default(true),
+});
+export type TableInput = z.infer<typeof TableInputZ>;
+export type TableDraft = z.input<typeof TableInputZ>;
+
+export interface AdminTable {
+  id: string;
+  floorId: string | null;
+  label: string;
+  seats: number;
+  shape: 'ROUND' | 'SQUARE' | 'RECT';
+  externalRef: string | null;
+  active: boolean;
+  /** A visit is open: seats cannot drop below the highest seat in use. */
+  inUse: boolean;
+}
+
+export interface AdminFloor {
+  id: string;
+  name: string;
+  hidden: boolean;
+  tables: AdminTable[];
+}
+
+// ─── Staff ─────────────────────────────────────────────────────────────────
+
+export const RoleZ = z.enum(['OWNER', 'MANAGER', 'CHEF', 'COOK', 'WAITER', 'RUNNER']);
+export const PinZ = z.string().regex(/^\d{4,6}$/);
+
+export const StaffInputZ = z.strictObject({
+  name: Name,
+  /** Roles at this location. Roles that hold for every location are managed by an owner. */
+  roles: z.array(RoleZ).min(1).max(6),
+  pin: PinZ.optional(),
+});
+export type StaffInput = z.infer<typeof StaffInputZ>;
+export type StaffDraft = z.input<typeof StaffInputZ>;
+
+export const StaffPinZ = z.strictObject({ pin: PinZ });
+
+export interface StaffMember {
+  id: string;
+  name: string;
+  /** Roles at this location. */
+  roles: z.infer<typeof RoleZ>[];
+  /** Roles that hold for every location of the organization. Read only here. */
+  orgRoles: z.infer<typeof RoleZ>[];
+  hasPin: boolean;
+  /** Five wrong PINs in a row: a manager sets a new PIN to unlock. */
+  locked: boolean;
+}
