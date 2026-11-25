@@ -35,7 +35,7 @@ export function LoginPage() {
   const error = login.error instanceof ApiError ? login.error : null;
 
   return (
-    <div className="mx-auto min-h-dvh max-w-md bg-mist px-4 pt-[max(env(safe-area-inset-top),24px)]">
+    <div className="mx-auto min-h-dvh max-w-md bg-mist px-4 pt-[max(env(safe-area-inset-top),24px)] pb-[max(env(safe-area-inset-bottom),24px)]">
       <h1 className="mx-1 mb-1 text-[32px] font-bold tracking-[-0.035em]">{t('auth:title')}</h1>
       <p className="mx-1 mb-4 text-sm text-soft">{staff.data?.location.name}</p>
 

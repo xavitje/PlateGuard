@@ -54,7 +54,7 @@ export function FloorPlanPage() {
       ))}
       <SaveError error={order.error} />
       <form
-        className="flex flex-wrap items-end gap-2"
+        className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2 sm:flex sm:flex-wrap"
         onSubmit={(e) => {
           e.preventDefault();
           addFloor.mutate([newFloor], { onSuccess: () => setNewFloor('') });
@@ -100,7 +100,10 @@ function FloorCard({
   const active = floor.tables.filter((tb) => tb.active);
   const removed = floor.tables.filter((tb) => !tb.active);
   return (
-    <section aria-label={floor.name} className="grid gap-4 rounded-[18px] bg-card p-5 shadow-card">
+    <section
+      aria-label={floor.name}
+      className="grid gap-4 rounded-[18px] bg-card p-4 shadow-card sm:p-5"
+    >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <form
           className="flex flex-wrap items-end gap-2"
@@ -123,36 +126,38 @@ function FloorCard({
             </button>
           )}
         </form>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Toggle
             label={t('admin:floors.hidden')}
             checked={floor.hidden}
             onChange={(hidden) => save.mutate([{ name: floor.name, hidden }])}
           />
-          <button
-            type="button"
-            className={button}
-            disabled={first}
-            aria-label={t('admin:moveUp', { name: floor.name })}
-            onClick={() => onMove(-1)}
-          >
-            ↑
-          </button>
-          <button
-            type="button"
-            className={button}
-            disabled={last}
-            aria-label={t('admin:moveDown', { name: floor.name })}
-            onClick={() => onMove(1)}
-          >
-            ↓
-          </button>
+          <span className="flex gap-1">
+            <button
+              type="button"
+              className={button}
+              disabled={first}
+              aria-label={t('admin:moveUp', { name: floor.name })}
+              onClick={() => onMove(-1)}
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              className={button}
+              disabled={last}
+              aria-label={t('admin:moveDown', { name: floor.name })}
+              onClick={() => onMove(1)}
+            >
+              ↓
+            </button>
+          </span>
         </div>
       </div>
       {floor.hidden && <p className="text-[13.5px] text-soft">{t('admin:floors.hiddenHint')}</p>}
       <SaveError error={save.error} />
 
-      <ul className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2">
+      <ul className="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-2">
         {active.map((tb) => (
           <li key={tb.id}>
             <button
@@ -235,7 +240,7 @@ function TableForm({
   });
   return (
     <form
-      className="grid gap-3 rounded-[14px] border border-line p-4"
+      className="grid gap-3 rounded-[14px] border border-line p-3 sm:p-4"
       onSubmit={(e) => {
         e.preventDefault();
         save.mutate([body(true)], { onSuccess: onDone });

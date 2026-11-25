@@ -1,5 +1,6 @@
 {
   "title": "Beheer",
+  "back": "Terug naar de app",
   "nav": {
     "recipes": "Receptuur",
     "menus": "Kaarten",
@@ -13,6 +14,7 @@
   "filter": "Filteren",
   "none": "Nog niets.",
   "pick": "Kies er links een, of voeg een nieuwe toe.",
+  "backToList": "Terug naar de lijst",
   "save": "Opslaan",
   "add": "Toevoegen",
   "cancel": "Annuleren",

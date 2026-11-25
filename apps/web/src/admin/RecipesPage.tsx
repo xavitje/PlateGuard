@@ -32,14 +32,14 @@ export function RecipesPage() {
     <>
       <h1 className="mb-1 text-3xl font-semibold">{t('admin:nav.recipes')}</h1>
       <p className="mb-4 max-w-2xl text-soft">{t('admin:recipes.intro')}</p>
-      <div role="tablist" className="mb-4 flex gap-1.5">
+      <div role="tablist" className="scroll-x -mx-4 mb-4 flex gap-1.5 px-4 md:mx-0 md:px-0">
         {TABS.map((k) => (
           <button
             key={k}
             role="tab"
             aria-selected={tab === k}
             onClick={() => setTab(k)}
-            className={`rounded-full px-3.5 py-1.5 text-[14.5px] ${
+            className={`press min-h-10 shrink-0 rounded-full px-4 text-[14.5px] ${
               tab === k ? 'bg-ink font-semibold text-card' : 'bg-card text-ink'
             }`}
           >
@@ -473,7 +473,7 @@ function DishForm({ row, onSaved }: { row?: DishResponse; onSaved: (r: DishRespo
               key={id}
               className="flex items-center justify-between gap-2 rounded-[10px] border border-line px-3 py-1.5"
             >
-              <span>{nameOf(id)}</span>
+              <span className="min-w-0">{nameOf(id)}</span>
               <span className="flex gap-1">
                 <button
                   type="button"

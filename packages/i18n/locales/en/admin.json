@@ -1,5 +1,6 @@
 {
   "title": "Admin",
+  "back": "Back to the app",
   "nav": {
     "recipes": "Recipes",
     "menus": "Menus",
@@ -13,6 +14,7 @@
   "filter": "Filter",
   "none": "Nothing here yet.",
   "pick": "Pick one on the left, or add a new one.",
+  "backToList": "Back to the list",
   "save": "Save",
   "add": "Add",
   "cancel": "Cancel",
