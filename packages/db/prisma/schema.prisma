@@ -118,6 +118,19 @@ enum ConnectionStatus {
   DISABLED
 }
 
+enum PrintJobKind {
+  TICKET
+  REPRINT
+  TEST
+}
+
+enum PrintJobStatus {
+  PENDING
+  SENT
+  PRINTED
+  FAILED
+}
+
 enum QueueStatus {
   PENDING
   PROCESSING
@@ -627,6 +640,7 @@ model PlateOrder {
   modifications PlateModification[]
   overrides     Override[]
   externalRefs  ExternalRef[]
+  printJobs     PrintJob[]
 
   @@index([locationId, status])
   @@map("plate_order")
@@ -721,6 +735,8 @@ model IntegrationConnection {
   organizationId   String           @map("organization_id") @db.Uuid
   locationId       String           @map("location_id") @db.Uuid
   provider         String
+  /// Shown in admin, for example "Kitchen" or "Grill".
+  name             String?
   kind             IntegrationKind
   status           ConnectionStatus @default(PENDING)
   capabilities     String[]
@@ -733,9 +749,32 @@ model IntegrationConnection {
   mappings      PosItemMapping[]
   externalRefs  ExternalRef[]
   inboundEvents InboundEvent[]
+  printJobs     PrintJob[]
 
   @@index([locationId])
   @@map("integration_connection")
+}
+
+/// An allergy ticket for a kitchen printer that fetches its own jobs (Star CloudPRNT). It holds
+/// the plate, not the text: the ticket is drawn when the printer fetches it.
+model PrintJob {
+  id           String         @id @default(uuid()) @db.Uuid
+  locationId   String         @map("location_id") @db.Uuid
+  connectionId String         @map("connection_id") @db.Uuid
+  plateId      String?        @map("plate_id") @db.Uuid
+  kind         PrintJobKind
+  status       PrintJobStatus @default(PENDING)
+  attempts     Int            @default(0)
+  lastError    String?        @map("last_error")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  sentAt       DateTime?      @map("sent_at")
+  printedAt    DateTime?      @map("printed_at")
+
+  connection IntegrationConnection @relation(fields: [connectionId], references: [id])
+  plate      PlateOrder?           @relation(fields: [plateId], references: [id], onDelete: SetNull)
+
+  @@index([connectionId, status, createdAt])
+  @@map("print_job")
 }
 
 model PosItemMapping {

@@ -180,5 +180,32 @@
     "remove": "Verwijderen van deze locatie",
     "removeConfirm": "{name} verwijderen van deze locatie? De rollen hier en de pincode vervallen.",
     "removeYes": "Ja, verwijderen"
+  },
+  "printers": {
+    "intro": "Koppel PlateGuard aan de systemen in je zaak. Eerst de keukenprinter; de kassakoppeling volgt.",
+    "title": "Keukenprinter",
+    "how": "Bij elke allergiebestelling print de eigen keukenprinter een bon met de checklist, zodat de keuken zonder scherm kan werken. Werkt met Star-printers met CloudPRNT (TSP100IV, mC-Print3 en andere).",
+    "none": "Nog geen printer. Allergiebonnen staan alleen op het keukenscherm.",
+    "name": "Naam van de printer",
+    "namePlaceholder": "Keuken, Grill…",
+    "add": "Printer toevoegen",
+    "online": "Verbonden",
+    "fault": "Printer meldt een probleem (papier, klep)",
+    "never": "Nog niet verbonden",
+    "lastSeen": "Laatste contact {time}",
+    "waiting": "{count, plural, one {# bon wacht} other {# bonnen wachten}}",
+    "test": "Testprint",
+    "tested": "Testpagina verstuurd. Hij print zodra de printer zich meldt, binnen een paar seconden.",
+    "newAddress": "Nieuw adres",
+    "confirmRemove": "Definitief verwijderen",
+    "addressTitle": "Vul dit adres in de printer in",
+    "step1": "Open de instellingenpagina van de printer in een browser (het IP-adres staat op de zelftestprint).",
+    "step2": "Zet onder CloudPRNT CloudPRNT aan en plak dit adres als server-URL. Zet het pollinterval op 5 seconden.",
+    "step3": "Sla op, herstart de printer en druk hier op Testprint.",
+    "address": "Adres van de printer",
+    "copy": "Kopiëren",
+    "copied": "Gekopieerd",
+    "done": "Klaar",
+    "once": "Dit adres zie je maar één keer. Kwijt? Vraag een nieuw adres aan: het oude werkt dan niet meer."
   }
 }

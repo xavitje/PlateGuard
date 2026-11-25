@@ -180,5 +180,32 @@
     "remove": "Remove from this location",
     "removeConfirm": "Remove {name} from this location? Their roles here and their PIN go.",
     "removeYes": "Yes, remove"
+  },
+  "printers": {
+    "intro": "Connect PlateGuard to the systems in your restaurant. Start with the kitchen printer; the POS link follows.",
+    "title": "Kitchen printer",
+    "how": "Every allergy order prints a ticket with the checklist on the kitchen's own printer, so the kitchen works without a screen. Works with Star printers that support CloudPRNT (TSP100IV, mC-Print3 and others).",
+    "none": "No printer yet. Allergy tickets show on the kitchen screen only.",
+    "name": "Printer name",
+    "namePlaceholder": "Kitchen, Grill…",
+    "add": "Add printer",
+    "online": "Connected",
+    "fault": "Printer reports a problem (paper, cover)",
+    "never": "Not connected yet",
+    "lastSeen": "Last contact {time}",
+    "waiting": "{count, plural, one {# ticket waiting} other {# tickets waiting}}",
+    "test": "Test print",
+    "tested": "Test page sent. It prints the next time the printer checks in, within a few seconds.",
+    "newAddress": "New address",
+    "confirmRemove": "Remove for good",
+    "addressTitle": "Enter this address in the printer",
+    "step1": "Open the printer's settings page in a browser (its IP address is on the self-test print).",
+    "step2": "Under CloudPRNT, turn CloudPRNT on and paste this address as the server URL. Set polling to 5 seconds.",
+    "step3": "Save, restart the printer, then press Test print here.",
+    "address": "Printer address",
+    "copy": "Copy",
+    "copied": "Copied",
+    "done": "Done",
+    "once": "This address is shown once. Lost it? Ask for a new address: the old one stops working."
   }
 }

@@ -37,5 +37,17 @@
   "actionError": "That did not work. The plate may have changed: the list is up to date again.",
   "exit": "Exit kitchen mode",
   "manualCheck": "Check by hand: {label}",
-  "manualCheckTraces": "Check for traces of {label} by hand"
+  "manualCheckTraces": "Check for traces of {label} by hand",
+  "print": {
+    "title": "Allergy ticket",
+    "reprint": "PRINTED AGAIN",
+    "where": "Table {table} · Seat {seat} · Course {course}",
+    "orderedAt": "Ordered {time}",
+    "doNotServe": "Do not serve",
+    "code": "Plate {code}",
+    "testTitle": "Test print",
+    "testBody": "This printer prints the allergy tickets of {location}.",
+    "again": "Print again",
+    "printed": "Sent to the printer"
+  }
 }

@@ -8,6 +8,7 @@ import {
 } from '@plateguard/domain';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../common/prisma.service.js';
+import { queueAllergyTicket } from '../print/print-queue.js';
 import { positionOf, sizeOf } from '../setup/floorplan.repository.js';
 
 /** Plates on their way to the guest: these are judged for alerts and shown in the kitchen. */
@@ -209,6 +210,7 @@ export class ServiceRepository {
           })),
         });
       }
+      await queueAllergyTicket(tx, locationId, guestId, plate.id);
       await audit(tx, ctx, {
         locationId,
         type: 'order.created',
@@ -282,6 +284,13 @@ export class ServiceRepository {
       const l = await tx.location.findUnique({ where: { id: locationId } });
       return l?.passCheck ?? false;
     });
+  }
+
+  /** Active kitchen printers of the location. */
+  printers(ctx: TenantContext, locationId: string): Promise<number> {
+    return this.prisma.forTenant(ctx, (tx) =>
+      tx.integrationConnection.count({ where: { locationId, kind: 'PRINTER', status: 'ACTIVE' } }),
+    );
   }
 
   setPassCheck(ctx: TenantContext, locationId: string, passCheck: boolean): Promise<void> {

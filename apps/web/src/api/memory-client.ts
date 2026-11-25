@@ -25,6 +25,7 @@ import {
 } from '../demo';
 import { ApiError, type ServiceClient } from './client';
 import { createMemoryAdmin } from './memory-admin';
+import { createMemoryPrinters } from './memory-printers';
 import { createMemorySetup } from './memory-setup';
 
 const LOCATION = 'demo';
@@ -174,6 +175,8 @@ export function createMemoryClient(
     return tk;
   };
 
+  const { printers, admin: printerAdmin } = createMemoryPrinters();
+
   return {
     admin: {
       ...createMemoryAdmin(dishes),
@@ -182,6 +185,7 @@ export function createMemoryClient(
       saveSettings: async (_, body) => {
         passCheck = body.passCheck;
       },
+      ...printerAdmin,
     },
     kitchen: {
       tickets: async () => {
@@ -190,6 +194,7 @@ export function createMemoryClient(
           queue: all.filter((t) => t.status === 'ASSESSED' || t.status === 'IN_KITCHEN'),
           ready: all.filter((t) => t.status === 'CHECKED' || t.status === 'PASS_CHECKED'),
           passCheck,
+          printers: printers.length,
         };
       },
       check: async (_, id, checked) => {
@@ -203,6 +208,10 @@ export function createMemoryClient(
       passCheck: async (_, id) => move(id, ['CHECKED'], 'PASS_CHECKED'),
       serve: async (_, id) =>
         move(id, passCheck ? ['PASS_CHECKED'] : ['CHECKED', 'PASS_CHECKED'], 'SERVED'),
+      reprint: async (_, id) => {
+        ticket(id);
+        for (const p of printers) p.waiting++;
+      },
     },
     staff: async () => ({
       location: { id: LOCATION, name: 'Demo' },

@@ -37,5 +37,17 @@
   "actionError": "Dat lukte niet. Het bord is misschien veranderd: de lijst is weer bijgewerkt.",
   "exit": "Keukenmodus verlaten",
   "manualCheck": "Met de hand controleren: {label}",
-  "manualCheckTraces": "Met de hand controleren op sporen van {label}"
+  "manualCheckTraces": "Met de hand controleren op sporen van {label}",
+  "print": {
+    "title": "Allergiebon",
+    "reprint": "OPNIEUW GEPRINT",
+    "where": "Tafel {table} · Stoel {seat} · Gang {course}",
+    "orderedAt": "Besteld {time}",
+    "doNotServe": "Niet serveren",
+    "code": "Bord {code}",
+    "testTitle": "Testprint",
+    "testBody": "Deze printer print de allergiebonnen van {location}.",
+    "again": "Opnieuw printen",
+    "printed": "Naar de printer gestuurd"
+  }
 }

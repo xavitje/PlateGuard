@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CloudPrntAdapter } from './adapters/cloudprnt/cloudprnt.adapter.js';
 import { FakePosAdapter } from './adapters/fake/fake-pos.adapter.js';
 import { ConnectionsRepository } from './core/connections.repository.js';
 import { InboxRepository } from './core/inbox.repository.js';
@@ -14,7 +15,7 @@ import { HooksService } from './hooks.service.js';
     {
       provide: AdapterRegistry,
       useFactory: () => {
-        const registry = new AdapterRegistry();
+        const registry = new AdapterRegistry().register(new CloudPrntAdapter());
         if (process.env.NODE_ENV !== 'production') registry.register(new FakePosAdapter());
         return registry;
       },

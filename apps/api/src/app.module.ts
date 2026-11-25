@@ -8,6 +8,7 @@ import { SessionGuard } from './modules/auth/session.guard.js';
 import { CardModule } from './modules/card/card.module.js';
 import { GuestModule } from './modules/guest/guest.module.js';
 import { KitchenModule } from './modules/kitchen/kitchen.module.js';
+import { PrintModule } from './modules/print/print.module.js';
 import { HealthController } from './modules/health/health.controller.js';
 import { SafetyModule } from './modules/safety/safety.module.js';
 import { RecipesModule } from './modules/recipes/recipes.module.js';
@@ -26,6 +27,7 @@ import { SetupModule } from './modules/setup/setup.module.js';
     SafetyModule,
     ServiceModule,
     KitchenModule,
+    PrintModule,
     GuestModule,
     CardModule,
     RecipesModule,
