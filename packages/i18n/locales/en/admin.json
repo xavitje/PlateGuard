@@ -132,7 +132,9 @@
     "removed": "Removed tables:",
     "restore": "Put back",
     "passCheck": "Check allergy plates at the pass",
-    "passCheckHint": "A runner checks each allergy plate again before it goes to the table."
+    "passCheckHint": "A runner checks each allergy plate again before it goes to the table.",
+    "plan": "Floor plan",
+    "dragHint": "Drag a table to move it, or select it and use the arrow keys. Click to edit it."
   },
   "staff": {
     "intro": "Everyone who signs in on this location's devices, with their roles here and their PIN.",

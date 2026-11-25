@@ -8,6 +8,7 @@ type Setup = Pick<
   | 'saveFloor'
   | 'orderFloors'
   | 'saveTable'
+  | 'layoutFloor'
   | 'staff'
   | 'createStaff'
   | 'updateStaff'
@@ -30,6 +31,7 @@ export function createMemorySetup(me: string): Setup {
       externalRef: null,
       active: true,
       inUse: false,
+      position: null,
     })),
   }));
   let staff: StaffMember[] = [
@@ -48,6 +50,15 @@ export function createMemorySetup(me: string): Setup {
 
   return {
     floors: async () => copy(),
+    layoutFloor: async (_, floorId, body) => {
+      const floor = floors.find((f) => f.id === floorId);
+      for (const p of body.tables) {
+        const tb = floor?.tables.find((x) => x.id === p.id);
+        if (!tb) throw new ApiError(400, 'TABLE_NOT_ON_FLOOR');
+        tb.position = { x: p.x, y: p.y };
+      }
+      return copy();
+    },
     saveFloor: async (_, id, body) => {
       if (id)
         floors = floors.map((f) => (f.id === id ? { ...f, ...body, hidden: !!body.hidden } : f));
@@ -81,6 +92,7 @@ export function createMemorySetup(me: string): Setup {
         externalRef: body.externalRef ?? null,
         active: body.active ?? true,
         inUse: before?.inUse ?? false,
+        position: before?.position ?? null,
       };
       floors = floors.map((f) => ({
         ...f,

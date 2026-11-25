@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { FloorInput, TableInput } from '@plateguard/contracts';
+import type { FloorInput, FloorLayout, TableInput } from '@plateguard/contracts';
 import type { TenantContext } from '../auth/permissions.js';
 import { FloorplanRepository } from './floorplan.repository.js';
 
@@ -18,6 +18,10 @@ export class FloorplanService {
 
   orderFloors(ctx: TenantContext, locationId: string, floorIds: string[]) {
     return this.repo.orderFloors(ctx, locationId, floorIds);
+  }
+
+  layout(ctx: TenantContext, locationId: string, floorId: string, input: FloorLayout) {
+    return this.repo.layout(ctx, locationId, floorId, input);
   }
 
   saveTable(ctx: TenantContext, locationId: string, id: string | null, input: TableInput) {

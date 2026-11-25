@@ -254,6 +254,7 @@ export function createMemoryClient(
             guests: seats.length,
             allergyGuests: seats.filter((s) => s.allergies.length > 0).length,
             openAlerts: all.filter((a) => a.table === t.label).length,
+            position: null,
           } as const;
         }),
       }));

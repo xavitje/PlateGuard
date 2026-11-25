@@ -32,5 +32,6 @@
     "CHECKED": "Gecontroleerd door de keuken",
     "PASS_CHECKED": "Gecontroleerd aan de pass",
     "SERVED": "Uitgeserveerd"
-  }
+  },
+  "allergyShort": "{count, plural, one {# allergie} other {# allergieën}}"
 }

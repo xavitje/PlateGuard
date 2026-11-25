@@ -1,4 +1,5 @@
-import type { AdminFloor, AdminTable, TableDraft } from '@plateguard/contracts';
+import type { AdminFloor, AdminTable, FloorLayout, TableDraft } from '@plateguard/contracts';
+import { FloorPlanCanvas } from './FloorPlanCanvas';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAdmin, useAdminSave } from './hooks';
@@ -98,6 +99,24 @@ function FloorCard({
     c.saveFloor(l, floor.id, body),
   );
   const active = floor.tables.filter((tb) => tb.active);
+  // The table stays where it was dropped while the save is on its way.
+  const layout = useAdminSave(
+    (c, l, body: FloorLayout) => c.layoutFloor(l, floor.id, body),
+    (qc, l, [body]) =>
+      qc.setQueryData<AdminFloor[]>(['admin', 'floors', l], (all) =>
+        all?.map((f) =>
+          f.id !== floor.id
+            ? f
+            : {
+                ...f,
+                tables: f.tables.map((tb) => {
+                  const p = body.tables.find((x) => x.id === tb.id);
+                  return p ? { ...tb, position: { x: p.x, y: p.y } } : tb;
+                }),
+              },
+        ),
+      ),
+  );
   const removed = floor.tables.filter((tb) => !tb.active);
   return (
     <section
@@ -157,35 +176,23 @@ function FloorCard({
       {floor.hidden && <p className="text-[13.5px] text-soft">{t('admin:floors.hiddenHint')}</p>}
       <SaveError error={save.error} />
 
-      <ul className="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-2">
-        {active.map((tb) => (
-          <li key={tb.id}>
-            <button
-              type="button"
-              aria-label={t('admin:floors.editTable', { label: tb.label })}
-              aria-expanded={editing === tb.id}
-              onClick={() => setEditing(editing === tb.id ? null : tb.id)}
-              className={`grid w-full gap-0.5 border p-3 text-left ${
-                tb.shape === 'ROUND' ? 'rounded-[28px]' : 'rounded-[12px]'
-              } ${editing === tb.id ? 'border-brand-ink bg-brand-soft' : 'border-line bg-mist'}`}
-            >
-              <span className="text-lg font-semibold">{tb.label}</span>
-              <span className="text-[13px] text-soft">
-                {t('admin:floors.seats', { count: tb.seats })}
-              </span>
-            </button>
-          </li>
-        ))}
-        <li>
-          <button
-            type="button"
-            onClick={() => setEditing(editing === 'new' ? null : 'new')}
-            className="grid h-full min-h-[68px] w-full place-items-center rounded-[12px] border border-dashed border-line text-[14px] text-soft"
-          >
-            + {t('admin:floors.addTable')}
-          </button>
-        </li>
-      </ul>
+      <FloorPlanCanvas
+        tables={active}
+        selected={editing}
+        onSelect={(id) => setEditing(editing === id ? null : id)}
+        onMove={(tables) => layout.mutate([{ tables }])}
+      />
+      <SaveError error={layout.error} />
+      <div>
+        <button
+          type="button"
+          className={button}
+          aria-expanded={editing === 'new'}
+          onClick={() => setEditing(editing === 'new' ? null : 'new')}
+        >
+          + {t('admin:floors.addTable')}
+        </button>
+      </div>
       {editing && (
         <TableForm
           key={editing}

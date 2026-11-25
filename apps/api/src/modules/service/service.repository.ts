@@ -42,6 +42,7 @@ export interface TableRow {
   seats: number;
   shape: 'ROUND' | 'SQUARE' | 'RECT';
   floorId: string | null;
+  position: { x: number; y: number } | null;
   visitId: string | null;
   bySeat: SeatRow[];
 }
@@ -333,6 +334,7 @@ async function loadTables(tx: TenantTx, locationId: string, label?: string): Pro
         seats: p.seats,
         shape: p.shape,
         floorId: p.floorId,
+        position: p.x === 0 && p.y === 0 ? null : { x: p.x, y: p.y },
         visitId: visit?.id ?? null,
         bySeat: visit?.guests.map(toSeat) ?? [],
       };

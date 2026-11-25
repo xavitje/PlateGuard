@@ -32,5 +32,6 @@
     "CHECKED": "Checked by the kitchen",
     "PASS_CHECKED": "Checked at the pass",
     "SERVED": "Served"
-  }
+  },
+  "allergyShort": "{count, plural, one {# allergy} other {# allergies}}"
 }

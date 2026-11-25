@@ -1,11 +1,13 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Req } from '@nestjs/common';
 import {
   FloorInputZ,
+  FloorLayoutZ,
   FloorOrderZ,
   StaffInputZ,
   StaffPinZ,
   TableInputZ,
   type FloorInput,
+  type FloorLayout,
   type StaffInput,
   type TableInput,
 } from '@plateguard/contracts';
@@ -51,6 +53,16 @@ export class FloorplanController {
     @Body(new ZodPipe(FloorOrderZ)) body: { floorIds: string[] },
   ) {
     return this.floorplan.orderFloors(ctx, locationId, body.floorIds);
+  }
+
+  @Put('floors/:id/layout')
+  layout(
+    @Tenant() ctx: TenantContext,
+    @Param('locationId') locationId: string,
+    @Param('id', IdPipe) id: string,
+    @Body(new ZodPipe(FloorLayoutZ)) body: FloorLayout,
+  ) {
+    return this.floorplan.layout(ctx, locationId, id, body);
   }
 
   @Put('floors/:id')

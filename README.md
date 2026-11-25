@@ -184,6 +184,8 @@ the same permissions.
 - **Floor plan** (`floorplan.edit`): floors in the order waiters see them, hidden floors, and tables
   (number, seats, shape, POS number). Tables are never deleted: removing one makes it inactive, and
   a table with guests seated keeps its number and seats.
+  Tables are placed on a drawing of each floor by dragging them, or with the arrow keys. Once every
+  table of a floor is placed, the Tables tab shows that floor as its drawing instead of a grid.
 - **Staff** (`staff.manage`): people, their roles at this location and their PIN. A new PIN also
   unlocks a locked one. Only an owner makes someone an owner, and nobody changes their own roles.
 
@@ -252,5 +254,5 @@ never green ("no allergen found in the recipe", not "safe"), and unknown is alwa
 
 ## Not in this skeleton yet
 
-The PDF allergen card on publishing, drawing the floor plan, remaking a plate, real-time updates (SSE; the kitchen polls every 5 seconds for now), the inbox worker and
+The PDF allergen card on publishing, remaking a plate, real-time updates (SSE; the kitchen polls every 5 seconds for now), the inbox worker and
 outbox dispatcher, real adapters, incidents and the dashboard. Each arrives in its phase of the plan.

@@ -1,8 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import type { AdminFloor, FloorInput, TableInput } from '@plateguard/contracts';
+import type { AdminFloor, FloorInput, FloorLayout, TableInput } from '@plateguard/contracts';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../common/prisma.service.js';
 import type { TenantContext } from '../auth/permissions.js';
+
+const round = (n: number) => Math.round(n * 10) / 10;
+
+/** A table at the origin was never placed: the column defaults to 0. */
+export const positionOf = (p: { x: number; y: number }) =>
+  p.x === 0 && p.y === 0 ? null : { x: p.x, y: p.y };
 
 /**
  * Floors and the tables on them, with the rules that need the data in the same transaction. Tables are never deleted: past visits point at them, so a
@@ -40,6 +46,7 @@ export class FloorplanRepository {
             externalRef: p.externalRef,
             active: p.active,
             inUse: inUse.has(p.id),
+            position: positionOf(p),
           })),
       }));
     });
@@ -71,6 +78,24 @@ export class FloorplanRepository {
         throw new BadRequestException({ code: 'FLOOR_ORDER_INCOMPLETE' });
       for (const [sortOrder, id] of floorIds.entries())
         await tx.floor.update({ where: { id }, data: { sortOrder } });
+    });
+    return this.floors(ctx, locationId);
+  }
+
+  /** Moves tables on the drawing. Every table must stand on this floor of this location. */
+  async layout(ctx: TenantContext, locationId: string, floorId: string, input: FloorLayout) {
+    await this.prisma.forTenant(ctx, async (tx) => {
+      const ids = input.tables.map((t) => t.id);
+      const found = await tx.servicePoint.count({
+        where: { id: { in: ids }, locationId, floorId },
+      });
+      if (found !== new Set(ids).size)
+        throw new BadRequestException({ code: 'TABLE_NOT_ON_FLOOR' });
+      for (const t of input.tables)
+        await tx.servicePoint.update({
+          where: { id: t.id },
+          data: { x: round(t.x), y: round(t.y) },
+        });
     });
     return this.floors(ctx, locationId);
   }
