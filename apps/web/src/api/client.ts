@@ -4,6 +4,7 @@ import type {
   LocationSettings,
   AdminFloor,
   FloorDraft,
+  FloorLayout,
   StaffDraft,
   StaffMember,
   TableDraft,
@@ -57,6 +58,7 @@ export interface AdminClient {
   floors(location: string): Promise<AdminFloor[]>;
   saveFloor(location: string, id: string | null, body: FloorDraft): Promise<AdminFloor[]>;
   orderFloors(location: string, floorIds: string[]): Promise<AdminFloor[]>;
+  layoutFloor(location: string, floorId: string, body: FloorLayout): Promise<AdminFloor[]>;
   saveTable(location: string, id: string | null, body: TableDraft): Promise<AdminFloor[]>;
   staff(location: string): Promise<StaffMember[]>;
   createStaff(location: string, body: StaffDraft): Promise<StaffMember[]>;
@@ -162,6 +164,7 @@ export function createHttpClient(
       saveFloor: (l, id, body) => save(l, 'floors', id, body),
       orderFloors: (l, floorIds) =>
         call(adm(l, 'floors/order'), { method: 'PUT', body: { floorIds } }),
+      layoutFloor: (l, id, body) => call(adm(l, `floors/${id}/layout`), { method: 'PUT', body }),
       saveTable: (l, id, body) => save(l, 'tables', id, body),
       staff: (l) => call(adm(l, 'staff')),
       createStaff: (l, body) => call(adm(l, 'staff'), { method: 'POST', body }),

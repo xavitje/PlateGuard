@@ -74,6 +74,19 @@ describe.skipIf(!hasDb)('floor plan and staff', () => {
     expect(floors[1]!.tables.map((t) => [t.label, t.seats])).toEqual([['1', 4]]);
   });
 
+  it('places tables on the drawing, only on their own floor', async () => {
+    const [terrace, inside] = await floorplan.floors(ctx, loc);
+    const table = inside!.tables[0]!;
+    expect(table.position).toBeNull();
+    const floors = await floorplan.layout(ctx, loc, inside!.id, {
+      tables: [{ id: table.id, x: 33.33, y: 50 }],
+    });
+    expect(floors[1]!.tables[0]!.position).toEqual({ x: 33.3, y: 50 });
+    await expect(
+      floorplan.layout(ctx, loc, terrace!.id, { tables: [{ id: table.id, x: 10, y: 10 }] }),
+    ).rejects.toThrow();
+  });
+
   it('will not shrink or remove a table with guests seated', async () => {
     const [, inside] = await floorplan.floors(ctx, loc);
     const table = inside!.tables[0]!;

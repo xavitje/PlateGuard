@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { I18nProvider } from '../i18n';
 import { createMemoryClient } from '../api/memory-client';
@@ -30,6 +30,28 @@ describe('Floor plan admin', () => {
     fireEvent.change(number, { target: { value: '14' } });
     fireEvent.click(within(terrace).getByRole('button', { name: 'Save' }));
     expect(await within(terrace).findByRole('button', { name: 'Edit table 14' })).toBeTruthy();
+  });
+
+  it('moves a table on the drawing and saves every table of the floor where it stands', async () => {
+    const client = createMemoryClient();
+    render(
+      <I18nProvider locale="en">
+        <ServiceProvider client={client} signedIn>
+          <FloorPlanPage />
+        </ServiceProvider>
+      </I18nProvider>,
+    );
+    const terrace = await screen.findByRole('region', { name: 'Terrace' });
+    const tables = within(terrace).getAllByRole('button', { name: /^Edit table/ });
+    const first = tables[0]!;
+    const x = Number(first.dataset.x);
+    fireEvent.keyDown(first, { key: 'ArrowRight', shiftKey: true });
+    await waitFor(async () => {
+      const [, saved] = await client.admin.floors('demo');
+      expect(saved!.tables.every((tb) => tb.position)).toBe(true);
+      expect(saved!.tables[0]!.position!.x).toBe(x + 5);
+    });
+    expect(Number(first.dataset.x)).toBe(x + 5);
   });
 
   it('adds a floor', async () => {

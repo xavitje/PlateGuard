@@ -48,6 +48,8 @@ export interface TableSummary {
   guests: number;
   allergyGuests: number;
   openAlerts: number;
+  /** On the drawn floor plan, in percent. Null until the table is placed in admin. */
+  position: { x: number; y: number } | null;
 }
 
 export interface FloorResponse {

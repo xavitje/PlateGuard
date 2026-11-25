@@ -140,6 +140,21 @@ export type FloorDraft = z.input<typeof FloorInputZ>;
 
 export const FloorOrderZ = z.strictObject({ floorIds: z.array(IdZ).max(50) });
 
+/** Table centres on the drawing, in percent. Sent for the tables that moved. */
+export const FloorLayoutZ = z.strictObject({
+  tables: z
+    .array(
+      z.strictObject({
+        id: IdZ,
+        x: z.number().min(0).max(100),
+        y: z.number().min(0).max(100),
+      }),
+    )
+    .min(1)
+    .max(200),
+});
+export type FloorLayout = z.infer<typeof FloorLayoutZ>;
+
 export const TableInputZ = z.strictObject({
   floorId: IdZ,
   /** What waiters call it, and the address in the app. Unique among the location's tables. */
@@ -164,6 +179,13 @@ export interface AdminTable {
   active: boolean;
   /** A visit is open: seats cannot drop below the highest seat in use. */
   inUse: boolean;
+  /** Where the table stands on the drawing, in percent of its width and height. Null: not drawn yet. */
+  position: TablePosition | null;
+}
+
+export interface TablePosition {
+  x: number;
+  y: number;
 }
 
 export interface AdminFloor {
