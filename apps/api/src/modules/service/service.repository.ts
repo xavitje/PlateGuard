@@ -25,6 +25,9 @@ export interface OrderRow {
   menuVersionId: string | null;
   status: PlateStatus;
   rejectReason: string | null;
+  waiterNote: string | null;
+  /** A chef or manager approved the blocked plate. */
+  override: { reason: string } | null;
   course: number;
   createdAt: Date;
   qrToken: string;
@@ -61,7 +64,10 @@ const guestInclude = {
   allergies: { include: { ingredient: { select: { id: true, name: true } } } },
   plates: {
     where: { status: { in: [...SHOWN_PLATE_STATUSES] } },
-    include: { assessment: { select: { outcome: true, menuVersionId: true } } },
+    include: {
+      assessment: { select: { outcome: true, menuVersionId: true } },
+      overrides: { select: { reason: true }, orderBy: { at: 'desc' }, take: 1 },
+    },
     orderBy: { createdAt: 'asc' },
   },
 } satisfies Prisma.GuestInclude;
@@ -89,6 +95,8 @@ function toSeat(g: GuestWithData): SeatRow {
               menuVersionId: p.menuVersionId ?? p.assessment?.menuVersionId ?? null,
               status: p.status,
               rejectReason: p.rejectReason,
+              waiterNote: p.waiterNote,
+              override: p.overrides[0] ?? null,
               course: p.course,
               createdAt: p.createdAt,
               qrToken: p.qrToken,
@@ -203,6 +211,7 @@ export class ServiceRepository {
     userId: string,
     menuVersionId: string | null = null,
     ref?: PosLineRef,
+    note?: string,
   ): Promise<string | null> {
     return this.prisma.forTenant(ctx, async (tx) => {
       if (ref) {
@@ -229,6 +238,7 @@ export class ServiceRepository {
           course: dish.course,
           status: 'ASSESSED',
           qrToken: randomBytes(12).toString('base64url'),
+          waiterNote: note || null,
         },
       });
       await tx.assessment.create({
@@ -276,6 +286,7 @@ export class ServiceRepository {
           dishId: dish.id,
           outcome: assessment.outcome,
           inputHash: assessment.inputHash,
+          ...(note ? { note } : {}),
           ...(ref ? { source: 'pos', externalId: ref.externalId } : {}),
         },
       });
@@ -306,6 +317,8 @@ export class ServiceRepository {
       payload?: Record<string, unknown>;
       check?: 'KITCHEN' | 'PASS';
       rejectReason?: string;
+      /** Approving a blocked plate: stored as an override in the same transaction. */
+      override?: { reason: string; guestConsent: boolean };
     },
   ): Promise<boolean> {
     return this.prisma.forTenant(ctx, async (tx) => {
@@ -319,6 +332,10 @@ export class ServiceRepository {
         },
       });
       if (count !== 1) return false;
+      if (e.override)
+        await tx.override.create({
+          data: { plateId, locationId, managerId: ctx.userId!, ...e.override },
+        });
       if (e.check)
         await tx.plateCheck.create({
           data: {

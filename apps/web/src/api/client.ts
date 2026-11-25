@@ -118,6 +118,8 @@ export interface KitchenClient {
   tickets(location: string, locale: string): Promise<KitchenResponse>;
   check(location: string, plateId: string, checked: string[], locale: string): Promise<void>;
   reject(location: string, plateId: string, reason: string): Promise<void>;
+  /** Approves a blocked plate, with the guest's consent and a reason. */
+  override(location: string, plateId: string, reason: string, locale: string): Promise<void>;
   passCheck(location: string, plateId: string): Promise<void>;
   serve(location: string, plateId: string): Promise<void>;
   /** The plate's allergy ticket again, on every kitchen printer. */
@@ -145,7 +147,14 @@ export interface ServiceClient {
     seat: number,
     body: SeatUpdateInput,
   ): Promise<TableResponse>;
-  order(location: string, label: string, seat: number, dishId: string): Promise<TableResponse>;
+  order(
+    location: string,
+    label: string,
+    seat: number,
+    dishId: string,
+    /** Required for a dish that is "do not serve" for this guest. */
+    note?: string,
+  ): Promise<TableResponse>;
   cancelOrder(location: string, label: string, plateId: string): Promise<TableResponse>;
   /** An incident at a table; the server freezes what is known about the seat and plate. */
   reportIncident(location: string, label: string, body: IncidentReport): Promise<{ id: string }>;
@@ -261,6 +270,11 @@ export function createHttpClient(
         }),
       reject: (l, id, reason) =>
         call(`${loc(l)}/plates/${id}/reject`, { method: 'POST', body: { reason } }),
+      override: (l, id, reason, locale) =>
+        call(`${loc(l)}/plates/${id}/override?locale=${locale}`, {
+          method: 'POST',
+          body: { reason, guestConsent: true },
+        }),
       passCheck: (l, id) => call(`${loc(l)}/plates/${id}/pass-check`, { method: 'POST' }),
       serve: (l, id) => call(`${loc(l)}/plates/${id}/serve`, { method: 'POST' }),
       reprint: (l, id) => call(`${loc(l)}/plates/${id}/print`, { method: 'POST' }),
@@ -283,8 +297,11 @@ export function createHttpClient(
       }),
     saveSeat: (l, label, seat, body) =>
       call(`${tbl(l, label)}/seats/${seat}`, { method: 'PUT', body }),
-    order: (l, label, seat, dishId) =>
-      call(`${tbl(l, label)}/seats/${seat}/orders`, { method: 'POST', body: { dishId } }),
+    order: (l, label, seat, dishId, note) =>
+      call(`${tbl(l, label)}/seats/${seat}/orders`, {
+        method: 'POST',
+        body: note ? { dishId, note } : { dishId },
+      }),
     cancelOrder: (l, label, plateId) =>
       call(`${tbl(l, label)}/orders/${plateId}`, { method: 'DELETE' }),
     reportIncident: (l, label, body) =>

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { createMemoryClient } from '../api/memory-client';
@@ -48,7 +48,18 @@ describe('AlertsPage', () => {
 
     await router.navigate('/tables/5');
     fireEvent.click(await screen.findByRole('button', { name: 'Order Caesar salad' }));
+    // Do not serve for this guest: the waiter confirms and says why before it is ordered.
+    const dialog = await screen.findByRole('alertdialog', { name: 'Order Caesar salad anyway?' });
+    const confirm = within(dialog).getByRole('button', { name: 'Order anyway' });
+    expect((confirm as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(within(dialog).getByRole('textbox'), {
+      target: { value: 'Without croutons, agreed with the chef' },
+    });
+    fireEvent.click(confirm);
     await screen.findByRole('button', { name: 'Remove Caesar salad from the order' });
+    expect(
+      screen.getByText('Your explanation: Without croutons, agreed with the chef'),
+    ).toBeTruthy();
     await router.navigate('/alerts');
     expect(await screen.findByText('3 open alerts · 3 unread')).toBeTruthy();
   });

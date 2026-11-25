@@ -18,6 +18,12 @@ export interface KitchenTicketResponse {
   /** Every point to tick before confirming. Empty when blocked. */
   checklist: ChecklistItem[];
   qrToken: string;
+  /** Why the waiter ordered a "do not serve" dish anyway. */
+  waiterNote: string | null;
+  /** Blocked and not yet approved: a chef or manager may approve it with consent and a reason. */
+  overridable: boolean;
+  /** Set when a chef or manager approved the blocked plate. */
+  override: { reason: string } | null;
 }
 
 export interface KitchenResponse {
@@ -37,6 +43,13 @@ export type PlateCheck = z.infer<typeof PlateCheckZ>;
 
 export const PlateRejectZ = z.strictObject({ reason: z.string().trim().min(1).max(300) });
 export type PlateReject = z.infer<typeof PlateRejectZ>;
+
+/** Approving a blocked plate: the guest's consent and a reason are both required. */
+export const PlateOverrideZ = z.strictObject({
+  reason: z.string().trim().min(1).max(300),
+  guestConsent: z.literal(true),
+});
+export type PlateOverride = z.infer<typeof PlateOverrideZ>;
 
 export const LocationSettingsZ = z.strictObject({ passCheck: z.boolean() });
 export type LocationSettings = z.infer<typeof LocationSettingsZ>;

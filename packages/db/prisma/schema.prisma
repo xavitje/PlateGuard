@@ -647,6 +647,8 @@ model PlateOrder {
   /// Why the kitchen sent it back to the waiter. Set with status REJECTED.
   rejectReason  String?     @map("reject_reason")
   rejectedAt    DateTime?   @map("rejected_at")
+  /// Why the waiter ordered it anyway: required when the engine said do not serve.
+  waiterNote    String?     @map("waiter_note")
   createdAt     DateTime    @default(now()) @map("created_at")
 
   visit         Visit               @relation(fields: [visitId], references: [id])

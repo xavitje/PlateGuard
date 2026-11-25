@@ -51,6 +51,36 @@ describe('KitchenPage', () => {
     expect(await screen.findByText('Kitchen sent it back: Cannot be made safely')).toBeTruthy();
   });
 
+  it('a chef approves a blocked plate only with the guest consent and a reason', async () => {
+    const router = renderApp('/kitchen');
+    expect(await screen.findByText('2 allergy plates')).toBeTruthy();
+    fireEvent.click(ticket(/Table 7 · Seat 2/));
+    const card = screen.getByRole('region', { name: 'Tomato soup' });
+    fireEvent.click(within(card).getByRole('button', { name: 'Approve anyway' }));
+    const form = within(card).getByRole('form', { name: 'Approve this plate anyway' });
+    const send = within(form).getByRole('button', { name: 'Approve' }) as HTMLButtonElement;
+    fireEvent.change(within(form).getByRole('textbox'), {
+      target: { value: 'Guest knows, mild reaction only' },
+    });
+    expect(send.disabled).toBe(true);
+    fireEvent.click(
+      within(form).getByRole('checkbox', { name: 'The guest has been told and agrees' }),
+    );
+    expect(send.disabled).toBe(false);
+    fireEvent.click(send);
+    expect(
+      await screen.findByText('Approved despite the block: Guest knows, mild reaction only'),
+    ).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+    // The waiter no longer gets a stop for it, and sees the approval at the table.
+    await router.navigate('/alerts');
+    expect(await screen.findByText('1 open alert · 1 unread')).toBeTruthy();
+    await router.navigate('/tables/7?seat=2');
+    expect(
+      await screen.findByText('Approved by the kitchen: Guest knows, mild reaction only'),
+    ).toBeTruthy();
+  });
+
   it('confirms only with every point ticked; with the pass check, serves after it', async () => {
     const client = createMemoryClient();
     await client.admin.saveSettings('demo', { passCheck: true });
