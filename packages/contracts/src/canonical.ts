@@ -48,8 +48,13 @@ export const KitchenTicketZ = z.object({
   dishName: z.string(),
   /** Codes are printed with their name in the location's kitchen language; custom labels as typed. */
   allergies: z.array(GuestAllergyZ),
-  /** Custom allergies the cook checks by hand before confirming. */
-  manualChecks: z.array(z.string()),
+  /**
+   * What the cook checks by hand before confirming: custom allergies as typed, and traces of an
+   * ingredient the guest is severely allergic to (traces are recorded per allergen only).
+   */
+  manualChecks: z.array(
+    z.strictObject({ kind: z.enum(['CUSTOM', 'INGREDIENT_TRACES']), label: z.string().min(1) }),
+  ),
   doNotServe: z.boolean(),
   modifications: z.array(z.string()),
   qrToken: z.string(),

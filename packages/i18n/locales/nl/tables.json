@@ -18,5 +18,6 @@
   "suggestions": "Ingrediënten die dit restaurant gebruikt",
   "inRecipes": "In de receptuur",
   "useTyped": "Gebruik “{text}” zoals getypt (handmatige controle)",
-  "ingredientHint": "Gecontroleerd tegen de receptuur, net als de allergenen"
+  "ingredientHint": "Gecontroleerd tegen de receptuur, net als de allergenen",
+  "ingredientHintSevere": "Gecontroleerd tegen de receptuur; bij ernstig controleert de keuken sporen ook met de hand"
 }

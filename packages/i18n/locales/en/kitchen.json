@@ -7,5 +7,6 @@
   "reject": "Reject",
   "remake": "Remake",
   "exit": "Exit kitchen mode",
-  "manualCheck": "Check by hand: {label}"
+  "manualCheck": "Check by hand: {label}",
+  "manualCheckTraces": "Check for traces of {label} by hand"
 }

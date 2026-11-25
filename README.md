@@ -62,7 +62,9 @@ data never gives "no allergen found".
 - **Other allergies.** Besides the known allergens a waiter can add any number of other allergies, each
   with its own severity. Typing searches the restaurant's own ingredients, synonyms and other languages
   included ("tomaat" finds Tomato). A picked ingredient is judged against the recipes like an allergen:
-  the engine finds it in every component, and fixes, swaps or omits it. Text the waiter keeps as typed is
+  the engine finds it in every component, and fixes, swaps or omits it. For intolerance and allergy that
+  is enough. For severe the cook also checks traces by hand (`manualChecks`), because recipes record
+  traces per allergen, not per ingredient; the change on the plate still goes on the ticket. Text the waiter keeps as typed is
   not in the recipe data, so it is always unknown for that guest and listed under `manualChecks` for the
   cook to check by hand; ingredients whose name looks like the label are returned as hints. Changes
   required by known allergens stay on the ticket.

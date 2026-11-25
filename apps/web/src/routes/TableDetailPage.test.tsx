@@ -32,6 +32,10 @@ describe('TableDetailPage', () => {
     expect(screen.getAllByRole('radiogroup')).toHaveLength(1);
     expect(screen.getByText(/Checked against the recipes/)).toBeTruthy();
     expect(screen.queryByText(/Check by hand: Tomato/)).toBeNull();
+    // Picked ingredients start as Severe: the kitchen still checks traces of it by hand.
+    expect(screen.getAllByText(/Check for traces of Tomato by hand/).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('radio', { name: /allergy/i }));
+    expect(screen.queryByText(/Check for traces of Tomato/)).toBeNull();
   });
 
   it('lets the waiter keep their own text for several allergies, each checked by hand', async () => {

@@ -435,7 +435,7 @@ describe('custom allergies typed by the waiter', () => {
     expect(a.perAllergy).toMatchObject([
       { custom: 'tomato', severity: 'SEVERE', outcome: 'UNKNOWN' },
     ]);
-    expect(a.manualChecks).toEqual([{ custom: 'tomato', severity: 'SEVERE' }]);
+    expect(a.manualChecks).toEqual([{ kind: 'CUSTOM', label: 'tomato', severity: 'SEVERE' }]);
   });
 
   it('lists ingredients and components whose name looks like the label as hints', () => {
@@ -462,7 +462,7 @@ describe('custom allergies typed by the waiter', () => {
     ]);
     // The gluten change still goes on the ticket, next to the manual checks.
     expect(a.modifications).toMatchObject([{ componentName: 'Croutons', action: 'OMIT' }]);
-    expect(a.manualChecks.map((m) => m.custom)).toEqual(['olive oil', 'tomato']);
+    expect(a.manualChecks.map((m) => m.label)).toEqual(['olive oil', 'tomato']);
   });
 
   it('treats the same label in other spelling as one allergy, keeping the stricter severity', () => {
@@ -473,7 +473,7 @@ describe('custom allergies typed by the waiter', () => {
         { custom: 'tomaat', severity: 'SEVERE' },
       ],
     });
-    expect(a.manualChecks).toEqual([{ custom: 'Tomaat', severity: 'SEVERE' }]);
+    expect(a.manualChecks).toEqual([{ kind: 'CUSTOM', label: 'Tomaat', severity: 'SEVERE' }]);
   });
 
   it('do not serve from a known allergen still wins', () => {
@@ -529,11 +529,36 @@ describe('ingredient allergies picked from the restaurant list', () => {
     expect(assess({ dish: plate, guest: [{ ingredient: tomato }] }).outcome).toBe('DO_NOT_SERVE');
   });
 
-  it('is clear when the dish does not use the ingredient', () => {
+  it('is clear when the dish does not use the ingredient (intolerance or allergy)', () => {
     const plate = dish('Steak', [simple('Steak', {})]);
-    expect(
-      assess({ dish: plate, guest: [{ ingredient: tomato, severity: 'SEVERE' }] }).outcome,
-    ).toBe('CLEAR');
+    for (const severity of ['INTOLERANCE', 'ALLERGY'] as const) {
+      const a = assess({ dish: plate, guest: [{ ingredient: tomato, severity }] });
+      expect(a.outcome).toBe('CLEAR');
+      expect(a.manualChecks).toEqual([]);
+    }
+  });
+
+  it('severe: traces are not recorded per ingredient, so the kitchen checks them by hand', () => {
+    const plate = dish('Steak', [simple('Steak', {})]);
+    const a = assess({ dish: plate, guest: [{ ingredient: tomato, severity: 'SEVERE' }] });
+    expect(a.outcome).toBe('UNKNOWN');
+    expect(a.reasons).toMatchObject([{ code: 'INGREDIENT_TRACES_MANUAL_CHECK' }]);
+    expect(a.manualChecks).toEqual([
+      { kind: 'INGREDIENT_TRACES', label: 'Tomato', severity: 'SEVERE' },
+    ]);
+    expect(isOverridable(a)).toBe(false);
+  });
+
+  it('severe: the ingredient itself is still fixed, and the change stays on the ticket', () => {
+    const a = assess({
+      dish: dish('Pasta', [sauce()]),
+      guest: [{ ingredient: tomato, severity: 'SEVERE' }],
+    });
+    expect(a.outcome).toBe('UNKNOWN');
+    expect(a.modifications).toMatchObject([
+      { action: 'SUBSTITUTE', reasonIngredients: [tomato.id] },
+    ]);
+    expect(a.manualChecks).toMatchObject([{ kind: 'INGREDIENT_TRACES', label: 'Tomato' }]);
   });
 
   it('a substitute must be free of the ingredient too', () => {
