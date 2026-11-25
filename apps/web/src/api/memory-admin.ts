@@ -189,6 +189,7 @@ export function createMemoryAdmin(
       draft = [...new Set(dishIds)];
       return menu();
     },
+    allergenCard: async () => new Blob(['%PDF-1.7'], { type: 'application/pdf' }),
     publishMenu: async () => {
       if (draft.length === 0) throw new ApiError(400, 'MENU_EMPTY');
       published = JSON.stringify(draft);

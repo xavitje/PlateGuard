@@ -5,5 +5,6 @@
   "notFound": "Deze kaart is niet gevonden.",
   "notPublished": "De allergenenkaart is nog niet beschikbaar. Vraag het je bediening.",
   "omit": "Zonder {name}",
-  "substitute": "{from} vervangen door {to}"
+  "substitute": "{from} vervangen door {to}",
+  "card": "Allergenenkaart om te printen (PDF)"
 }

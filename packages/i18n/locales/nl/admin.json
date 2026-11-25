@@ -103,7 +103,10 @@
     "history": "Gepubliceerde versies",
     "version": "Versie {version}",
     "live": "live",
-    "dishCount": "{count, plural, one {# gerecht} other {# gerechten}}"
+    "dishCount": "{count, plural, one {# gerecht} other {# gerechten}}",
+    "card": "Allergenenkaart {language} (PDF)",
+    "cardError": "De allergenenkaart kon niet worden geopend.",
+    "cardHint": "Elke gepubliceerde versie heeft een eigen allergenenkaart, gemaakt van precies die versie. Gasten vinden de actuele kaart via het allergenenmenu."
   },
   "floors": {
     "intro": "Verdiepingen staan in deze volgorde in de bedieningsapp. Een verborgen verdieping, zoals een gesloten terras, verdwijnt uit de bediening en houdt haar tafels.",

@@ -1,0 +1,12 @@
+{
+  "title": "Allergen information",
+  "subtitle": "{location} · menu version {version}, published {date}",
+  "legend": {
+    "CONTAINS": "Contains",
+    "ON_REQUEST": "Can be left out on request",
+    "TRACES": "May contain traces",
+    "UNKNOWN": "Unknown: ask us"
+  },
+  "footer": "The 14 allergens of EU Regulation 1169/2011. Recipes can change: always tell your server about your allergy.",
+  "page": "Page {n} of {of}"
+}
