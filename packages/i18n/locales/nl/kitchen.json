@@ -51,5 +51,15 @@
     "printed": "Naar de printer gestuurd"
   },
   "tab": "Keuken",
-  "checkAll": "Alle {count, plural, one {# punt} other {# punten}} afvinken"
+  "checkAll": "Alle {count, plural, one {# punt} other {# punten}} afvinken",
+  "waiterNote": "Ober: {note}",
+  "override": {
+    "approve": "Toch goedkeuren",
+    "title": "Bord toch goedkeuren",
+    "severe": "Let op: ernstige allergie ({names}). Bij een fout kan de gast ernstig ziek worden.",
+    "consent": "De gast is geïnformeerd en gaat akkoord",
+    "reason": "Waarom keur je het goed? (verplicht)",
+    "send": "Goedkeuren",
+    "approved": "Goedgekeurd ondanks blokkade: {reason}"
+  }
 }

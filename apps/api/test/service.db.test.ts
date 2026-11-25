@@ -87,11 +87,20 @@ describe.skipIf(!hasDb)('service flow', () => {
   });
 
   it('stores the order with its assessment, and alerts when it cannot be served', async () => {
-    const table = await service.order(ctx, loc, '4', 1, salad, user);
+    // Ordering a dish the guest must not have takes a note from the waiter.
+    await expect(service.order(ctx, loc, '4', 1, salad, user)).rejects.toMatchObject({
+      response: { code: 'NOTE_REQUIRED' },
+    });
+    await expect(service.order(ctx, loc, '4', 1, salad, user, '  ')).rejects.toThrow();
+    const table = await service.order(ctx, loc, '4', 1, salad, user, ' Guest insists ');
     const line = table.bySeat[0]?.orders[0];
-    expect(line).toMatchObject({ dishId: salad, outcome: 'DO_NOT_SERVE' });
+    expect(line).toMatchObject({ dishId: salad, outcome: 'DO_NOT_SERVE', note: 'Guest insists' });
     const stored = await db.assessment.findUnique({ where: { plateId: line!.id } });
     expect(stored?.outcome).toBe('DO_NOT_SERVE');
+    const event = await db.auditEvent.findFirst({
+      where: { entityId: line!.id, type: 'order.created' },
+    });
+    expect(event?.payload).toMatchObject({ outcome: 'DO_NOT_SERVE', note: 'Guest insists' });
     await service.order(ctx, loc, '4', 1, soup, user);
     const alerts = await service.alerts(ctx, loc, 'en', user);
     expect(alerts.map((a) => [a.table, a.seat, a.dishName, a.kind])).toEqual([

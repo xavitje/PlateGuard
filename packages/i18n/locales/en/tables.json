@@ -53,5 +53,15 @@
       "3": "Desserts",
       "other": "Course {course}"
     }
-  }
+  },
+  "confirmStop": {
+    "title": "Order {dish} anyway?",
+    "body": "This dish is not safe for this guest. The kitchen gets it as ‘do not serve’, with your explanation. Your order and explanation are recorded.",
+    "note": "Why are you ordering it anyway? (required)",
+    "placeholder": "For example: agreed with the chef, made without nuts",
+    "cancel": "Cancel",
+    "confirm": "Order anyway",
+    "shown": "Your explanation: {note}"
+  },
+  "approvedByKitchen": "Approved by the kitchen: {reason}"
 }

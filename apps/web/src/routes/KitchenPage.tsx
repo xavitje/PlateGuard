@@ -173,6 +173,12 @@ function TicketCard({
   const action = useKitchenAction();
   const [ticked, setTicked] = useState<Set<string>>(new Set());
   const [rejecting, setRejecting] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const [why, setWhy] = useState(ticket.waiterNote ?? '');
+  const severe = ticket.allergies.filter(
+    (a) => a.severity === 'SEVERE' && (a.outcome === 'DO_NOT_SERVE' || a.outcome === 'UNKNOWN'),
+  );
   const [reason, setReason] = useState('');
   const [printed, setPrinted] = useState(false);
   const toCheck = ticket.status === 'ASSESSED' || ticket.status === 'IN_KITCHEN';
@@ -217,6 +223,18 @@ function TicketCard({
           </span>
         ))}
       </div>
+
+      {ticket.waiterNote && (
+        <p className="rounded-xl bg-[#2a2e36] px-3.5 py-3 text-[17px]">
+          {t('kitchen:waiterNote', { note: ticket.waiterNote })}
+        </p>
+      )}
+
+      {ticket.override && (
+        <p className="rounded-xl bg-[#1f2b22] px-3.5 py-3 text-[17px]">
+          {t('kitchen:override.approved', { reason: ticket.override.reason })}
+        </p>
+      )}
 
       {ticket.block && (
         <p role="alert" className="rounded-xl bg-[rgba(229,72,77,0.18)] px-3.5 py-3 text-[17px]">
@@ -264,7 +282,64 @@ function TicketCard({
         </p>
       )}
 
-      {rejecting ? (
+      {approving && ticket.overridable ? (
+        <form
+          aria-label={t('kitchen:override.title')}
+          className="grid gap-2.5 rounded-xl border border-[#e5484d]/50 p-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (consent && why.trim())
+              action.mutate(
+                { kind: 'override', plateId: ticket.plateId, reason: why.trim() },
+                { onSuccess: () => setApproving(false) },
+              );
+          }}
+        >
+          <p className="text-[17px] font-semibold">{t('kitchen:override.title')}</p>
+          {severe.length > 0 && (
+            <p
+              role="alert"
+              className="rounded-xl bg-[rgba(229,72,77,0.25)] px-3.5 py-3 text-[17px]"
+            >
+              {t('kitchen:override.severe', { names: severe.map((a) => name(a)).join(', ') })}
+            </p>
+          )}
+          <label className="flex min-h-12 items-center gap-3 rounded-xl bg-[#111317] px-3.5 text-[17px]">
+            <input
+              type="checkbox"
+              className="size-6 accent-[var(--pg-brand)]"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+            />
+            {t('kitchen:override.consent')}
+          </label>
+          <label className="grid gap-1.5 text-[15px] text-[#9aa1ad]">
+            {t('kitchen:override.reason')}
+            <textarea
+              rows={2}
+              maxLength={300}
+              value={why}
+              onChange={(e) => setWhy(e.target.value)}
+              className="rounded-xl bg-[#111317] px-3.5 py-2.5 text-[17px] text-white"
+            />
+          </label>
+          <div className="flex flex-wrap gap-2 [&>*]:flex-1">
+            <button
+              className={`${big} bg-[#e5484d] text-white disabled:opacity-40`}
+              disabled={!consent || !why.trim() || action.isPending}
+            >
+              {t('kitchen:override.send')}
+            </button>
+            <button
+              type="button"
+              className={`${grey} flex-none`}
+              onClick={() => setApproving(false)}
+            >
+              {t('kitchen:rejectCancel')}
+            </button>
+          </div>
+        </form>
+      ) : rejecting ? (
         <form
           className="grid gap-2"
           onSubmit={(e) => {
@@ -338,6 +413,11 @@ function TicketCard({
                 {t('kitchen:served')}
               </button>
             )}
+          {toCheck && ticket.overridable && can('plate.override') && (
+            <button className={`${grey} flex-none`} onClick={() => setApproving(true)}>
+              {t('kitchen:override.approve')}
+            </button>
+          )}
           {can('plate.reject') && (
             <button className={`${grey} flex-none`} onClick={() => setRejecting(true)}>
               {t('kitchen:reject')}

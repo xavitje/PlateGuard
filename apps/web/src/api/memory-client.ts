@@ -73,6 +73,7 @@ export function createMemoryClient(
           const dish = dishes.find((d) => d.id === o.dishId)!;
           return {
             ...o,
+            ...(o.override ? { approved: o.override } : {}),
             status: statusOf(o),
             outcome: assess({ dish, guest: s.allergies }).outcome,
           };
@@ -121,7 +122,10 @@ export function createMemoryClient(
       }),
     );
     const open = orderAlerts(
-      seats.map((s) => ({ ...s, orders: s.orders.filter((o) => OPEN.includes(o.status)) })),
+      seats.map((s) => ({
+        ...s,
+        orders: s.orders.filter((o) => OPEN.includes(o.status) && !o.approved),
+      })),
       dishes,
     ).map((a) => ({
       id: a.id,
@@ -143,7 +147,7 @@ export function createMemoryClient(
           : s.orders.map((o) => {
               const dish = dishes.find((d) => d.id === o.dishId)!;
               const result = assess({ dish, guest: s.allergies });
-              const block = kitchenBlock(result);
+              const block = o.override ? null : kitchenBlock(result);
               return {
                 plateId: o.id,
                 table,
@@ -157,6 +161,9 @@ export function createMemoryClient(
                 allergies: result.perAllergy,
                 checklist: block ? [] : kitchenChecklist(result),
                 qrToken: o.id,
+                waiterNote: o.note ?? null,
+                overridable: block !== null,
+                override: o.override ? { reason: o.override } : null,
               };
             }),
       ),
@@ -166,7 +173,7 @@ export function createMemoryClient(
     id: string,
     from: PlateStatusName[],
     to: PlateStatusName,
-    extra: { rejectReason?: string } = {},
+    extra: { rejectReason?: string; override?: string } = {},
   ) => {
     for (const seats of Object.values(state))
       for (const s of Object.values(seats))
@@ -248,6 +255,10 @@ export function createMemoryClient(
         move(id, ['ASSESSED', 'IN_KITCHEN'], 'CHECKED');
       },
       reject: async (_, id, reason) => move(id, [...OPEN], 'REJECTED', { rejectReason: reason }),
+      override: async (_, id, reason) => {
+        if (!ticket(id).overridable) throw new ApiError(409, 'NOT_OVERRIDABLE');
+        move(id, ['ASSESSED', 'IN_KITCHEN'], 'CHECKED', { override: reason });
+      },
       passCheck: async (_, id) => move(id, ['CHECKED'], 'PASS_CHECKED'),
       serve: async (_, id) =>
         move(id, passCheck ? ['PASS_CHECKED'] : ['CHECKED', 'PASS_CHECKED'], 'SERVED'),
@@ -332,9 +343,17 @@ export function createMemoryClient(
       s.noAllergy = body.allergies.length === 0 && !!body.noAllergy;
       return table(label);
     },
-    order: async (_, label, n, dishId) => {
+    order: async (_, label, n, dishId, note) => {
       table(label);
-      seat(label, n).orders.push({ id: `new-${nextId++}`, dishId });
+      const s = seat(label, n);
+      const dish = dishes.find((d) => d.id === dishId)!;
+      if (assess({ dish, guest: s.allergies }).outcome === 'DO_NOT_SERVE' && !note?.trim())
+        throw new ApiError(400, 'NOTE_REQUIRED');
+      s.orders.push({
+        id: `new-${nextId++}`,
+        dishId,
+        ...(note?.trim() ? { note: note.trim() } : {}),
+      });
       return table(label);
     },
     reportIncident: async (_, label, body) => {

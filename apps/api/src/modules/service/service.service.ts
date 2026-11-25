@@ -103,6 +103,8 @@ export class ServiceService {
           outcome: o.outcome,
           status: o.status,
           ...(o.status === 'REJECTED' && o.rejectReason ? { rejectReason: o.rejectReason } : {}),
+          ...(o.waiterNote ? { note: o.waiterNote } : {}),
+          ...(o.override ? { approved: o.override.reason } : {}),
         })),
       })),
     };
@@ -194,14 +196,17 @@ export class ServiceService {
     seat: number,
     dishId: string,
     userId: string,
+    note?: string,
   ): Promise<TableResponse> {
-    await this.place(ctx, locationId, label, seat, dishId, userId);
+    await this.place(ctx, locationId, label, seat, dishId, userId, undefined, note);
     return this.table(ctx, locationId, label);
   }
 
   /**
    * Puts a plate on a seat, judged against the seat's allergies. With a POS line as ref, the
-   * same line is placed only once: a second attempt answers null.
+   * same line is placed only once: a second attempt answers null. A waiter who orders a dish
+   * that must not be served to this guest has to say why; the note goes to the kitchen and the
+   * audit trail. A POS line cannot, so it is placed and the kitchen blocks it as before.
    */
   async place(
     ctx: TenantContext,
@@ -211,6 +216,7 @@ export class ServiceService {
     dishId: string,
     userId: string,
     ref?: PosLineRef,
+    note?: string,
   ): Promise<string | null> {
     const t = await this.requireTable(ctx, locationId, label);
     if (seat > t.seats) throw new BadRequestException({ code: 'SEAT_NOT_AT_TABLE' });
@@ -224,6 +230,8 @@ export class ServiceService {
     const guest = t.bySeat.find((s) => s.seat === seat)?.allergies ?? [];
     const input = { dish, guest };
     const result = assess(input);
+    if (!ref && result.outcome === 'DO_NOT_SERVE' && !note?.trim())
+      throw new BadRequestException({ code: 'NOTE_REQUIRED' });
     return this.service.createOrder(
       ctx,
       locationId,
@@ -235,6 +243,7 @@ export class ServiceService {
       userId,
       menu.versionId,
       ref,
+      note?.trim(),
     );
   }
 
@@ -261,6 +270,7 @@ export class ServiceService {
 /**
  * The API shape of the domain's order alerts, for plates on their way to the guest. A plate the
  * kitchen sent back always alerts as a stop, with the cook's reason, until the waiter removes it.
+ * A blocked plate the kitchen approved anyway no longer alerts: the table shows the approval.
  */
 export function alertsFor(
   tables: TableRow[],
@@ -275,7 +285,9 @@ export function alertsFor(
     t.bySeat.map((s) => ({
       ...s,
       table: t.label,
-      orders: s.orders.filter((o) => OPEN.has(o.status)).map((o) => ({ ...o, dish: dishOf(o) })),
+      orders: s.orders
+        .filter((o) => OPEN.has(o.status) && !o.override)
+        .map((o) => ({ ...o, dish: dishOf(o) })),
     })),
   );
   const open: AlertResponse[] = orderAlerts(seats, dishes).map((a) => ({

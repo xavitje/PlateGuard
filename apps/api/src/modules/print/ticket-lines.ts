@@ -64,8 +64,10 @@ export function ticketLines(ticket: KitchenTicketResponse, text: TicketText): Ti
     { kind: 'text', text: t('kitchen:print.orderedAt', { time }) },
     { kind: 'rule' },
     { kind: 'text', text: ticket.dishName, bold: true },
-    { kind: 'rule' },
   );
+  if (ticket.waiterNote)
+    lines.push({ kind: 'text', text: t('kitchen:waiterNote', { note: ticket.waiterNote }) });
+  lines.push({ kind: 'rule' });
   if (ticket.block) {
     lines.push(
       { kind: 'title', text: t('kitchen:print.doNotServe') },

@@ -1,6 +1,6 @@
 import type { MenuDish } from '@plateguard/contracts';
 import { normalizeLabel, type Assessment } from '@plateguard/domain';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AssessmentDetails } from './AssessmentDetails';
 import { ChevronLeft, Plus } from './icons';
@@ -30,7 +30,8 @@ interface Props {
   /** The seat has allergies: show each dish's outcome. */
   judged: boolean;
   verdictOf: (dishId: string) => Assessment;
-  onOrder: (dish: MenuDish) => void;
+  /** With a note when the waiter confirmed a "do not serve" dish. */
+  onOrder: (dish: MenuDish, note?: string) => void;
 }
 
 /**
@@ -38,20 +39,26 @@ interface Props {
  * - a list with a search bar and filters per category, everything one tap from ordering;
  * - a till-style grid: categories, then subcategories when there are any, then the dishes. A
  *   tap on a dish orders it and the grid stays in that category for the next one.
- * Without categories set in Recipes, dishes are grouped by course.
+ * Without categories set in Recipes, dishes are grouped by course. A dish that must not be
+ * served to this guest is only ordered after the waiter confirms it and says why.
  */
 export function DishPicker({ title, dishes, judged, verdictOf, onOrder }: Props) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<Mode>(readMode);
   const [added, setAdded] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<MenuDish | null>(null);
   const groupOf = (d: MenuDish) =>
     d.category ??
     (d.course >= 1 && d.course <= 3
       ? t(`tables:pick.course.${d.course}`)
       : t('tables:pick.course.other', { course: d.course }));
-  const order = (d: MenuDish) => {
-    onOrder(d);
+  const place = (d: MenuDish, note?: string) => {
+    onOrder(d, note);
     setAdded(d.name);
+  };
+  const order = (d: MenuDish) => {
+    if (judged && verdictOf(d.id).outcome === 'DO_NOT_SERVE') setConfirming(d);
+    else place(d);
   };
   const choose = (m: Mode) => {
     setMode(m);
@@ -101,7 +108,93 @@ export function DishPicker({ title, dishes, judged, verdictOf, onOrder }: Props)
           added={added}
         />
       )}
+      {confirming && (
+        <ConfirmDoNotServe
+          dish={confirming}
+          onCancel={() => setConfirming(null)}
+          onConfirm={(note) => {
+            place(confirming, note);
+            setConfirming(null);
+          }}
+        />
+      )}
     </>
+  );
+}
+
+/**
+ * Ordering a dish the guest must not have: the waiter confirms it and writes why. The kitchen
+ * still gets it as "do not serve", with the note on the ticket; the note is in the audit trail.
+ */
+function ConfirmDoNotServe({
+  dish,
+  onCancel,
+  onConfirm,
+}: {
+  dish: MenuDish;
+  onCancel: () => void;
+  onConfirm: (note: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [note, setNote] = useState('');
+  const field = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => field.current?.focus(), []);
+  const ok = note.trim().length > 0;
+  return (
+    <div
+      className="fixed inset-0 z-50 grid items-end bg-black/40 p-3 sm:place-items-center"
+      onClick={(e) => e.target === e.currentTarget && onCancel()}
+      onKeyDown={(e) => e.key === 'Escape' && onCancel()}
+    >
+      <form
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="dns-title"
+        aria-describedby="dns-body"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (ok) onConfirm(note.trim());
+        }}
+        className="grid w-full max-w-md gap-3 rounded-[22px] bg-card p-5 shadow-xl"
+      >
+        <OutcomeBadge outcome="DO_NOT_SERVE" />
+        <h2 id="dns-title" className="text-[20px] leading-tight font-bold">
+          {t('tables:confirmStop.title', { dish: dish.name })}
+        </h2>
+        <p id="dns-body" className="text-[14.5px] text-soft">
+          {t('tables:confirmStop.body')}
+        </p>
+        <label className="grid gap-1.5 text-[14px] font-semibold">
+          {t('tables:confirmStop.note')}
+          <textarea
+            ref={field}
+            required
+            maxLength={300}
+            rows={3}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={t('tables:confirmStop.placeholder')}
+            className="rounded-xl border border-line bg-bg px-3 py-2 text-base font-normal"
+          />
+        </label>
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="press min-h-11 rounded-full bg-mist px-4 text-[15px] font-semibold"
+          >
+            {t('tables:confirmStop.cancel')}
+          </button>
+          <button
+            type="submit"
+            disabled={!ok}
+            className="press min-h-11 rounded-full bg-red px-4 text-[15px] font-semibold text-white disabled:opacity-40"
+          >
+            {t('tables:confirmStop.confirm')}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
