@@ -36,7 +36,9 @@
     "STAFF_ORG_ROLE": "Deze persoon heeft een rol op elke locatie. Een eigenaar past dat aan.",
     "INCIDENT_FOLLOW_UP_INCOMPLETE": "Vul de oorzaak en de maatregel in voordat je afsluit.",
     "INCIDENT_NOT_FOUND": "Dit incident bestaat niet meer.",
-    "PIN_TAKEN": "Iemand anders hier met dezelfde voornaam heeft deze pincode al. Kies een andere."
+    "PIN_TAKEN": "Iemand anders hier met dezelfde voornaam heeft deze pincode al. Kies een andere.",
+    "MENU_IMPORT_NOT_CONFIGURED": "Menu importeren is nog niet ingesteld: de server heeft geen AI-sleutel.",
+    "MENU_IMPORT_FAILED": "De menukaart kon niet worden gelezen. Probeer het opnieuw, of met een scherpere foto."
   },
   "fields": {
     "name": "Naam",
@@ -47,7 +49,8 @@
     "tabs": {
       "ingredients": "Ingrediënten",
       "components": "Componenten",
-      "dishes": "Gerechten"
+      "dishes": "Gerechten",
+      "import": "Menu importeren"
     }
   },
   "ingredients": {
@@ -463,5 +466,18 @@
       "serveMinutes": "Tot uitgeserveerd",
       "openIncidents": "Open incidenten"
     }
+  },
+  "import": {
+    "intro": "Upload foto's of een PDF van je huidige menukaart. PlateGuard leest de gerechten, hun onderdelen en waarschijnlijke ingrediënten. Jij controleert alles voordat het wordt opgeslagen.",
+    "files": "Foto's of PDF van de menukaart",
+    "read": "Menu inlezen",
+    "reading": "Bezig met lezen… dit kan een minuut duren",
+    "tooLarge": "Deze bestanden zijn samen te groot. Gebruik minder foto's of een kleinere PDF (maximaal ongeveer 3 MB).",
+    "check": "De allergenen hieronder zijn een voorstel van AI, geen feit. Elk nieuw ingrediënt wordt opgeslagen als niet gecontroleerd: de gerechten blijven \"onbekend\" voor gasten tot je elk ingrediënt controleert onder Ingrediënten. Er wordt niets gepubliceerd.",
+    "none": "Geen gerechten gevonden. Probeer een scherpere foto.",
+    "may": "kan bevatten",
+    "save": "{count, plural, one {# gerecht aan het concept toevoegen} other {# gerechten aan het concept toevoegen}}",
+    "cancel": "Weggooien",
+    "done": "{count, plural, one {# gerecht toegevoegd aan het menuconcept.} other {# gerechten toegevoegd aan het menuconcept.}} Controleer de nieuwe ingrediënten onder Ingrediënten voordat je publiceert."
   }
 }

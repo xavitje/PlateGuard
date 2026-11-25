@@ -36,7 +36,9 @@
     "STAFF_ORG_ROLE": "This person has a role at every location. An owner changes that.",
     "INCIDENT_FOLLOW_UP_INCOMPLETE": "Write down the cause and the measure before closing.",
     "INCIDENT_NOT_FOUND": "This incident no longer exists.",
-    "PIN_TAKEN": "Someone else here with the same first name already has this PIN. Choose another one."
+    "PIN_TAKEN": "Someone else here with the same first name already has this PIN. Choose another one.",
+    "MENU_IMPORT_NOT_CONFIGURED": "Menu import is not set up yet: the server has no AI key.",
+    "MENU_IMPORT_FAILED": "The menu could not be read. Try again, or with a sharper photo."
   },
   "fields": {
     "name": "Name",
@@ -47,7 +49,8 @@
     "tabs": {
       "ingredients": "Ingredients",
       "components": "Components",
-      "dishes": "Dishes"
+      "dishes": "Dishes",
+      "import": "Import menu"
     }
   },
   "ingredients": {
@@ -463,5 +466,18 @@
       "serveMinutes": "To served",
       "openIncidents": "Open incidents"
     }
+  },
+  "import": {
+    "intro": "Upload photos or a PDF of your current menu. PlateGuard reads the dishes, their parts and likely ingredients. You check everything before it is saved.",
+    "files": "Menu photos or PDF",
+    "read": "Read menu",
+    "reading": "Reading… this can take a minute",
+    "tooLarge": "These files are too big together. Use fewer photos or a smaller PDF (at most about 3 MB).",
+    "check": "The allergens below are a suggestion from AI, not a fact. Every new ingredient is saved as unverified: the dishes stay \"unknown\" for guests until you check each ingredient under Ingredients. Nothing is published.",
+    "none": "No dishes found. Try a sharper photo.",
+    "may": "may contain",
+    "save": "{count, plural, one {Add # dish to the draft} other {Add # dishes to the draft}}",
+    "cancel": "Discard",
+    "done": "{count, plural, one {# dish added to the menu draft.} other {# dishes added to the menu draft.}} Check the new ingredients under Ingredients before you publish."
   }
 }

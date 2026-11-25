@@ -246,3 +246,37 @@ export interface StaffMember {
   /** Five wrong PINs in a row: a manager sets a new PIN to unlock. */
   locked: boolean;
 }
+
+// ─── Menu import ───────────────────────────────────────────────────────────
+
+/** Photos or a PDF of an existing menu. Vercel takes at most 4.5 MB per request. */
+export const MenuImportInputZ = z.strictObject({
+  files: z
+    .array(
+      z.strictObject({
+        mediaType: z.enum(['application/pdf', 'image/jpeg', 'image/png', 'image/webp']),
+        /** Base64, no data: prefix. */
+        data: z.string().min(1).max(6_000_000),
+      }),
+    )
+    .min(1)
+    .max(10),
+});
+export type MenuImportInput = z.infer<typeof MenuImportInputZ>;
+
+/** What the AI read from the menu. A proposal only: nothing is saved until the owner imports it. */
+export interface ImportedDish {
+  name: string;
+  category: string | null;
+  priceCents: number | null;
+  description: string | null;
+  components: {
+    name: string;
+    /** Allergens are a guess from the dish name and description: always saved unverified. */
+    ingredients: { name: string; contains: string[]; mayContain: string[] }[];
+  }[];
+}
+
+export interface MenuImportProposal {
+  dishes: ImportedDish[];
+}

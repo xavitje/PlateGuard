@@ -4,11 +4,13 @@ import {
   DishInputZ,
   EquipmentInputZ,
   IngredientInputZ,
+  MenuImportInputZ,
   MenuItemsZ,
   type ComponentInput,
   type DishInput,
   type EquipmentInput,
   type IngredientInput,
+  type MenuImportInput,
   type MenuItems,
 } from '@plateguard/contracts';
 import type { Principal } from '@plateguard/domain';
@@ -21,6 +23,7 @@ import {
   type AuthedRequest,
   type TenantContext,
 } from '../auth/permissions.js';
+import { MenuImportService } from './menu-import.service.js';
 import { RecipesService } from './recipes.service.js';
 
 const IdPipe = new ZodPipe(z.uuid());
@@ -30,7 +33,10 @@ const LocaleZ = z.enum(['en', 'nl']).catch('en');
 @Controller('locations/:locationId/admin')
 @RequirePermission('menu.edit')
 export class RecipesController {
-  constructor(private readonly recipes: RecipesService) {}
+  constructor(
+    private readonly recipes: RecipesService,
+    private readonly menuImport: MenuImportService,
+  ) {}
 
   @Get('allergens')
   allergens(@Tenant() ctx: TenantContext, @Query('locale', new ZodPipe(LocaleZ)) locale: string) {
@@ -143,6 +149,16 @@ export class RecipesController {
     @Body(new ZodPipe(MenuItemsZ)) body: MenuItems,
   ) {
     return this.recipes.setMenuItems(ctx, locationId, body.dishIds);
+  }
+
+  /** Reads dishes from photos or a PDF of a menu. Saves nothing: the owner checks and imports. */
+  @Post('menu/import')
+  async importMenu(
+    @Tenant() ctx: TenantContext,
+    @Body(new ZodPipe(MenuImportInputZ)) body: MenuImportInput,
+  ) {
+    const codes = (await this.recipes.allergens(ctx, 'en')).map((a) => a.code);
+    return this.menuImport.extract(body, codes);
   }
 
   @Post('menu/publish')

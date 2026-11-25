@@ -18,6 +18,8 @@ import type {
   IngredientDraft,
   IngredientResponse,
   MenuDraftResponse,
+  MenuImportInput,
+  MenuImportProposal,
   LoginResponse,
   PinLogin,
   SignInLocationResponse,
@@ -71,6 +73,8 @@ export interface AdminClient {
   menuDraft(location: string): Promise<MenuDraftResponse>;
   setMenuItems(location: string, dishIds: string[]): Promise<MenuDraftResponse>;
   publishMenu(location: string): Promise<MenuDraftResponse>;
+  /** Reads dishes from photos or a PDF of a menu. Saves nothing. */
+  importMenu(location: string, body: MenuImportInput): Promise<MenuImportProposal>;
   /** The printable allergen card of a published menu version, as a PDF. */
   allergenCard(location: string, versionId: string, locale: string): Promise<Blob>;
   floors(location: string): Promise<AdminFloor[]>;
@@ -223,6 +227,7 @@ export function createHttpClient(
       setMenuItems: (l, dishIds) =>
         call(adm(l, 'menu/items'), { method: 'PUT', body: { dishIds } }),
       publishMenu: (l) => call(adm(l, 'menu/publish'), { method: 'POST' }),
+      importMenu: (l, body) => call(adm(l, 'menu/import'), { method: 'POST', body }),
       allergenCard: (l, id, locale) =>
         call(adm(l, `menu/versions/${id}/card.pdf?locale=${locale}`), { blob: true }),
       floors: (l) => call(adm(l, 'floors')),
