@@ -4,3 +4,4 @@ export * from './engine.js';
 export * from './hash.js';
 export * from './permissions.js';
 export * from './ingredient-search.js';
+export * from './alerts.js';

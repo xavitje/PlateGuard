@@ -46,6 +46,8 @@ enum PlateStatus {
   PASS_CHECKED
   SERVED
   REJECTED
+  /// Taken off the order before the kitchen started. The assessment stays, append-only.
+  CANCELLED
 }
 
 enum ServicePointKind {

@@ -17,5 +17,8 @@
     "CAUTION": "Vraag gast",
     "UNKNOWN": "Onbekend",
     "DO_NOT_SERVE": "Niet serveren"
-  }
+  },
+  "loading": "Laden…",
+  "loadError": "PlateGuard is niet bereikbaar. Controleer de verbinding en probeer het opnieuw.",
+  "saveError": "Niet opgeslagen. Controleer de verbinding en probeer het opnieuw."
 }

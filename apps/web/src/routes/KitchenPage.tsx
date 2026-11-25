@@ -3,7 +3,8 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { OutcomeBadge } from '../components/OutcomeBadge';
-import { DEMO_ALLERGEN_NAMES, DEMO_DISHES } from '../demo';
+import { ALLERGEN_NAMES } from '../allergens';
+import { DEMO_DISHES } from '../demo';
 
 interface Ticket {
   id: string;
@@ -112,7 +113,7 @@ export function KitchenPage() {
               >
                 {a.custom ??
                   a.ingredient?.name ??
-                  DEMO_ALLERGEN_NAMES[a.allergen ?? '']?.[lang] ??
+                  ALLERGEN_NAMES[a.allergen ?? '']?.[lang] ??
                   a.allergen}{' '}
                 · {t(`common:severity.${a.severity}`)}
               </span>

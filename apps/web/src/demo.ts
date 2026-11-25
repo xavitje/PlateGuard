@@ -1,5 +1,6 @@
 /**
- * Demo data for the app shell until the API serves real data. Invented: Brasserie De Haven does not exist.
+ * Demo data for the tests (through the in-memory client) and the kitchen view, which does not
+ * read from the API yet. The app itself reads the seeded database through the API. Invented: Brasserie De Haven does not exist.
  * Allergen names come from the database per locale in production (AllergenTranslation).
  */
 import type {
@@ -8,7 +9,6 @@ import type {
   ResolvedDish,
   SearchableIngredient,
 } from '@plateguard/domain';
-import type { SeatState, ServiceState } from './service/state';
 
 export interface DemoTable {
   label: string;
@@ -33,24 +33,6 @@ export const DEMO_TABLES: DemoTable[] = [
   { label: '11', floor: 'Terrace', seats: 2, guests: 0 },
   { label: '12', floor: 'Terrace', seats: 4, guests: 4 },
 ];
-
-export const DEMO_ALLERGEN_NAMES: Record<string, { en: string; nl: string }> = {
-  GLUTEN: { en: 'Gluten', nl: 'Gluten' },
-  MILK: { en: 'Milk', nl: 'Melk' },
-  EGGS: { en: 'Eggs', nl: 'Ei' },
-  NUTS: { en: 'Nuts', nl: 'Noten' },
-  NUTS_HAZELNUT: { en: 'Hazelnut', nl: 'Hazelnoot' },
-  PEANUTS: { en: 'Peanuts', nl: "Pinda's" },
-  CELERY: { en: 'Celery', nl: 'Selderij' },
-  FISH: { en: 'Fish', nl: 'Vis' },
-  CRUSTACEANS: { en: 'Crustaceans', nl: 'Schaaldieren' },
-  SESAME: { en: 'Sesame', nl: 'Sesam' },
-  SOYBEANS: { en: 'Soy', nl: 'Soja' },
-  MUSTARD: { en: 'Mustard', nl: 'Mosterd' },
-};
-
-/** The quick picks on the seat screen. Anything else goes through "Other allergy". */
-export const QUICK_ALLERGENS = ['GLUTEN', 'MILK', 'NUTS', 'PEANUTS', 'CELERY'];
 
 const ing = (
   id: string,
@@ -164,7 +146,16 @@ export const DEMO_DISHES: ResolvedDish[] = [
   },
 ];
 
-const seat = (orders: string[], allergies: GuestAllergy[] = []): SeatState => ({
+export interface DemoSeat {
+  allergies: GuestAllergy[];
+  noAllergy: boolean;
+  orders: { id: string; dishId: string }[];
+}
+
+/** Table label → seat number → what was recorded and ordered. */
+export type DemoService = Record<string, Record<number, DemoSeat>>;
+
+const seat = (orders: string[], allergies: GuestAllergy[] = []): DemoSeat => ({
   allergies,
   noAllergy: allergies.length === 0,
   orders: orders.map((dishId, i) => ({ id: `${dishId}-${i}`, dishId })),
@@ -174,7 +165,7 @@ const seat = (orders: string[], allergies: GuestAllergy[] = []): SeatState => ({
  * What the waiters have entered so far. Alerts follow from these orders only: a seat with an
  * allergy gets an alert when a dish it ordered needs a change or cannot be served.
  */
-export const DEMO_SERVICE: ServiceState = {
+export const DEMO_SERVICE: DemoService = {
   '12': {
     1: seat(['d-steak']),
     2: seat(['d-soup']),
@@ -194,19 +185,6 @@ export const DEMO_SERVICE: ServiceState = {
     4: seat(['d-risotto']),
   },
 };
-
-/** Events from the kitchen, not from the menu: a plate that skipped its check. */
-export interface KitchenEvent {
-  id: string;
-  kind: 'missed';
-  table: string;
-  plate: string;
-  minutesAgo: number;
-}
-
-export const DEMO_KITCHEN_EVENTS: KitchenEvent[] = [
-  { id: 'k1', kind: 'missed', table: '7', plate: '4810', minutesAgo: 31 },
-];
 
 const SYNONYMS: Record<string, string[]> = {
   'i-tomato': ['tomaat', 'tomaten', 'tomatoes'],

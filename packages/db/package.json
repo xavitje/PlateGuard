@@ -20,15 +20,16 @@
     "migrate:dev": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "reset": "prisma migrate reset --force --skip-seed"
   },
   "dependencies": {
-    "@prisma/client": "~6.19.3"
+    "@prisma/client": "~6.19.3",
+    "@plateguard/domain": "workspace:*"
   },
   "devDependencies": {
     "prisma": "~6.19.3",
     "tsx": "^4.20.0",
-    "@plateguard/domain": "workspace:*",
     "@types/node": "^22.10.0"
   }
 }
