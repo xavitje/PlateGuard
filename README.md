@@ -155,6 +155,19 @@ seats with allergies and orders, and alerts.
   `order.cancelled`, `plate.checked`, `plate.rejected`, `plate.pass_checked`, `plate.served` and
   `location.pass_check_set`. Kitchen and pass checks are also stored as `PlateCheck` rows.
 
+## Guest menu
+
+`/menu/<location slug>` is the public allergen menu a guest opens from the QR code on the table. It
+needs no sign-in and reads `GET /api/public/locations/<slug>/menu?locale=nl&avoid=GLUTEN,MILK`.
+
+- It shows the latest published menu only. Before the first publish it says the menu is not
+  available yet.
+- The guest picks from the 14 EU allergens. The server judges each dish with the same engine, as an
+  allergy (not severe), and returns only the dish name, the outcome and what the kitchen leaves off
+  or replaces. Ingredients and recipes never leave the restaurant.
+- The choice stays in the address (`?avoid=GLUTEN`), so a reload or a shared link keeps it. The page
+  never says "safe" and tells the guest to mention their allergy to their server.
+
 ## Admin: recipes, menu, floor plan and staff
 
 `/admin` is the desktop environment. Each section shows only to roles that may use it; the API checks

@@ -217,6 +217,28 @@ export function createMemoryClient(
       };
     },
     me: async () => ME,
+    guestMenu: async (slug, _, avoid) => {
+      if (slug !== 'demo') throw new ApiError(404, 'LOCATION_NOT_FOUND');
+      const guest = avoid.map((allergen) => ({ allergen, severity: 'ALLERGY' as const }));
+      return {
+        location: { name: 'Brasserie De Haven' },
+        published: true,
+        dishes: dishes.map((dish) => {
+          const base = { id: dish.id, name: dish.name, course: 1 };
+          if (guest.length === 0) return base;
+          const r = assess({ dish, guest });
+          return {
+            ...base,
+            outcome: r.outcome,
+            changes: r.modifications.map((m) => ({
+              action: m.action,
+              componentName: m.componentName,
+              ...(m.substitute ? { substituteName: m.substitute.name } : {}),
+            })),
+          };
+        }),
+      };
+    },
     floors: async () => {
       const all = alerts();
       return DEMO_FLOORS.map((f) => ({

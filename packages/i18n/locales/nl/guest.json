@@ -1,5 +1,9 @@
 {
   "title": "Allergenenkaart",
   "filter": "Ik vermijd",
-  "disclaimer": "Allergeneninfo via PlateGuard. Meld je allergie altijd bij de bediening."
+  "disclaimer": "Allergeneninfo via PlateGuard. Meld je allergie altijd bij de bediening.",
+  "notFound": "Deze kaart is niet gevonden.",
+  "notPublished": "De allergenenkaart is nog niet beschikbaar. Vraag het je bediening.",
+  "omit": "Zonder {name}",
+  "substitute": "{from} vervangen door {to}"
 }

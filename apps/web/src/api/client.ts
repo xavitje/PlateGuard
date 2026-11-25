@@ -1,4 +1,5 @@
 import type {
+  GuestMenuResponse,
   KitchenResponse,
   LocationSettings,
   AdminFloor,
@@ -82,6 +83,8 @@ export interface ServiceClient {
   staff(slug: string): Promise<StaffListResponse>;
   loginPin(body: PinLogin): Promise<LoginResponse>;
   me(): Promise<MeResponse>;
+  /** Public: the published allergen menu of a location, judged for what the guest avoids. */
+  guestMenu(slug: string, locale: string, avoid: string[]): Promise<GuestMenuResponse>;
   floors(location: string): Promise<FloorResponse[]>;
   menu(location: string, locale: string): Promise<MenuResponse>;
   table(location: string, label: string): Promise<TableResponse>;
@@ -184,6 +187,10 @@ export function createHttpClient(
     staff: (slug) => call(`/auth/locations/${encodeURIComponent(slug)}/staff`),
     loginPin: (body) => call('/auth/pin', { method: 'POST', body }),
     me: () => call('/me'),
+    guestMenu: (slug, locale, avoid) =>
+      call(
+        `/public/locations/${encodeURIComponent(slug)}/menu?locale=${locale}&avoid=${avoid.join(',')}`,
+      ),
     floors: (l) => call(`${loc(l)}/floors`),
     menu: (l, locale) => call(`${loc(l)}/menu?locale=${locale}`),
     table: (l, label) => call(tbl(l, label)),

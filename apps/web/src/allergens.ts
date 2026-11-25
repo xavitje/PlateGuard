@@ -14,6 +14,9 @@ export const ALLERGEN_NAMES: Record<string, { en: string; nl: string }> = {
   SESAME: { en: 'Sesame', nl: 'Sesam' },
   SOYBEANS: { en: 'Soy', nl: 'Soja' },
   MUSTARD: { en: 'Mustard', nl: 'Mosterd' },
+  SULPHITES: { en: 'Sulphites', nl: 'Sulfiet' },
+  LUPIN: { en: 'Lupin', nl: 'Lupine' },
+  MOLLUSCS: { en: 'Molluscs', nl: 'Weekdieren' },
 };
 
 /** The quick picks on the seat screen. Anything else goes through "Other allergy". */
