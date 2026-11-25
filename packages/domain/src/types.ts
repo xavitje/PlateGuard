@@ -59,7 +59,7 @@ export interface Component {
    * stock in a batch-made jus). It cannot be left off or swapped; only its parent can.
    */
   premixed: boolean;
-  /** Made separately, without cross-contact, so usable as a substitute for a SEVERE allergy. */
+  /** Made separately, without cross-contact: usable as a substitute, or left off, for a SEVERE allergy. */
   suitableForSevere: boolean;
   preparedWith: Equipment[];
   ingredients: Ingredient[];
@@ -179,8 +179,18 @@ export interface Assessment {
   inputHash: string;
 }
 
+/** A change the waiter picked when ordering, for a component of the dish itself. */
+export interface Choice {
+  componentId: string;
+  action: ModificationAction;
+  /** The replacement component, with SUBSTITUTE. */
+  substituteId?: string;
+}
+
 export interface AssessInput {
   dish: ResolvedDish | UnmappedItem;
   guest: GuestAllergy[];
+  /** The waiter's picks. The engine takes them before its own, if they are safe. */
+  choices?: Choice[];
   engineVersion?: string;
 }

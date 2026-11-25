@@ -1,3 +1,4 @@
+import type { Choice } from '@plateguard/domain';
 import type {
   AlertResponse,
   LoginResponse,
@@ -178,7 +179,7 @@ export function useTable(label: string) {
 
 type TableWrite =
   | { kind: 'seat'; seat: number; body: SeatUpdateInput }
-  | { kind: 'order'; seat: number; dishId: string; note?: string }
+  | { kind: 'order'; seat: number; dishId: string; note?: string; choices?: Choice[] }
   | { kind: 'cancel'; plateId: string };
 
 /** Every write at a table returns the new table; alerts and the floor counts refresh after. */
@@ -190,7 +191,7 @@ export function useTableWrite(label: string) {
     mutationFn: (w: TableWrite): Promise<TableResponse> => {
       if (!loc) throw new Error('No location');
       if (w.kind === 'seat') return client.saveSeat(loc, label, w.seat, w.body);
-      if (w.kind === 'order') return client.order(loc, label, w.seat, w.dishId, w.note);
+      if (w.kind === 'order') return client.order(loc, label, w.seat, w.dishId, w.note, w.choices);
       return client.cancelOrder(loc, label, w.plateId);
     },
     // Allergies show at once, so quick taps build on each other; the server's answer replaces it.

@@ -1,3 +1,4 @@
+import type { Choice } from '@plateguard/domain';
 import type {
   GuestMenuResponse,
   KitchenResponse,
@@ -154,6 +155,8 @@ export interface ServiceClient {
     dishId: string,
     /** Required for a dish that is "do not serve" for this guest. */
     note?: string,
+    /** What the waiter changed on the plate; the engine judges it with these. */
+    choices?: Choice[],
   ): Promise<TableResponse>;
   cancelOrder(location: string, label: string, plateId: string): Promise<TableResponse>;
   /** An incident at a table; the server freezes what is known about the seat and plate. */
@@ -297,10 +300,10 @@ export function createHttpClient(
       }),
     saveSeat: (l, label, seat, body) =>
       call(`${tbl(l, label)}/seats/${seat}`, { method: 'PUT', body }),
-    order: (l, label, seat, dishId, note) =>
+    order: (l, label, seat, dishId, note, choices) =>
       call(`${tbl(l, label)}/seats/${seat}/orders`, {
         method: 'POST',
-        body: note ? { dishId, note } : { dishId },
+        body: { dishId, ...(note ? { note } : {}), ...(choices?.length ? { choices } : {}) },
       }),
     cancelOrder: (l, label, plateId) =>
       call(`${tbl(l, label)}/orders/${plateId}`, { method: 'DELETE' }),

@@ -649,6 +649,8 @@ model PlateOrder {
   rejectedAt    DateTime?   @map("rejected_at")
   /// Why the waiter ordered it anyway: required when the engine said do not serve.
   waiterNote    String?     @map("waiter_note")
+  /// The waiter's picks when ordering: [{componentId, action, substituteId?}].
+  choices       Json?
   createdAt     DateTime    @default(now()) @map("created_at")
 
   visit         Visit               @relation(fields: [visitId], references: [id])

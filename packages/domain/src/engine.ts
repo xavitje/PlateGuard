@@ -17,6 +17,7 @@ import {
   type AllergyResult,
   type AssessInput,
   type Assessment,
+  type Choice,
   type Component,
   type ManualCheck,
   type GuestAllergy,
@@ -50,6 +51,7 @@ interface Hit {
 interface Ctx {
   allergies: NormalizedAllergy[];
   taxonomy: AllergenTaxonomy;
+  choices: Choice[];
 }
 
 export interface EngineOptions {
@@ -186,6 +188,9 @@ type Resolution =
 function resolveComponent(c: Component, parentPath: string[], ctx: Ctx): Resolution {
   const path = [...parentPath, c.id];
   const needs = ctx.allergies.filter((a) => needsAction(levelOf(deepHits(c, a, ctx)), a.severity));
+  const choice =
+    parentPath.length === 0 ? ctx.choices.find((x) => x.componentId === c.id) : undefined;
+  if (choice) return chosen(c, path, choice, needs, ctx);
   if (needs.length === 0) return { ok: true, modifications: [] };
 
   const ownNeeds = needs.filter((a) => needsAction(levelOf(ownHits(c, a, ctx)), a.severity));
@@ -222,8 +227,8 @@ function resolveComponent(c: Component, parentPath: string[], ctx: Ctx): Resolut
     }
   }
 
-  // Leaving something off is not enough for SEVERE: that needs a substitute made separately.
-  if (c.omittable && !c.premixed && !anySevere) {
+  // For SEVERE, leaving it off is only enough when it is made separately and never touched the plate.
+  if (c.omittable && !c.premixed && (!anySevere || c.suitableForSevere)) {
     return {
       ok: true,
       modifications: [
@@ -239,6 +244,46 @@ function resolveComponent(c: Component, parentPath: string[], ctx: Ctx): Resolut
     };
   }
 
+  return { ok: false, unresolved: needs.map((a) => ({ key: a.key, componentId: c.id })) };
+}
+
+/**
+ * The waiter's pick for a component, held to the same rules as the engine's own. A pick that is
+ * not safe leaves the component unresolved: the engine does not quietly pick something else.
+ * A substitute is checked again on the plate as served, so a pick for taste cannot add an allergen.
+ */
+function chosen(
+  c: Component,
+  path: string[],
+  choice: Choice,
+  needs: NormalizedAllergy[],
+  ctx: Ctx,
+): Resolution {
+  const anySevere = needs.some((a) => a.severity === 'SEVERE');
+  const mod = {
+    componentPath: path,
+    componentId: c.id,
+    componentName: c.name,
+    reasonAllergens: needs.flatMap((a) => (a.allergen ? [a.allergen] : [])),
+    reasonIngredients: needs.flatMap((a) => (a.ingredient ? [a.ingredient.id] : [])),
+  };
+  if (!c.premixed && choice.action === 'SUBSTITUTE') {
+    const sub = c.substitutions.find((s) => s.replacement.id === choice.substituteId);
+    const severeOk = !anySevere || sub?.suitableForSevere || sub?.replacement.suitableForSevere;
+    if (sub && severeOk && (needs.length === 0 || isCleanFor(sub.replacement, ctx))) {
+      const substitute = { id: sub.replacement.id, name: sub.replacement.name };
+      return { ok: true, modifications: [{ ...mod, action: 'SUBSTITUTE', substitute }] };
+    }
+  }
+  if (
+    !c.premixed &&
+    choice.action === 'OMIT' &&
+    c.omittable &&
+    (!anySevere || c.suitableForSevere)
+  ) {
+    return { ok: true, modifications: [{ ...mod, action: 'OMIT' }] };
+  }
+  if (needs.length === 0) return { ok: true, modifications: [] };
   return { ok: false, unresolved: needs.map((a) => ({ key: a.key, componentId: c.id })) };
 }
 
@@ -399,8 +444,16 @@ export function assess(input: AssessInput, options: EngineOptions = {}): Assessm
   const engineVersion = input.engineVersion ?? ENGINE_VERSION;
   const taxonomy = options.taxonomy ?? DEFAULT_TAXONOMY;
   const guest = normalizeGuest(input.guest);
-  const ctx: Ctx = { allergies: guest.known, taxonomy };
-  const hash = inputHash({ dish: input.dish, guest, engineVersion, taxonomy });
+  const choices = input.choices ?? [];
+  const ctx: Ctx = { allergies: guest.known, taxonomy, choices };
+  // Without picks the hash stays what it was, so earlier plates still verify.
+  const hash = inputHash({
+    dish: input.dish,
+    guest,
+    engineVersion,
+    taxonomy,
+    ...(choices.length > 0 ? { choices } : {}),
+  });
 
   let modifications: Modification[] = [];
   let perAllergy: AllergyResult[];

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { I18nProvider } from '../i18n';
@@ -26,6 +26,36 @@ describe('TableDetailPage', () => {
     renderTable('12');
     fireEvent.click(await screen.findByRole('tab', { name: /3/ }));
     expect((await screen.findAllByText('Jus → GF jus')).length).toBeGreaterThan(0);
+  });
+
+  it('names the part of a dish that cannot be fixed', async () => {
+    renderTable('7');
+    fireEvent.click(await screen.findByRole('tab', { name: /2/ }));
+    expect((await screen.findAllByText('Cannot be fixed: Soup')).length).toBeGreaterThan(0);
+  });
+
+  it('lets the waiter change a dish while ordering, judged again on every tap', async () => {
+    renderTable('12');
+    fireEvent.click(await screen.findByRole('tab', { name: /3/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Adjust Steak, jus and fries' }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Without' }));
+    expect(within(dialog).getByText('Jus → GF jus · − Fries')).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Order' }));
+    expect(
+      await screen.findByRole('button', { name: 'Remove Steak, jus and fries from the order' }),
+    ).toBeTruthy();
+    expect(screen.getAllByText('Jus → GF jus · − Fries').length).toBeGreaterThan(0);
+  });
+
+  it('offers to change a "do not serve" dish instead of ordering it anyway', async () => {
+    renderTable('12');
+    fireEvent.click(await screen.findByRole('tab', { name: /3/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Order Caesar salad' }));
+    const stop = await screen.findByRole('alertdialog');
+    fireEvent.click(within(stop).getByRole('button', { name: 'Adjust the dish' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('group', { name: 'Croutons' })).toBeTruthy();
   });
 
   it('adds a dish to the seat order, and removes it again', async () => {

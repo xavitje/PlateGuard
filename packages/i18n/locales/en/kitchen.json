@@ -61,5 +61,6 @@
     "reason": "Why are you approving it? (required)",
     "send": "Approve",
     "approved": "Approved despite the block: {reason}"
-  }
+  },
+  "blockedBy": "Cannot be fixed: {names}"
 }

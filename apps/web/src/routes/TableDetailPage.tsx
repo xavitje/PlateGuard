@@ -96,8 +96,10 @@ export function TableDetailPage() {
 
   const verdicts = dishes.map((dish) => ({ dish, result: assess({ dish, guest: current }) }));
   const ordered = seatState.orders.flatMap((line) => {
-    const v = verdicts.find((x) => x.dish.id === line.dishId);
-    return v ? [{ line, ...v }] : [];
+    const dish = dishes.find((d) => d.id === line.dishId);
+    return dish
+      ? [{ line, dish, result: assess({ dish, guest: current, choices: line.choices }) }]
+      : [];
   });
 
   return (
@@ -320,7 +322,7 @@ export function TableDetailPage() {
                   )
                 )}
                 {current.length > 0 && line.status !== 'SERVED' && (
-                  <AssessmentDetails result={result} />
+                  <AssessmentDetails result={result} dish={dish} />
                 )}
                 {line.approved && (
                   <p className="col-span-3 text-[13px] font-semibold">
@@ -341,7 +343,10 @@ export function TableDetailPage() {
             dishes={dishes}
             judged={current.length > 0}
             verdictOf={(id) => verdicts.find((v) => v.dish.id === id)!.result}
-            onOrder={(dish, note) => write.mutate({ kind: 'order', seat, dishId: dish.id, note })}
+            guest={current}
+            onOrder={(dish, note, choices) =>
+              write.mutate({ kind: 'order', seat, dishId: dish.id, note, choices })
+            }
           />
           <p className="mx-1.5 mt-2 text-[12.5px] text-soft">{t('tables:menuGuidance')}</p>
           <IncidentReport

@@ -1,5 +1,5 @@
 import { assess } from './engine.js';
-import type { Assessment, GuestAllergy, Outcome, ResolvedDish } from './types.js';
+import type { Assessment, Choice, GuestAllergy, Outcome, ResolvedDish } from './types.js';
 
 export type AlertKind = 'stop' | 'warn' | 'unknown';
 
@@ -11,7 +11,7 @@ export interface SeatOrders {
    * Open orders only: not served, rejected or cancelled. `dish` is the recipe as it was on the
    * menu when ordered; without it the dish is looked up in the current menu.
    */
-  orders: { id: string; dishId: string; dish?: ResolvedDish }[];
+  orders: { id: string; dishId: string; dish?: ResolvedDish; choices?: Choice[] }[];
 }
 
 export interface OrderAlert {
@@ -46,7 +46,7 @@ export function orderAlerts(seats: SeatOrders[], dishes: ResolvedDish[]): OrderA
     for (const order of s.orders) {
       const dish = order.dish ?? byId.get(order.dishId);
       if (!dish) continue;
-      const result = assess({ dish, guest: s.allergies });
+      const result = assess({ dish, guest: s.allergies, choices: order.choices });
       const kind = KIND[result.outcome];
       if (kind) alerts.push({ id: order.id, kind, table: s.table, seat: s.seat, dish, result });
     }

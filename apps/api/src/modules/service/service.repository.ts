@@ -3,6 +3,7 @@ import { audit, type Prisma, type TenantContext, type TenantTx } from '@plategua
 import {
   normalizeLabel,
   type Assessment,
+  type Choice,
   type GuestAllergy,
   type Severity,
 } from '@plateguard/domain';
@@ -26,6 +27,7 @@ export interface OrderRow {
   status: PlateStatus;
   rejectReason: string | null;
   waiterNote: string | null;
+  choices: Choice[];
   /** A chef or manager approved the blocked plate. */
   override: { reason: string } | null;
   course: number;
@@ -96,6 +98,7 @@ function toSeat(g: GuestWithData): SeatRow {
               status: p.status,
               rejectReason: p.rejectReason,
               waiterNote: p.waiterNote,
+              choices: (p.choices as Choice[] | null) ?? [],
               override: p.overrides[0] ?? null,
               course: p.course,
               createdAt: p.createdAt,
@@ -212,6 +215,7 @@ export class ServiceRepository {
     menuVersionId: string | null = null,
     ref?: PosLineRef,
     note?: string,
+    choices: Choice[] = [],
   ): Promise<string | null> {
     return this.prisma.forTenant(ctx, async (tx) => {
       if (ref) {
@@ -239,6 +243,7 @@ export class ServiceRepository {
           status: 'ASSESSED',
           qrToken: randomBytes(12).toString('base64url'),
           waiterNote: note || null,
+          ...(choices.length > 0 ? { choices: choices as unknown as Prisma.InputJsonValue } : {}),
         },
       });
       await tx.assessment.create({
@@ -287,6 +292,7 @@ export class ServiceRepository {
           outcome: assessment.outcome,
           inputHash: assessment.inputHash,
           ...(note ? { note } : {}),
+          ...(choices.length > 0 ? { choices } : {}),
           ...(ref ? { source: 'pos', externalId: ref.externalId } : {}),
         },
       });

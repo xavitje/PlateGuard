@@ -24,6 +24,7 @@ describe.skipIf(!hasDb)('service flow', () => {
   const ctx = { organizationId: org, locationIds: [loc], userId: user };
   let salad = '';
   let soup = '';
+  let croutonsId = '';
 
   beforeAll(async () => {
     await db.user.create({ data: { id: user, name: 'Test waiter' } });
@@ -50,6 +51,7 @@ describe.skipIf(!hasDb)('service flow', () => {
       data: { organizationId: org, name: 'Tomato', contains: [], mayContain: [], ...verified },
     });
     const croutons = await db.component.create({ data: { organizationId: org, name: 'Croutons' } });
+    croutonsId = croutons.id;
     const soupC = await db.component.create({ data: { organizationId: org, name: 'Soup' } });
     await db.componentIngredient.createMany({
       data: [
@@ -152,5 +154,27 @@ describe.skipIf(!hasDb)('service flow', () => {
         user,
       ),
     ).rejects.toThrow();
+  });
+
+  it("judges the plate with the waiter's picks and keeps them on the order", async () => {
+    await db.component.update({ where: { id: croutonsId }, data: { omittable: true } });
+    await service.saveSeat(
+      ctx,
+      loc,
+      '4',
+      2,
+      { allergies: [{ allergen: 'GLUTEN', severity: 'ALLERGY' }], noAllergy: false },
+      user,
+    );
+    const choices = [{ componentId: croutonsId, action: 'OMIT' as const }];
+    // Safe with the pick, so no note is needed.
+    const table = await service.order(ctx, loc, '4', 2, salad, user, undefined, choices);
+    const line = table.bySeat.find((s) => s.seat === 2)?.orders[0];
+    expect(line).toMatchObject({ outcome: 'ADAPTABLE', choices });
+    const mods = await db.plateModification.findMany({ where: { plateId: line!.id } });
+    expect(mods).toMatchObject([{ componentId: croutonsId, action: 'OMIT' }]);
+    // Alerts judge it with the same pick: a change to make, not a stop.
+    const alert = (await service.alerts(ctx, loc, 'en', user)).find((a) => a.id === line!.id);
+    expect(alert).toMatchObject({ kind: 'warn', result: { outcome: 'ADAPTABLE' } });
   });
 });

@@ -9,6 +9,7 @@ import type {
 import {
   assess,
   normalizeLabel,
+  type Choice,
   orderAlerts,
   type GuestAllergy,
   type ResolvedDish,
@@ -105,6 +106,7 @@ export class ServiceService {
           ...(o.status === 'REJECTED' && o.rejectReason ? { rejectReason: o.rejectReason } : {}),
           ...(o.waiterNote ? { note: o.waiterNote } : {}),
           ...(o.override ? { approved: o.override.reason } : {}),
+          ...(o.choices.length > 0 ? { choices: o.choices } : {}),
         })),
       })),
     };
@@ -197,8 +199,9 @@ export class ServiceService {
     dishId: string,
     userId: string,
     note?: string,
+    choices?: Choice[],
   ): Promise<TableResponse> {
-    await this.place(ctx, locationId, label, seat, dishId, userId, undefined, note);
+    await this.place(ctx, locationId, label, seat, dishId, userId, undefined, note, choices);
     return this.table(ctx, locationId, label);
   }
 
@@ -217,6 +220,7 @@ export class ServiceService {
     userId: string,
     ref?: PosLineRef,
     note?: string,
+    choices: Choice[] = [],
   ): Promise<string | null> {
     const t = await this.requireTable(ctx, locationId, label);
     if (seat > t.seats) throw new BadRequestException({ code: 'SEAT_NOT_AT_TABLE' });
@@ -228,7 +232,7 @@ export class ServiceService {
     const dish = menu.dishes.find((d) => d.id === dishId);
     if (!dishRow || !dish) throw new NotFoundException({ code: 'DISH_NOT_FOUND' });
     const guest = t.bySeat.find((s) => s.seat === seat)?.allergies ?? [];
-    const input = { dish, guest };
+    const input = { dish, guest, ...(choices.length > 0 ? { choices } : {}) };
     const result = assess(input);
     if (!ref && result.outcome === 'DO_NOT_SERVE' && !note?.trim())
       throw new BadRequestException({ code: 'NOTE_REQUIRED' });
@@ -244,6 +248,7 @@ export class ServiceService {
       menu.versionId,
       ref,
       note?.trim(),
+      choices,
     );
   }
 
@@ -309,7 +314,7 @@ export function alertsFor(
       s.orders.flatMap((o) => {
         const dish = o.status === 'REJECTED' ? dishOf(o) : undefined;
         if (!dish) return [];
-        const result = assess({ dish, guest: s.allergies });
+        const result = assess({ dish, guest: s.allergies, choices: o.choices });
         return [
           {
             id: o.id,

@@ -75,7 +75,7 @@ export function createMemoryClient(
             ...o,
             ...(o.override ? { approved: o.override } : {}),
             status: statusOf(o),
-            outcome: assess({ dish, guest: s.allergies }).outcome,
+            outcome: assess({ dish, guest: s.allergies, choices: o.choices }).outcome,
           };
         }),
       }))
@@ -115,7 +115,7 @@ export function createMemoryClient(
             seat: s.seat,
             dishId: dish.id,
             dishName: dish.name,
-            result: assess({ dish, guest: s.allergies }),
+            result: assess({ dish, guest: s.allergies, choices: o.choices }),
             rejected: { reason: o.rejectReason ?? '' },
           },
         ];
@@ -146,7 +146,7 @@ export function createMemoryClient(
           ? []
           : s.orders.map((o) => {
               const dish = dishes.find((d) => d.id === o.dishId)!;
-              const result = assess({ dish, guest: s.allergies });
+              const result = assess({ dish, guest: s.allergies, choices: o.choices });
               const block = o.override ? null : kitchenBlock(result);
               return {
                 plateId: o.id,
@@ -343,16 +343,17 @@ export function createMemoryClient(
       s.noAllergy = body.allergies.length === 0 && !!body.noAllergy;
       return table(label);
     },
-    order: async (_, label, n, dishId, note) => {
+    order: async (_, label, n, dishId, note, choices) => {
       table(label);
       const s = seat(label, n);
       const dish = dishes.find((d) => d.id === dishId)!;
-      if (assess({ dish, guest: s.allergies }).outcome === 'DO_NOT_SERVE' && !note?.trim())
+      if (assess({ dish, guest: s.allergies, choices }).outcome === 'DO_NOT_SERVE' && !note?.trim())
         throw new ApiError(400, 'NOTE_REQUIRED');
       s.orders.push({
         id: `new-${nextId++}`,
         dishId,
         ...(note?.trim() ? { note: note.trim() } : {}),
+        ...(choices?.length ? { choices } : {}),
       });
       return table(label);
     },
