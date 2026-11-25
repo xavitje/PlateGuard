@@ -167,11 +167,14 @@ describe.skipIf(!hasDb)('recipes and publishing', () => {
     const published = await recipes.publish(ctx, loc, userId);
     expect(published.versions.map((v) => v.version)).toEqual([2, 1]);
     // The open order was placed from version 1 and is still judged with that recipe.
-    const alerts = await service.alerts(ctx, loc, 'en');
+    const alerts = await service.alerts(ctx, loc, 'en', userId);
     expect(alerts.map((a) => a.kind)).toEqual(['unknown']);
     // A new order uses version 2, with bread: do not serve.
     await service.order(ctx, loc, '1', 1, soupId, userId);
-    expect((await service.alerts(ctx, loc, 'en')).map((a) => a.kind)).toEqual(['stop', 'unknown']);
+    expect((await service.alerts(ctx, loc, 'en', userId)).map((a) => a.kind)).toEqual([
+      'stop',
+      'unknown',
+    ]);
   });
 
   it('only dishes on the published menu can be ordered', async () => {

@@ -227,6 +227,16 @@ function TicketCard({
       {toCheck && ticket.checklist.length > 0 && (
         <fieldset className="grid gap-2">
           <legend className="mb-1 text-[13px] text-[#9aa1ad]">{t('kitchen:tickAll')}</legend>
+          {/* Quick for a cook who checked the plate: still one deliberate tap on "checked" after. */}
+          {left > 0 && !ticket.block && (
+            <button
+              type="button"
+              onClick={() => setTicked(new Set(ticket.checklist.map((i) => i.id)))}
+              className="press min-h-12 justify-self-start rounded-xl bg-[#2a2e36] px-4 text-[16px] font-semibold"
+            >
+              {t('kitchen:checkAll', { count: left })}
+            </button>
+          )}
           {ticket.checklist.map((item) => (
             <label
               key={item.id}

@@ -25,6 +25,10 @@ import {
 
 const OPEN = new Set<PlateStatus>(OPEN_PLATE_STATUSES);
 
+/** A plate's alert as it is now: a worse outcome, or the kitchen sending it back, is new. */
+const alertKey = (a: AlertResponse) =>
+  `${a.id}:${a.kind}:${a.result.outcome}:${a.rejected ? 'r' : ''}`;
+
 const allergyKey = (a: GuestAllergy) =>
   a.allergen ?? (a.ingredient ? `i:${a.ingredient.id}` : `c:${normalizeLabel(a.custom ?? '')}`);
 
@@ -92,9 +96,37 @@ export class ServiceService {
     };
   }
 
-  async alerts(ctx: TenantContext, locationId: string, locale: string): Promise<AlertResponse[]> {
+  /** The open alerts, each marked read or unread for this person. */
+  async alerts(
+    ctx: TenantContext,
+    locationId: string,
+    locale: string,
+    userId: string,
+  ): Promise<AlertResponse[]> {
     const { tables } = await this.service.floors(ctx, locationId);
-    return this.alertsOf(ctx, locationId, locale, tables);
+    const alerts = await this.alertsOf(ctx, locationId, locale, tables);
+    const read = await this.service.readAlertKeys(ctx, locationId, userId);
+    return alerts.map((a) => ({ ...a, read: read.has(alertKey(a)) }));
+  }
+
+  /** Marks the given open alerts read for this person, or all of them without ids. */
+  async markAlertsRead(
+    ctx: TenantContext,
+    locationId: string,
+    locale: string,
+    userId: string,
+    ids?: string[],
+  ): Promise<AlertResponse[]> {
+    const { tables } = await this.service.floors(ctx, locationId);
+    const alerts = await this.alertsOf(ctx, locationId, locale, tables);
+    const pick = ids ? new Set(ids) : null;
+    await this.service.markAlertsRead(
+      ctx,
+      locationId,
+      userId,
+      alerts.filter((a) => !pick || pick.has(a.id)).map(alertKey),
+    );
+    return this.alerts(ctx, locationId, locale, userId);
   }
 
   /** Each order is judged with the recipe from the menu version it was ordered from. */
@@ -246,6 +278,7 @@ export function alertsFor(
       modifications: a.result.modifications,
       manualChecks: a.result.manualChecks,
     },
+    read: false,
   }));
   const rejected: AlertResponse[] = tables.flatMap((t) =>
     t.bySeat.flatMap((s) =>
@@ -267,6 +300,7 @@ export function alertsFor(
               manualChecks: result.manualChecks,
             },
             rejected: { reason: o.rejectReason ?? '' },
+            read: false,
           },
         ];
       }),

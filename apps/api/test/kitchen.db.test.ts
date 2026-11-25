@@ -146,13 +146,13 @@ describe.skipIf(!hasDb)('kitchen flow', () => {
     await kitchen.reject(ctx, loc, ticket!.plateId, 'Bread is wheat');
     const seat3 = (await service.table(ctx, loc, '7')).bySeat.find((s) => s.seat === 3)!;
     expect(seat3.orders[0]).toMatchObject({ status: 'REJECTED', rejectReason: 'Bread is wheat' });
-    const alerts = await service.alerts(ctx, loc, 'en');
+    const alerts = await service.alerts(ctx, loc, 'en', user);
     expect(alerts.map((a) => [a.seat, a.kind, a.rejected?.reason])).toEqual([
       [3, 'stop', 'Bread is wheat'],
     ]);
     // The waiter takes it off the order; then nothing is left to alert about.
     await service.cancelOrder(ctx, loc, '7', ticket!.plateId);
-    expect(await service.alerts(ctx, loc, 'en')).toEqual([]);
+    expect(await service.alerts(ctx, loc, 'en', user)).toEqual([]);
   });
 
   it('writes an audit event for every step', async () => {

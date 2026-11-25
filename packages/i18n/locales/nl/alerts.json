@@ -2,8 +2,20 @@
   "tab": "Meldingen",
   "title": "Meldingen",
   "empty": "Niets vraagt aandacht",
-  "openCount": "{count, plural, =0 {Geen open meldingen} one {# open melding} other {# open meldingen}}",
   "ordered": "Stoel {seat} bestelde {dish}",
   "fromOrders": "Meldingen komen uit bestellingen, niet uit de menukaart",
-  "rejected": "Keuken stuurde het terug: {reason}"
+  "rejected": "Keuken stuurde het terug: {reason}",
+  "counts": "{open, plural, =0 {Geen open meldingen} one {# open melding} other {# open meldingen}} · {unread} ongelezen",
+  "markAll": "Markeer alle als gelezen",
+  "filter": "Meldingen filteren",
+  "emptyFilter": "Geen meldingen in dit filter.",
+  "readLabel": "(gelezen)",
+  "unreadLabel": "(ongelezen)",
+  "filters": {
+    "all": "Alle · {count}",
+    "unread": "Ongelezen · {count}",
+    "stop": "Niet serveren · {count}",
+    "warn": "Let op · {count}",
+    "unknown": "Onbekend · {count}"
+  }
 }

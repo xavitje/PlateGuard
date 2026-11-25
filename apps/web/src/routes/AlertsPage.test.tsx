@@ -30,7 +30,7 @@ afterEach(cleanup);
 describe('AlertsPage', () => {
   it('lists only ordered dishes that need attention, worst first', async () => {
     renderApp('/alerts');
-    expect(await screen.findByText('2 open alerts')).toBeTruthy();
+    expect(await screen.findByText('2 open alerts · 2 unread')).toBeTruthy();
     const rows = screen.getAllByRole('link');
     expect(rows[0]?.textContent).toMatch(/Table 7/);
     expect(rows[0]?.textContent).toMatch(/Do not serve/);
@@ -44,12 +44,30 @@ describe('AlertsPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: '+ Gluten' }));
     await screen.findByRole('radiogroup');
     await router.navigate('/alerts');
-    expect(await screen.findByText('2 open alerts')).toBeTruthy();
+    expect(await screen.findByText('2 open alerts · 2 unread')).toBeTruthy();
 
     await router.navigate('/tables/5');
     fireEvent.click(await screen.findByRole('button', { name: 'Order Caesar salad' }));
     await screen.findByRole('button', { name: 'Remove Caesar salad from the order' });
     await router.navigate('/alerts');
-    expect(await screen.findByText('3 open alerts')).toBeTruthy();
+    expect(await screen.findByText('3 open alerts · 3 unread')).toBeTruthy();
+  });
+
+  it('an opened alert stays as read; filters and "mark all as read"', async () => {
+    const router = renderApp('/alerts');
+    expect(await screen.findByText('2 open alerts · 2 unread')).toBeTruthy();
+    fireEvent.click(screen.getAllByRole('link')[0]!);
+    await router.navigate('/alerts');
+    expect(await screen.findByText('2 open alerts · 1 unread')).toBeTruthy();
+    expect(screen.getAllByRole('link')[0]?.textContent).toMatch(/\(read\)/);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Unread · 1' }));
+    expect(screen.getAllByRole('link')).toHaveLength(1);
+    expect(screen.getAllByRole('link')[0]?.textContent).toMatch(/Table 12/);
+    fireEvent.click(screen.getByRole('button', { name: 'Do not serve · 1' }));
+    expect(screen.getAllByRole('link')[0]?.textContent).toMatch(/Table 7/);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark all as read' }));
+    expect(await screen.findByText('2 open alerts · 0 unread')).toBeTruthy();
   });
 });

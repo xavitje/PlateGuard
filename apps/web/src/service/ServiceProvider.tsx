@@ -1,4 +1,9 @@
-import type { LoginResponse, SeatUpdateInput, TableResponse } from '@plateguard/contracts';
+import type {
+  AlertResponse,
+  LoginResponse,
+  SeatUpdateInput,
+  TableResponse,
+} from '@plateguard/contracts';
 import {
   QueryClient,
   QueryClientProvider,
@@ -140,6 +145,24 @@ export function useAlerts(enabled = true) {
     queryFn: () => client.alerts(loc!, locale),
     enabled: enabled && !!loc,
     refetchInterval: 15_000,
+  });
+}
+
+/** Marks alerts read (or all of them without ids); the list shows it at once. */
+export function useMarkAlertsRead() {
+  const client = useClient();
+  const loc = useLocationId();
+  const locale = lang(useTranslation().i18n.language);
+  const qc = useQueryClient();
+  const key = ['alerts', loc, locale];
+  return useMutation({
+    mutationFn: (ids?: string[]) => client.markAlertsRead(loc!, locale, ids),
+    onMutate: (ids) => {
+      qc.setQueryData<AlertResponse[]>(key, (old) =>
+        old?.map((a) => (!ids || ids.includes(a.id) ? { ...a, read: true } : a)),
+      );
+    },
+    onSuccess: (alerts) => qc.setQueryData(key, alerts),
   });
 }
 

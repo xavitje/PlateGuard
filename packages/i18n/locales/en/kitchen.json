@@ -50,5 +50,6 @@
     "again": "Print again",
     "printed": "Sent to the printer"
   },
-  "tab": "Kitchen"
+  "tab": "Kitchen",
+  "checkAll": "Tick all {count, plural, one {# point} other {# points}}"
 }

@@ -81,7 +81,7 @@ describe.skipIf(!hasDb)('service flow', () => {
       },
       user,
     );
-    expect(await service.alerts(ctx, loc, 'en')).toEqual([]);
+    expect(await service.alerts(ctx, loc, 'en', user)).toEqual([]);
     const [floor] = await service.floors(ctx, loc);
     expect(floor?.tables[0]).toMatchObject({ guests: 1, allergyGuests: 1, openAlerts: 0 });
   });
@@ -93,17 +93,30 @@ describe.skipIf(!hasDb)('service flow', () => {
     const stored = await db.assessment.findUnique({ where: { plateId: line!.id } });
     expect(stored?.outcome).toBe('DO_NOT_SERVE');
     await service.order(ctx, loc, '4', 1, soup, user);
-    const alerts = await service.alerts(ctx, loc, 'en');
+    const alerts = await service.alerts(ctx, loc, 'en', user);
     expect(alerts.map((a) => [a.table, a.seat, a.dishName, a.kind])).toEqual([
       ['4', 1, 'Salad', 'stop'],
     ]);
+  });
+
+  it('an opened alert stays, marked read for that person only', async () => {
+    const [alert] = await service.alerts(ctx, loc, 'en', user);
+    expect(alert?.read).toBe(false);
+    const after = await service.markAlertsRead(ctx, loc, 'en', user, [alert!.id]);
+    expect(after.map((a) => [a.id, a.read])).toEqual([[alert!.id, true]]);
+    // Someone else still sees it unread; "mark all" reads it for them too.
+    const colleague = randomUUID();
+    await db.user.create({ data: { id: colleague, name: 'Colleague' } });
+    expect((await service.alerts(ctx, loc, 'en', colleague))[0]?.read).toBe(false);
+    const all = await service.markAlertsRead(ctx, loc, 'en', colleague);
+    expect(all.every((a) => a.read)).toBe(true);
   });
 
   it('a cancelled order no longer alerts', async () => {
     const table = await service.table(ctx, loc, '4');
     const saladLine = table.bySeat[0]!.orders.find((o) => o.dishId === salad)!;
     await service.cancelOrder(ctx, loc, '4', saladLine.id);
-    expect(await service.alerts(ctx, loc, 'en')).toEqual([]);
+    expect(await service.alerts(ctx, loc, 'en', user)).toEqual([]);
     await expect(service.cancelOrder(ctx, loc, '4', saladLine.id)).rejects.toThrow();
   });
 

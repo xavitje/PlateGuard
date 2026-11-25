@@ -96,6 +96,9 @@ export function createMemoryClient(
   };
   const allSeats = () =>
     Object.keys(state).flatMap((label) => seatsOf(label).map((s) => ({ ...s, table: label })));
+  const readKeys = new Set<string>();
+  const keyOf = (a: Omit<AlertResponse, 'read'>) =>
+    `${a.id}:${a.kind}:${a.result.outcome}:${a.rejected ? 'r' : ''}`;
   const alerts = (): AlertResponse[] => {
     const seats = allSeats();
     const rejected = seats.flatMap((s) =>
@@ -128,7 +131,7 @@ export function createMemoryClient(
       dishName: a.dish.name,
       result: a.result,
     }));
-    return [...rejected, ...open];
+    return [...rejected, ...open].map((a) => ({ ...a, read: readKeys.has(keyOf(a)) }));
   };
 
   const tickets = (): KitchenTicketResponse[] =>
@@ -311,6 +314,10 @@ export function createMemoryClient(
     menu: async () => ({ dishes, ingredients: DEMO_INGREDIENTS }),
     table: async (_, label) => table(label),
     alerts: async () => alerts(),
+    markAlertsRead: async (_, __, ids) => {
+      for (const a of alerts()) if (!ids || ids.includes(a.id)) readKeys.add(keyOf(a));
+      return alerts();
+    },
     saveSeat: async (_, label, n, body) => {
       table(label);
       const s = seat(label, n);

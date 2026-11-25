@@ -137,6 +137,8 @@ export interface ServiceClient {
   menu(location: string, locale: string): Promise<MenuResponse>;
   table(location: string, label: string): Promise<TableResponse>;
   alerts(location: string, locale: string): Promise<AlertResponse[]>;
+  /** Marks these alerts read for the signed-in person, or every open one without ids. */
+  markAlertsRead(location: string, locale: string, ids?: string[]): Promise<AlertResponse[]>;
   saveSeat(
     location: string,
     label: string,
@@ -274,6 +276,11 @@ export function createHttpClient(
     menu: (l, locale) => call(`${loc(l)}/menu?locale=${locale}`),
     table: (l, label) => call(tbl(l, label)),
     alerts: (l, locale) => call(`${loc(l)}/alerts?locale=${locale}`),
+    markAlertsRead: (l, locale, ids) =>
+      call(`${loc(l)}/alerts/read?locale=${locale}`, {
+        method: 'POST',
+        body: ids ? { ids } : {},
+      }),
     saveSeat: (l, label, seat, body) =>
       call(`${tbl(l, label)}/seats/${seat}`, { method: 'PUT', body }),
     order: (l, label, seat, dishId) =>

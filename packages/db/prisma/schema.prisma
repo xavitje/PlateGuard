@@ -195,10 +195,25 @@ model User {
   locale       String  @default("en")
   passwordHash String? @map("password_hash")
 
-  roles RoleAssignment[]
-  pins  StaffPin[]
+  roles      RoleAssignment[]
+  pins       StaffPin[]
+  alertReads AlertRead[]
 
   @@map("app_user")
+}
+
+/// An alert a person has opened. The key holds the alert's kind, so a plate that gets worse
+/// (or is sent back) alerts again as unread.
+model AlertRead {
+  userId     String   @map("user_id") @db.Uuid
+  locationId String   @map("location_id") @db.Uuid
+  alertKey   String   @map("alert_key")
+  readAt     DateTime @default(now()) @map("read_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, locationId, alertKey])
+  @@map("alert_read")
 }
 
 /// locationId null = the role holds for every location of the organization, including future ones.
