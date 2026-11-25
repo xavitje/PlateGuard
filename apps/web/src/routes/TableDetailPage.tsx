@@ -135,11 +135,15 @@ export function TableDetailPage() {
                 role="tab"
                 aria-selected={seat === s}
                 onClick={() => setSeat(s)}
-                className={`grid min-h-12 min-w-11 flex-1 shrink-0 rounded-[11px] py-1 text-xs ${seat === s ? 'bg-card shadow-sm' : 'text-soft'}`}
+                className={`grid min-h-12 min-w-11 flex-1 shrink-0 rounded-[11px] py-1 text-xs ${seat === s ? 'bg-brand text-white shadow-sm' : 'text-soft'}`}
               >
-                <b className="text-base font-semibold text-ink">{s}</b>
+                <b className={`text-base font-semibold ${seat === s ? 'text-white' : 'text-ink'}`}>
+                  {s}
+                </b>
                 {(seatOf(s)?.allergies.length ?? 0) > 0 && (
-                  <i className="mx-auto mt-0.5 block size-1.5 rounded-full bg-brand" />
+                  <i
+                    className={`mx-auto mt-0.5 block size-1.5 rounded-full ${seat === s ? 'bg-white' : 'bg-brand'}`}
+                  />
                 )}
               </button>
             ))}
