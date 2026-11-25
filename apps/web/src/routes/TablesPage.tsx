@@ -108,15 +108,19 @@ function TableTile({
       style={style}
       aria-label={t('tables:table', { label: tb.label })}
       className={`press grid gap-0.5 text-ink no-underline ${className} ${
-        free ? 'bg-mist shadow-[inset_0_0_0_1.5px_var(--pg-line)]' : 'bg-card shadow-sm'
-      } ${compact && !free ? 'shadow-[inset_0_0_0_2px_var(--pg-brand)]' : ''}`}
+        free
+          ? 'bg-mist shadow-[inset_0_0_0_1.5px_var(--pg-line)]'
+          : tb.allergyGuests > 0
+            ? 'bg-brand-soft shadow-[inset_0_0_0_2px_var(--pg-brand-ink)]'
+            : 'bg-raised shadow-[inset_0_0_0_1.5px_color-mix(in_srgb,var(--pg-ink)_28%,transparent)]'
+      }`}
     >
       <span
         className="grid justify-items-center gap-0.5"
         style={rotation ? { transform: `rotate(${-rotation}deg)` } : undefined}
       >
         <b
-          className={`font-semibold tracking-[-0.02em] ${compact ? 'text-lg leading-none' : 'text-xl'} ${free ? 'text-[#9aa1ad]' : ''}`}
+          className={`font-semibold tracking-[-0.02em] ${compact ? 'text-lg leading-none' : 'text-xl'} ${free ? 'text-soft' : ''}`}
         >
           {tb.label}
         </b>
