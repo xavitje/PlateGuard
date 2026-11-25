@@ -155,6 +155,8 @@ export interface DemoSeat {
     status?: PlateStatusName;
     rejectReason?: string;
     note?: string;
+    /** Why a chef approved it although it was blocked. */
+    override?: string;
   }[];
 }
 

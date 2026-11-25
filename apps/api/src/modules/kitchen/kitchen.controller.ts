@@ -2,9 +2,11 @@ import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestj
 import {
   LocationSettingsZ,
   PlateCheckZ,
+  PlateOverrideZ,
   PlateRejectZ,
   type LocationSettings,
   type PlateCheck,
+  type PlateOverride,
   type PlateReject,
 } from '@plateguard/contracts';
 import { z } from 'zod';
@@ -53,6 +55,19 @@ export class KitchenController {
     @Body(new ZodPipe(PlateRejectZ)) body: PlateReject,
   ) {
     return this.kitchen.reject(ctx, locationId, plateId, body.reason);
+  }
+
+  @Post('plates/:plateId/override')
+  @HttpCode(204)
+  @RequirePermission('plate.override')
+  override(
+    @Tenant() ctx: TenantContext,
+    @Param('locationId') locationId: string,
+    @Param('plateId', PlateIdPipe) plateId: string,
+    @Query('locale', new ZodPipe(LocaleZ)) locale: string,
+    @Body(new ZodPipe(PlateOverrideZ)) body: PlateOverride,
+  ) {
+    return this.kitchen.override(ctx, locationId, plateId, body, locale);
   }
 
   @Post('plates/:plateId/pass-check')

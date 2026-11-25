@@ -325,6 +325,11 @@ export function TableDetailPage() {
                 {current.length > 0 && line.status !== 'SERVED' && (
                   <AssessmentDetails result={result} />
                 )}
+                {line.approved && (
+                  <p className="col-span-3 text-[13px] font-semibold">
+                    {t('tables:approvedByKitchen', { reason: line.approved })}
+                  </p>
+                )}
                 {line.note && (
                   <p className="col-span-3 text-[13px] text-soft">
                     {t('tables:confirmStop.shown', { note: line.note })}

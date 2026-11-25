@@ -62,5 +62,6 @@
     "cancel": "Annuleren",
     "confirm": "Toch bestellen",
     "shown": "Jouw uitleg: {note}"
-  }
+  },
+  "approvedByKitchen": "Goedgekeurd door de keuken: {reason}"
 }

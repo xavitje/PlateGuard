@@ -62,5 +62,6 @@
     "cancel": "Cancel",
     "confirm": "Order anyway",
     "shown": "Your explanation: {note}"
-  }
+  },
+  "approvedByKitchen": "Approved by the kitchen: {reason}"
 }

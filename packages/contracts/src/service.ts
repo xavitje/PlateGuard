@@ -92,6 +92,8 @@ export interface OrderLineResponse {
   rejectReason?: string;
   /** Why the waiter ordered it although it was "do not serve". */
   note?: string;
+  /** Why the kitchen approved it although it was blocked. */
+  approved?: string;
 }
 
 export type PlateStatusName =

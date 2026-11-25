@@ -104,6 +104,7 @@ export class ServiceService {
           status: o.status,
           ...(o.status === 'REJECTED' && o.rejectReason ? { rejectReason: o.rejectReason } : {}),
           ...(o.waiterNote ? { note: o.waiterNote } : {}),
+          ...(o.override ? { approved: o.override.reason } : {}),
         })),
       })),
     };
@@ -269,6 +270,7 @@ export class ServiceService {
 /**
  * The API shape of the domain's order alerts, for plates on their way to the guest. A plate the
  * kitchen sent back always alerts as a stop, with the cook's reason, until the waiter removes it.
+ * A blocked plate the kitchen approved anyway no longer alerts: the table shows the approval.
  */
 export function alertsFor(
   tables: TableRow[],
@@ -283,7 +285,9 @@ export function alertsFor(
     t.bySeat.map((s) => ({
       ...s,
       table: t.label,
-      orders: s.orders.filter((o) => OPEN.has(o.status)).map((o) => ({ ...o, dish: dishOf(o) })),
+      orders: s.orders
+        .filter((o) => OPEN.has(o.status) && !o.override)
+        .map((o) => ({ ...o, dish: dishOf(o) })),
     })),
   );
   const open: AlertResponse[] = orderAlerts(seats, dishes).map((a) => ({

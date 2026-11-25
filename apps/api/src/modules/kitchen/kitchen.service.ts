@@ -111,6 +111,30 @@ export class KitchenService {
     });
   }
 
+  /**
+   * A chef or manager approves a blocked plate, with the guest's consent and a reason, often the
+   * waiter's note. The restaurant's call, also for a severe allergy: it is stored as an override
+   * with who, why and the outcome in the audit trail, and the plate goes to the pass.
+   */
+  async override(
+    ctx: TenantContext,
+    locationId: string,
+    plateId: string,
+    input: { reason: string; guestConsent: boolean },
+    locale: string,
+  ): Promise<void> {
+    const plate = await this.plate(ctx, locationId, plateId);
+    const ticket = (await this.judge(ctx, locationId, locale, [plate]))(plate);
+    if (!ticket) throw new NotFoundException({ code: 'PLATE_NOT_FOUND' });
+    if (!ticket.overridable) throw new ConflictException({ code: 'NOT_OVERRIDABLE' });
+    await this.move(ctx, locationId, plateId, TO_CHECK, 'CHECKED', {
+      type: 'plate.overridden',
+      check: 'KITCHEN',
+      override: input,
+      payload: { ...input, waiterNote: ticket.waiterNote, outcome: ticket.outcome },
+    });
+  }
+
   async passChecked(ctx: TenantContext, locationId: string, plateId: string): Promise<void> {
     await this.plate(ctx, locationId, plateId);
     await this.move(ctx, locationId, plateId, ['CHECKED'], 'PASS_CHECKED', {
@@ -197,7 +221,8 @@ export class KitchenService {
       const dish = dishOf(order);
       if (!dish) return null;
       const result = assess({ dish, guest: seat.allergies });
-      const block = kitchenBlock(result);
+      // An approved plate is no longer blocked; the approval shows on the ticket instead.
+      const block = order.override ? null : kitchenBlock(result);
       return {
         plateId: order.id,
         table: table.label,
@@ -218,6 +243,8 @@ export class KitchenService {
         checklist: block ? [] : kitchenChecklist(result),
         qrToken: order.qrToken,
         waiterNote: order.waiterNote,
+        overridable: block !== null,
+        override: order.override,
       };
     };
   }

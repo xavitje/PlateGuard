@@ -234,6 +234,7 @@ export function useKitchen() {
 export type KitchenAction =
   | { kind: 'check'; plateId: string; checked: string[] }
   | { kind: 'reject'; plateId: string; reason: string }
+  | { kind: 'override'; plateId: string; reason: string }
   | { kind: 'passCheck'; plateId: string }
   | { kind: 'serve'; plateId: string }
   | { kind: 'reprint'; plateId: string };
@@ -250,6 +251,7 @@ export function useKitchenAction() {
       const k = client.kitchen;
       if (a.kind === 'check') return k.check(loc, a.plateId, a.checked, locale);
       if (a.kind === 'reject') return k.reject(loc, a.plateId, a.reason);
+      if (a.kind === 'override') return k.override(loc, a.plateId, a.reason, locale);
       if (a.kind === 'passCheck') return k.passCheck(loc, a.plateId);
       if (a.kind === 'reprint') return k.reprint(loc, a.plateId);
       return k.serve(loc, a.plateId);

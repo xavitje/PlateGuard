@@ -118,6 +118,8 @@ export interface KitchenClient {
   tickets(location: string, locale: string): Promise<KitchenResponse>;
   check(location: string, plateId: string, checked: string[], locale: string): Promise<void>;
   reject(location: string, plateId: string, reason: string): Promise<void>;
+  /** Approves a blocked plate, with the guest's consent and a reason. */
+  override(location: string, plateId: string, reason: string, locale: string): Promise<void>;
   passCheck(location: string, plateId: string): Promise<void>;
   serve(location: string, plateId: string): Promise<void>;
   /** The plate's allergy ticket again, on every kitchen printer. */
@@ -268,6 +270,11 @@ export function createHttpClient(
         }),
       reject: (l, id, reason) =>
         call(`${loc(l)}/plates/${id}/reject`, { method: 'POST', body: { reason } }),
+      override: (l, id, reason, locale) =>
+        call(`${loc(l)}/plates/${id}/override?locale=${locale}`, {
+          method: 'POST',
+          body: { reason, guestConsent: true },
+        }),
       passCheck: (l, id) => call(`${loc(l)}/plates/${id}/pass-check`, { method: 'POST' }),
       serve: (l, id) => call(`${loc(l)}/plates/${id}/serve`, { method: 'POST' }),
       reprint: (l, id) => call(`${loc(l)}/plates/${id}/print`, { method: 'POST' }),

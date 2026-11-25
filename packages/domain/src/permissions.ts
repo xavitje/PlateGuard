@@ -24,6 +24,7 @@ export const PERMISSIONS = [
   'incident.manage',
   'incident.report',
   'override.intolerance',
+  'plate.override',
   'kitchen.view',
   'plate.check',
   'plate.reject',
@@ -44,6 +45,8 @@ const CHEF: Permission[] = [
   'ingredient.verify',
   'special.create',
   'pos.mapping',
+  // Approving a plate the engine blocked, with the guest's consent and a reason.
+  'plate.override',
 ];
 const WAITER: Permission[] = [
   'table.view',

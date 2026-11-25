@@ -52,5 +52,14 @@
   },
   "tab": "Kitchen",
   "checkAll": "Tick all {count, plural, one {# point} other {# points}}",
-  "waiterNote": "Waiter: {note}"
+  "waiterNote": "Waiter: {note}",
+  "override": {
+    "approve": "Approve anyway",
+    "title": "Approve this plate anyway",
+    "severe": "Careful: severe allergy ({names}). A mistake can make the guest seriously ill.",
+    "consent": "The guest has been told and agrees",
+    "reason": "Why are you approving it? (required)",
+    "send": "Approve",
+    "approved": "Approved despite the block: {reason}"
+  }
 }

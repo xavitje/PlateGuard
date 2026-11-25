@@ -160,6 +160,49 @@ describe.skipIf(!hasDb)('kitchen flow', () => {
     expect(await service.alerts(ctx, loc, 'en', user)).toEqual([]);
   });
 
+  it('a chef approves a blocked plate with the guest consent and a reason', async () => {
+    await service.order(ctx, loc, '7', 3, toast, user, 'Guest takes the risk');
+    const [ticket] = (await kitchen.tickets(ctx, loc, 'en')).queue;
+    expect(ticket).toMatchObject({ block: 'DO_NOT_SERVE', overridable: true, override: null });
+    await kitchen.override(
+      ctx,
+      loc,
+      ticket!.plateId,
+      { reason: 'Guest takes the risk', guestConsent: true },
+      'en',
+    );
+    const { queue, ready } = await kitchen.tickets(ctx, loc, 'en');
+    expect(queue).toEqual([]);
+    expect(ready[0]).toMatchObject({
+      plateId: ticket!.plateId,
+      status: 'CHECKED',
+      block: null,
+      overridable: false,
+      override: { reason: 'Guest takes the risk' },
+    });
+    // The waiter no longer gets a stop for it, and sees the approval at the table.
+    expect((await service.alerts(ctx, loc, 'en', user)).map((a) => a.id)).not.toContain(
+      ticket!.plateId,
+    );
+    const line = (await service.table(ctx, loc, '7')).bySeat
+      .find((s) => s.seat === 3)!
+      .orders.find((o) => o.id === ticket!.plateId);
+    expect(line?.approved).toBe('Guest takes the risk');
+    const stored = await db.override.findMany({ where: { plateId: ticket!.plateId } });
+    expect(stored.map((o) => [o.managerId, o.reason, o.guestConsent])).toEqual([
+      [user, 'Guest takes the risk', true],
+    ]);
+    // Approving twice, or a plate that is not blocked, is refused.
+    expect(
+      await code(
+        kitchen.override(ctx, loc, ticket!.plateId, { reason: 'x', guestConsent: true }, 'en'),
+      ),
+    ).toBe('NOT_OVERRIDABLE');
+    // From there it goes the usual way: the pass check is on, then served.
+    await kitchen.passChecked(ctx, loc, ticket!.plateId);
+    await kitchen.serve(ctx, loc, ticket!.plateId);
+  });
+
   it('writes an audit event for every step', async () => {
     const events = await db.auditEvent.findMany({
       where: { organizationId: org },
@@ -175,6 +218,7 @@ describe.skipIf(!hasDb)('kitchen flow', () => {
       'plate.served',
       'plate.rejected',
       'order.cancelled',
+      'plate.overridden',
     ])
       expect(types).toContain(t);
     expect(events.every((e) => e.actorId === user)).toBe(true);
