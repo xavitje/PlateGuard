@@ -10,6 +10,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { ChevronLeft, Plus } from '../components/icons';
+import { IncidentReport } from '../components/IncidentReport';
 import { OutcomeBadge } from '../components/OutcomeBadge';
 import { SeveritySegment } from '../components/SeveritySegment';
 import { ALLERGEN_NAMES, QUICK_ALLERGENS } from '../allergens';
@@ -350,6 +351,18 @@ export function TableDetailPage() {
             ))}
           </section>
           <p className="mx-1.5 mt-2 text-[12.5px] text-soft">{t('tables:menuGuidance')}</p>
+          <IncidentReport
+            label={label}
+            seats={seats}
+            seat={seat}
+            plates={table.bySeat.flatMap((s) =>
+              s.orders.map((o) => ({
+                id: o.id,
+                seat: s.seat,
+                name: dishes.find((d) => d.id === o.dishId)?.name ?? '',
+              })),
+            )}
+          />
         </>
       )}
     </>

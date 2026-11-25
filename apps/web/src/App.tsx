@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router';
 import { FloorPlanPage } from './admin/FloorPlanPage';
 import { MenuPage } from './admin/MenuPage';
 import { RecipesPage } from './admin/RecipesPage';
+import { IncidentsPage } from './admin/IncidentsPage';
 import { IntegrationsPage } from './admin/IntegrationsPage';
 import { StaffPage } from './admin/StaffPage';
 import { AdminLayout, AdminSection } from './routes/AdminPage';
@@ -44,6 +45,7 @@ export const router = createBrowserRouter([
       { path: 'floor-plan', element: <FloorPlanPage /> },
       { path: 'staff', element: <StaffPage /> },
       { path: 'integrations', element: <IntegrationsPage /> },
+      { path: 'incidents', element: <IncidentsPage /> },
       { path: ':section', element: <AdminSection /> },
     ],
   },

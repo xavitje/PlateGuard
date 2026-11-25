@@ -8,7 +8,8 @@
     "integrations": "Integrations",
     "webhooks": "Webhooks",
     "staff": "Staff",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "incidents": "Incidents"
   },
   "comingSoon": "This section is built in a later phase.",
   "filter": "Filter",
@@ -33,7 +34,9 @@
     "TABLE_IN_USE": "Guests are seated at this table. Try again after the visit is closed.",
     "FLOOR_NOT_FOUND": "This floor no longer exists. Reload and try again.",
     "STAFF_SELF": "You cannot change your own roles.",
-    "STAFF_ORG_ROLE": "This person has a role at every location. An owner changes that."
+    "STAFF_ORG_ROLE": "This person has a role at every location. An owner changes that.",
+    "INCIDENT_FOLLOW_UP_INCOMPLETE": "Write down the cause and the measure before closing.",
+    "INCIDENT_NOT_FOUND": "This incident no longer exists."
   },
   "fields": {
     "name": "Name",
@@ -286,6 +289,107 @@
       "POS_NOT_CONNECTED": "No till is connected.",
       "WEBHOOK_URL_MISMATCH": "This URL does not point to this connection.",
       "DISH_NOT_IN_POS": "One of the dishes is not linked to an item in Square."
+    }
+  },
+  "incidents": {
+    "title": "Incidents",
+    "intro": "Allergy incidents reported by staff. What was known at that moment is frozen with each report; the guest data of that visit is kept for the follow-up.",
+    "none": "No incidents reported.",
+    "report": "Report incident",
+    "reportTitle": "Report an incident at table {table}",
+    "reportHow": "What happened? The plate, its checks and who did what are saved with the report as they are now.",
+    "plate": "Plate",
+    "noPlateChoice": "No specific plate",
+    "send": "Send report",
+    "sent": "Incident reported. A manager follows it up.",
+    "cancel": "Cancel",
+    "where": "Table {table} · seat {seat}",
+    "whereTable": "Table {table}",
+    "reportedBy": "Reported by {name}",
+    "open": "Open",
+    "download": "Download PDF",
+    "pdf": {
+      "title": "Allergy incident",
+      "subtitle": "{location} · reported {time}",
+      "footer": "PlateGuard incident {id} · printed {time}",
+      "page": "Page {n} of {of}"
+    },
+    "back": "All incidents",
+    "followUpTitle": "Follow-up",
+    "followUpHow": "Write down the cause and the measure taken so it does not happen again. Closing needs both.",
+    "save": "Save",
+    "saveClose": "Save and close",
+    "reopen": "Reopen",
+    "saved": "Saved.",
+    "noAllergies": "No allergies were recorded for this seat.",
+    "noPlate": "The report is not about one plate.",
+    "noChecks": "No checks were recorded for this plate.",
+    "noTimeline": "No steps were recorded for this seat or plate.",
+    "kind": {
+      "REACTION": "Guest reacted",
+      "NEAR_MISS": "Near miss (caught in time)",
+      "OTHER": "Other"
+    },
+    "severity": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High"
+    },
+    "status": {
+      "OPEN": "Open",
+      "CLOSED": "Closed"
+    },
+    "check": {
+      "KITCHEN": "Kitchen check",
+      "PASS": "Pass check"
+    },
+    "plateStatus": {
+      "ASSESSED": "Ordered",
+      "IN_KITCHEN": "In the kitchen",
+      "CHECKED": "Checked by the kitchen",
+      "PASS_CHECKED": "Checked at the pass",
+      "SERVED": "Served",
+      "REJECTED": "Sent back",
+      "CANCELLED": "Cancelled"
+    },
+    "event": {
+      "guest_allergies_recorded": "Allergies recorded",
+      "order_created": "Ordered",
+      "order_cancelled": "Taken off the order",
+      "plate_checked": "Checked by the kitchen",
+      "plate_pass_checked": "Checked at the pass",
+      "plate_served": "Served",
+      "plate_rejected": "Sent back by the kitchen",
+      "plate_ticket_printed": "Allergy ticket printed",
+      "plate_ticket_reprinted": "Allergy ticket printed again"
+    },
+    "section": {
+      "report": "Report",
+      "guest": "Guest's allergies",
+      "plate": "Plate",
+      "checks": "Checks",
+      "timeline": "Timeline",
+      "followUp": "Follow-up"
+    },
+    "field": {
+      "seat": "Seat",
+      "reportedAt": "Reported",
+      "reportedBy": "Reported by",
+      "where": "Where",
+      "kind": "What happened",
+      "severity": "Severity",
+      "description": "Description",
+      "dish": "Dish",
+      "orderedAt": "Ordered",
+      "course": "Course",
+      "outcome": "Assessment",
+      "status": "Status",
+      "modifications": "Changes",
+      "rejectReason": "Sent back because",
+      "engine": "Engine · menu version",
+      "cause": "Cause",
+      "measure": "Measure",
+      "closed": "Closed"
     }
   }
 }

@@ -641,6 +641,7 @@ model PlateOrder {
   overrides     Override[]
   externalRefs  ExternalRef[]
   printJobs     PrintJob[]
+  incidents     Incident[]
 
   @@index([locationId, status])
   @@map("plate_order")
@@ -725,6 +726,56 @@ model AuditEvent {
   @@index([locationId, at])
   @@index([organizationId, at])
   @@map("audit_event")
+}
+
+// ─── Incidents ─────────────────────────────────────────────────────────────
+
+enum IncidentKind {
+  /// The guest reacted.
+  REACTION
+  /// Caught before the guest ate: the wrong plate, a missed check.
+  NEAR_MISS
+  /// Something else that went wrong around allergies.
+  OTHER
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum IncidentStatus {
+  OPEN
+  CLOSED
+}
+
+/// Reported from a table or a plate. What was known at that moment is frozen in snapshot, and the
+/// visit's guest data is kept past anonymization, so the follow-up works from the facts.
+model Incident {
+  id           String           @id @default(uuid()) @db.Uuid
+  locationId   String           @map("location_id") @db.Uuid
+  visitId      String?          @map("visit_id") @db.Uuid
+  plateId      String?          @map("plate_id") @db.Uuid
+  tableLabel   String           @map("table_label")
+  seat         Int?
+  kind         IncidentKind
+  severity     IncidentSeverity
+  description  String
+  reportedById String           @map("reported_by_id") @db.Uuid
+  reportedAt   DateTime         @default(now()) @map("reported_at")
+  /// Plate, assessment input and outcome, checks, timeline with staff, the seat's allergies.
+  snapshot     Json
+  status       IncidentStatus   @default(OPEN)
+  cause        String?
+  measure      String?
+  closedById   String?          @map("closed_by_id") @db.Uuid
+  closedAt     DateTime?        @map("closed_at")
+
+  plate PlateOrder? @relation(fields: [plateId], references: [id])
+
+  @@index([locationId, reportedAt])
+  @@map("incident")
 }
 
 // ─── Integrations ──────────────────────────────────────────────────────────
