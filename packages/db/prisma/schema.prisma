@@ -496,8 +496,10 @@ model ServicePoint {
   shape       TableShape       @default(SQUARE)
   x           Float            @default(0)
   y           Float            @default(0)
-  w           Float            @default(10)
-  h           Float            @default(10)
+  /// Size on the drawing, in percent of its width. null = sized from the seats and shape.
+  w           Float?
+  h           Float?
+  /// Degrees clockwise.
   rotation    Float            @default(0)
   /// Table number in the POS.
   externalRef String?          @map("external_ref")

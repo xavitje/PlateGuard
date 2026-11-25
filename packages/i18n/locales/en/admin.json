@@ -137,7 +137,14 @@
     "passCheck": "Check allergy plates at the pass",
     "passCheckHint": "A runner checks each allergy plate again before it goes to the table.",
     "plan": "Floor plan",
-    "dragHint": "Drag a table to move it, or select it and use the arrow keys. Click to edit it."
+    "dragHint": "Drag a table to move it, or select it and use the arrow keys. Click to edit, resize or turn it.",
+    "smaller": "Smaller",
+    "bigger": "Bigger",
+    "rotateLeft": "Turn left",
+    "rotateRight": "Turn right",
+    "resetShape": "Default size",
+    "shapeTools": "Size and turn table {label}",
+    "resizeHint": "Or drag the round handle on the corner."
   },
   "staff": {
     "intro": "Everyone who signs in on this location's devices, with their roles here and their PIN.",

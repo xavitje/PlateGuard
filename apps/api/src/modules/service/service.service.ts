@@ -60,6 +60,8 @@ export class ServiceService {
           seats: t.seats,
           shape: t.shape,
           position: t.position,
+          size: t.size,
+          rotation: t.rotation,
           guests: t.bySeat.length,
           allergyGuests: t.bySeat.filter((s) => s.allergies.length > 0).length,
           openAlerts: alerts.filter((a) => a.table === t.label).length,

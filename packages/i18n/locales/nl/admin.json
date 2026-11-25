@@ -137,7 +137,14 @@
     "passCheck": "Allergieborden aan de pass controleren",
     "passCheckHint": "Een runner controleert elk allergiebord nog een keer voordat het naar tafel gaat.",
     "plan": "Plattegrond",
-    "dragHint": "Sleep een tafel om hem te verplaatsen, of selecteer hem en gebruik de pijltjestoetsen. Klik om te bewerken."
+    "dragHint": "Sleep een tafel om hem te verplaatsen, of selecteer hem en gebruik de pijltjestoetsen. Klik om hem te bewerken, te schalen of te draaien.",
+    "smaller": "Kleiner",
+    "bigger": "Groter",
+    "rotateLeft": "Draai links",
+    "rotateRight": "Draai rechts",
+    "resetShape": "Standaardmaat",
+    "shapeTools": "Maat en draaiing van tafel {label}",
+    "resizeHint": "Of sleep aan het ronde bolletje op de hoek."
   },
   "staff": {
     "intro": "Iedereen die inlogt op de apparaten van deze locatie, met hun rollen hier en hun pincode.",
