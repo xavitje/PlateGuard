@@ -35,12 +35,11 @@ pnpm install
 cp .env.example .env            # DATABASE_URL for migrations, seed and the API
 pnpm db:migrate                 # schema, row-level security, audit triggers
 pnpm db:seed                    # EU-14 allergens, plus a demo restaurant with two tables in service
-pnpm dev:api                    # http://localhost:3000/api/health (needs AUTH_MODE=dev for now)
-pnpm dev:web                    # http://localhost:5173, reads and writes through the API
+pnpm dev:api                    # http://localhost:3000/api/health
+pnpm dev:web                    # http://localhost:5173, sign in as Demo Waiter with PIN 1234
 ```
 
-Until PIN login lands, the API accepts the user id in an `x-plateguard-user` header when
-`AUTH_MODE=dev`, and the web app sends `VITE_DEV_USER` (the seeded demo waiter). The seed only fills
+The seed sets two development PINs on the demo location: Demo Waiter 1234 and Demo Owner 2580. The seed only fills
 an empty demo location; `pnpm db:reset` rebuilds a development database from scratch and deletes all
 its data, so never point it at a real one.
 
@@ -89,6 +88,17 @@ seats with allergies and orders, and alerts.
 - Alerts are not stored. They follow from the open orders and each seat's current allergies
   (`orderAlerts` in `packages/domain`), so the menu alone never raises one, and the Alerts tab, its
   badge and the table grid always agree.
+
+## Signing in
+
+Service devices are shared, so staff sign in per shift: pick your name, type your PIN (4 to 6
+digits). A PIN belongs to one person on one location, is stored as a salted scrypt hash, and locks
+after five wrong tries in a row until a manager sets a new one. The API answers with a session
+token (HMAC-SHA256, signed with `JWT_SECRET`) that is bound to that location and lasts 12 hours.
+A device learns its location once, from `?location=<slug>` or `VITE_LOCATION_SLUG`.
+
+For scripts and local tools, `AUTH_MODE=dev` also accepts a user id in the `x-plateguard-user`
+header. The API refuses to start with that mode in production.
 
 ## Tenants, locations and roles
 

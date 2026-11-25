@@ -1,17 +1,20 @@
-import { NavLink, Outlet } from 'react-router';
+import { Navigate, NavLink, Outlet } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { AlertsIcon, ProfileIcon, TablesIcon } from '../components/icons';
-import { useAlerts } from '../service/ServiceProvider';
+import { useAlerts, useSession } from '../service/ServiceProvider';
 
 /** The service app: three tabs at the bottom, nothing more is needed during service. */
 export function TabsLayout() {
   const { t } = useTranslation();
+  const { signedIn } = useSession();
   const openAlerts = useAlerts().data?.length ?? 0;
   const tabs = [
     { to: '/tables', label: t('tables:tab'), Icon: TablesIcon, badge: 0 },
     { to: '/alerts', label: t('alerts:tab'), Icon: AlertsIcon, badge: openAlerts },
     { to: '/profile', label: t('profile:tab'), Icon: ProfileIcon, badge: 0 },
   ];
+
+  if (!signedIn) return <Navigate to="/login" replace />;
 
   return (
     <div className="mx-auto min-h-dvh max-w-3xl bg-mist">

@@ -7,6 +7,7 @@
 import { PrismaClient, type Prisma } from '@prisma/client';
 import { assess, type GuestAllergy } from '@plateguard/domain';
 import { loadDishes } from '../src/menu.js';
+import { hashPin } from '../src/pin.js';
 import { ALLERGEN_NAMES } from './seed-data/allergens.js';
 
 const prisma = new PrismaClient();
@@ -85,6 +86,19 @@ async function seedDemo() {
         locationId: DEMO_LOCATION,
         role: 'WAITER',
       },
+    });
+  }
+
+  // Demo PINs, for development only: owner 2580, waiter 1234.
+  for (const [userId, pin] of [
+    [DEMO_OWNER, '2580'],
+    [DEMO_WAITER, '1234'],
+  ] as const) {
+    const pinHash = await hashPin(pin);
+    await prisma.staffPin.upsert({
+      where: { userId_locationId: { userId, locationId: DEMO_LOCATION } },
+      update: {},
+      create: { userId, locationId: DEMO_LOCATION, pinHash },
     });
   }
 

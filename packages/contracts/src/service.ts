@@ -88,3 +88,23 @@ export interface AlertResponse {
   dishName: string;
   result: Pick<Assessment, 'outcome' | 'modifications' | 'manualChecks'>;
 }
+
+/** POST /auth/pin: one person signs in on a location's shared device for one shift. */
+export const PinLoginZ = z.strictObject({
+  locationId: IdZ,
+  userId: IdZ,
+  pin: z.string().regex(/^\d{4,6}$/),
+});
+export type PinLogin = z.infer<typeof PinLoginZ>;
+
+export interface LoginResponse {
+  token: string;
+  expiresAt: string;
+  me: MeResponse;
+}
+
+/** GET /auth/locations/:slug/staff: the names on the sign-in screen of a location's devices. */
+export interface StaffListResponse {
+  location: { id: string; name: string };
+  staff: { id: string; name: string }[];
+}

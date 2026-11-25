@@ -17,7 +17,7 @@ function renderApp(path: string) {
   );
   render(
     <I18nProvider locale="en">
-      <ServiceProvider client={createMemoryClient()}>
+      <ServiceProvider client={createMemoryClient()} signedIn>
         <RouterProvider router={router} />
       </ServiceProvider>
     </I18nProvider>,

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { Principal, Role } from '@plateguard/domain';
+import { verifyPin } from '@plateguard/db';
 import { PrismaService } from '../../common/prisma.service.js';
 
 export interface LocationRow {
@@ -49,6 +50,39 @@ export class AuthRepository {
       where: { organizationId: { in: organizationIds } },
       select: { id: true, organizationId: true, name: true, slug: true },
       orderBy: { name: 'asc' },
+    });
+  }
+
+  findLocationBySlug(slug: string): Promise<LocationRow | null> {
+    return this.prisma.system().location.findUnique({
+      where: { slug },
+      select: { id: true, organizationId: true, name: true, slug: true },
+    });
+  }
+
+  /** Who can sign in on this location's devices: everyone with a PIN there. Names only. */
+  async staffWithPin(locationId: string): Promise<{ id: string; name: string }[]> {
+    const pins = await this.prisma.system().staffPin.findMany({
+      where: { locationId },
+      select: { user: { select: { id: true, name: true } } },
+    });
+    return pins.map((p) => p.user).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  findPin(userId: string, locationId: string) {
+    return this.prisma.system().staffPin.findUnique({
+      where: { userId_locationId: { userId, locationId } },
+    });
+  }
+
+  pinMatches(pin: string, pinHash: string): Promise<boolean> {
+    return verifyPin(pin, pinHash);
+  }
+
+  setFailedTries(userId: string, locationId: string, failedTries: number) {
+    return this.prisma.system().staffPin.update({
+      where: { userId_locationId: { userId, locationId } },
+      data: { failedTries },
     });
   }
 }

@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_DEV_USER?: string;
+  /** The location a new device signs in to, until it is set with ?location=<slug>. */
+  readonly VITE_LOCATION_SLUG?: string;
 }
