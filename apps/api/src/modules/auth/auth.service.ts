@@ -61,8 +61,9 @@ export class AuthService {
   /**
    * First name and PIN. The first name narrows it down to a person (or a few with the same
    * first name); the PIN decides who it is. Every wrong PIN counts against those people, and the
-   * fifth locks the PIN until a manager sets a new one. Without a location (a new device) the
-   * PIN also finds the location; when it fits several, the device asks which one.
+   * fifth locks the PIN until a manager sets a new one. Only the PINs of the given location are
+   * compared: a new device asks for its restaurant first, so a wrong PIN can never count against
+   * (or match) staff of another restaurant.
    */
   async loginWithPin(input: PinLogin): Promise<LoginResponse> {
     const key = firstNameKey(input.name);
@@ -86,21 +87,8 @@ export class AuthService {
       if (left <= 0) throw new HttpException({ code: 'PIN_LOCKED' }, HttpStatus.LOCKED);
       throw new UnauthorizedException({ code: 'PIN_INVALID', details: { triesLeft: left } });
     }
-    const people = new Set(found.map((f) => f.userId));
     // Two people with the same first name and PIN: setting a PIN prevents this per location.
-    if (people.size > 1) throw new ConflictException({ code: 'LOGIN_AMBIGUOUS' });
-    if (found.length > 1) {
-      const locations = await Promise.all(found.map((f) => this.auth.findLocation(f.locationId)));
-      throw new ConflictException({
-        code: 'LOCATION_CHOICE',
-        details: {
-          locations: locations
-            .filter((l) => l !== null)
-            .map((l) => ({ id: l.id, name: l.name }))
-            .sort((a, b) => a.name.localeCompare(b.name)),
-        },
-      });
-    }
+    if (found.length > 1) throw new ConflictException({ code: 'LOGIN_AMBIGUOUS' });
     const row = found[0]!;
     if (row.failedTries > 0) await this.auth.setFailedTries(row.userId, row.locationId, 0);
 

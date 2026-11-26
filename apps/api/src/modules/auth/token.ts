@@ -19,30 +19,70 @@ function secret(): string {
   return s;
 }
 
-const sign = (data: string, key: string) => createHmac('sha256', key).update(data).digest();
+const mac = (data: string, key: string) => createHmac('sha256', key).update(data).digest();
 
 export function issueToken(
   claims: Omit<SessionClaims, 'exp'>,
   now = Date.now(),
 ): { token: string; expiresAt: string } {
-  const exp = Math.floor(now / 1000) + SESSION_SECONDS;
+  return sign({ ...claims }, SESSION_SECONDS, now);
+}
+
+/** The claims of a valid, unexpired shift token; null for anything else, a platform token too. */
+export function readToken(token: string, now = Date.now()): SessionClaims | null {
+  const claims = verify(token, now);
+  if (!claims || claims.aud !== undefined) return null;
+  if (typeof claims.sub !== 'string' || typeof claims.loc !== 'string') return null;
+  return claims as unknown as SessionClaims;
+}
+
+/** A platform admin's session: not bound to any restaurant, and shorter than a shift. */
+export interface PlatformClaims {
+  sub: string;
+  aud: 'platform';
+  exp: number;
+}
+
+export const PLATFORM_SESSION_SECONDS = 8 * 60 * 60;
+
+export function issuePlatformToken(
+  adminId: string,
+  now = Date.now(),
+): { token: string; expiresAt: string } {
+  return sign({ sub: adminId, aud: 'platform' }, PLATFORM_SESSION_SECONDS, now);
+}
+
+/** The claims of a valid, unexpired platform token; null for anything else, a shift token too. */
+export function readPlatformToken(token: string, now = Date.now()): PlatformClaims | null {
+  const claims = verify(token, now);
+  if (!claims || claims.aud !== 'platform' || typeof claims.sub !== 'string') return null;
+  return claims as unknown as PlatformClaims;
+}
+
+function sign(
+  claims: Record<string, unknown>,
+  seconds: number,
+  now: number,
+): { token: string; expiresAt: string } {
+  const exp = Math.floor(now / 1000) + seconds;
   const body = `${HEADER}.${b64(JSON.stringify({ ...claims, exp }))}`;
   return {
-    token: `${body}.${sign(body, secret()).toString('base64url')}`,
+    token: `${body}.${mac(body, secret()).toString('base64url')}`,
     expiresAt: new Date(exp * 1000).toISOString(),
   };
 }
 
-/** The claims of a valid, unexpired token; null for anything else. */
-export function readToken(token: string, now = Date.now()): SessionClaims | null {
+function verify(token: string, now: number): Record<string, unknown> | null {
   const [header, payload, sig] = token.split('.');
   if (header !== HEADER || !payload || !sig) return null;
-  const expected = sign(`${header}.${payload}`, secret());
+  const expected = mac(`${header}.${payload}`, secret());
   const given = Buffer.from(sig, 'base64url');
   if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null;
   try {
-    const claims = JSON.parse(Buffer.from(payload, 'base64url').toString()) as SessionClaims;
-    if (typeof claims.sub !== 'string' || typeof claims.loc !== 'string') return null;
+    const claims = JSON.parse(Buffer.from(payload, 'base64url').toString()) as Record<
+      string,
+      unknown
+    >;
     if (typeof claims.exp !== 'number' || claims.exp * 1000 <= now) return null;
     return claims;
   } catch {

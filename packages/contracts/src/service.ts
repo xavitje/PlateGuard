@@ -151,12 +151,12 @@ export type AlertsRead = z.infer<typeof AlertsReadZ>;
 
 /**
  * POST /auth/pin: one person signs in on a location's shared device for one shift, with their
- * first name and PIN. The roles of the person found decide where the app opens. Without a
- * location (a new device), the person's PIN finds it; when it fits more than one location the
- * API answers 409 LOCATION_CHOICE with those locations, and the device asks which one.
+ * first name and PIN. The roles of the person found decide where the app opens. The location is
+ * always given: a new device first asks which restaurant it is for, so a PIN is only ever
+ * compared with the PINs of that one location, never with those of every restaurant.
  */
 export const PinLoginZ = z.strictObject({
-  locationId: IdZ.optional(),
+  locationId: IdZ,
   name: z.string().trim().min(1).max(80),
   pin: z.string().regex(/^\d{4,6}$/),
 });
@@ -185,4 +185,26 @@ export interface SignInLocationResponse {
   location: { id: string; name: string };
   /** False until a manager has given someone a PIN here. */
   hasStaff: boolean;
+}
+
+/**
+ * POST /platform/login: the people who run PlateGuard itself, apart from every restaurant.
+ * Email, password and the 6-digit code from an authenticator app; never first name and PIN.
+ */
+export const PlatformLoginZ = z.strictObject({
+  email: z.string().trim().toLowerCase().max(200).pipe(z.email()),
+  password: z.string().min(1).max(200),
+  code: z.string().regex(/^\d{6}$/),
+});
+export type PlatformLogin = z.infer<typeof PlatformLoginZ>;
+
+/** GET /platform/me: the signed-in platform admin. */
+export interface PlatformMe {
+  email: string;
+}
+
+export interface PlatformLoginResponse {
+  token: string;
+  expiresAt: string;
+  me: PlatformMe;
 }

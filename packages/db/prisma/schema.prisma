@@ -252,6 +252,25 @@ model StaffPin {
   @@map("staff_pin")
 }
 
+/// The people who run PlateGuard itself (not a restaurant). Kept apart from app_user: no roles at
+/// any restaurant, no PIN, never found by the PIN sign-in. Made only with the platform-admin script.
+/// The app role plateguard_app has no rights on this table (migration 20261126000200).
+model PlatformAdmin {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  /// Base32 key of the authenticator app (TOTP, RFC 6238).
+  totpSecret   String    @map("totp_secret")
+  /// The last 30-second step a code was used for, so a code works once.
+  totpLastStep Int?      @map("totp_last_step")
+  failedTries  Int       @default(0) @map("failed_tries")
+  lockedUntil  DateTime? @map("locked_until")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@map("platform_admin")
+}
+
 // ─── Recipes ───────────────────────────────────────────────────────────────
 
 /// EU-14 and subtypes have organizationId null and are visible to everyone.

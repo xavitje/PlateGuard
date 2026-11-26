@@ -191,7 +191,8 @@
     "unlock": "Pincode instellen en deblokkeren",
     "remove": "Verwijderen van deze locatie",
     "removeConfirm": "{name} verwijderen van deze locatie? De rollen hier en de pincode vervallen.",
-    "removeYes": "Ja, verwijderen"
+    "removeYes": "Ja, verwijderen",
+    "deviceLink": "Log een nieuw apparaat in met deze link. Het kent dan dit restaurant:"
   },
   "printers": {
     "intro": "Koppel PlateGuard aan de systemen in je restaurant: de keukenprinter en de kassa.",
