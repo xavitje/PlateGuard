@@ -128,7 +128,7 @@ describe.skipIf(!process.env.DATABASE_URL)('PIN login', () => {
   it('does not know the name, or has no PIN on a location without one', async () => {
     await expect(
       auth.loginWithPin({ locationId: loc, name: 'Kim', pin: '1234' }),
-    ).rejects.toMatchObject({ status: 401, response: { code: 'NAME_UNKNOWN' } });
+    ).rejects.toMatchObject({ status: 401, response: { code: 'PIN_INVALID' } });
     await expect(
       auth.loginWithPin({ locationId: other, name: 'Sam', pin: '1234' }),
     ).rejects.toMatchObject({ status: 401 });

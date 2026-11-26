@@ -22,6 +22,10 @@ import { issueToken } from './token.js';
 /** After this many wrong PINs in a row, a manager has to set a new PIN. */
 export const MAX_PIN_TRIES = 5;
 
+/** Compared when nothing real is: an unknown name or email takes as long as a wrong secret. */
+export const DUMMY_HASH =
+  'scrypt$32768$8$1$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+
 @Injectable()
 export class AuthService {
   constructor(private readonly auth: AuthRepository) {}
@@ -79,7 +83,11 @@ export class AuthService {
     const candidates = (await this.auth.pins(input.locationId)).filter(
       (p) => firstNameKey(p.user.name) === key,
     );
-    if (candidates.length === 0) throw new UnauthorizedException({ code: 'NAME_UNKNOWN' });
+    // An unknown name answers like a wrong PIN, in the same time, so names cannot be probed.
+    if (candidates.length === 0) {
+      await this.auth.pinMatches(input.pin, DUMMY_HASH);
+      throw new UnauthorizedException({ code: 'PIN_INVALID' });
+    }
     // Each try is counted before the PIN is compared, so parallel guesses cannot share one count.
     const tries = await Promise.all(
       candidates.map((c) => this.auth.reserveTry(c.userId, c.locationId, MAX_PIN_TRIES)),
@@ -92,7 +100,7 @@ export class AuthService {
     if (found.length === 0) {
       const left = MAX_PIN_TRIES - Math.max(...tries.filter((t) => t !== null));
       if (left <= 0) throw new HttpException({ code: 'PIN_LOCKED' }, HttpStatus.LOCKED);
-      throw new UnauthorizedException({ code: 'PIN_INVALID', details: { triesLeft: left } });
+      throw new UnauthorizedException({ code: 'PIN_INVALID' });
     }
     // Two people with the same first name and PIN: setting a PIN prevents this per location.
     if (found.length > 1) throw new ConflictException({ code: 'LOGIN_AMBIGUOUS' });

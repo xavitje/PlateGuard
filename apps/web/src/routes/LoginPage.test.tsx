@@ -52,12 +52,21 @@ describe('LoginPage', () => {
     });
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(await screen.findByText(/Nobody with this first name/)).toBeTruthy();
+    expect(
+      await screen.findByText(
+        "That first name and PIN don't match. After 5 wrong tries the PIN locks.",
+      ),
+    ).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText('First name or email'), { target: { value: 'demo' } });
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '0000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(await screen.findByText('Wrong PIN. 4 tries left before it locks.')).toBeTruthy();
+    // A wrong PIN answers exactly like an unknown name, so names cannot be probed.
+    expect(
+      await screen.findAllByText(
+        "That first name and PIN don't match. After 5 wrong tries the PIN locks.",
+      ),
+    ).toHaveLength(1);
 
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));

@@ -83,11 +83,9 @@ export function LoginPage() {
     ? null
     : error.code === 'PIN_LOCKED'
       ? t('auth:pinLocked')
-      : error.code === 'NAME_UNKNOWN'
-        ? t('auth:nameUnknown')
-        : error.code === 'LOGIN_AMBIGUOUS'
-          ? t('auth:ambiguous')
-          : t('auth:pinInvalid', { triesLeft: Number(error.details.triesLeft ?? 0) });
+      : error.code === 'LOGIN_AMBIGUOUS'
+        ? t('auth:ambiguous')
+        : t('auth:pinInvalid');
   const platformError = !platform.error
     ? null
     : platform.error instanceof ApiError && platform.error.code === 'LOGIN_LOCKED'

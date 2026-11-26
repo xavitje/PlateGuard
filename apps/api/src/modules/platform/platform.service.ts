@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { PlatformLogin, PlatformLoginResponse, PlatformReset } from '@plateguard/contracts';
+import { DUMMY_HASH } from '../auth/auth.service.js';
 import { issuePlatformToken } from '../auth/token.js';
 import { PlatformRepository } from './platform.repository.js';
 import { matchTotp } from './totp.js';
@@ -7,10 +8,6 @@ import { matchTotp } from './totp.js';
 /** After this many failed sign-ins in a row the account waits LOCK_MINUTES. */
 export const MAX_PLATFORM_TRIES = 5;
 export const LOCK_MINUTES = 15;
-
-// Compared when the email is unknown, so an unknown email takes as long as a wrong password.
-const DUMMY_HASH =
-  'scrypt$32768$8$1$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 
 @Injectable()
 export class PlatformService {

@@ -20,5 +20,16 @@
   "loading": "Loading…",
   "loadError": "Could not reach PlateGuard. Check the connection and try again.",
   "saveError": "Not saved. Check the connection and try again.",
-  "mainNav": "Main menu"
+  "mainNav": "Main menu",
+  "error": {
+    "notFound": {
+      "title": "Page not found",
+      "lead": "This address does not exist, or it moved. Check the link, or start from the beginning."
+    },
+    "crashed": {
+      "title": "Something went wrong",
+      "lead": "This page stopped working. Nothing you saved is lost. Go back to the start and try again."
+    },
+    "home": "Back to the start"
+  }
 }
