@@ -11,7 +11,7 @@ import type {
   StaffDraft,
   StaffMember,
 } from '@plateguard/contracts';
-import { getPlatformToken } from '../session';
+import { getPlatformToken, setPlatformToken } from '../session';
 import { ApiError } from './client';
 
 /** Platform administration calls. They carry the platform token, never the shift token. */
@@ -25,6 +25,8 @@ async function call<T>(path: string, method = 'GET', body?: unknown): Promise<T>
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
+  // An ended platform session is forgotten, so sign-in doesn't send back to /platform again.
+  if (res.status === 401 && token) setPlatformToken(null);
   if (!res.ok) {
     const err = (await res.json().catch(() => ({}))) as { code?: string };
     throw new ApiError(res.status, err.code ?? 'HTTP_ERROR');
