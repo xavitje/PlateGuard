@@ -6,6 +6,7 @@ import {
   LocationProfileZ,
   NewLocationZ,
   StaffInputZ,
+  StaffLinkZ,
   StaffPinZ,
   TableInputZ,
   type FloorInput,
@@ -13,6 +14,7 @@ import {
   type LocationProfile,
   type NewLocation,
   type StaffInput,
+  type StaffLink,
   type TableInput,
 } from '@plateguard/contracts';
 import type { Principal } from '@plateguard/domain';
@@ -120,6 +122,23 @@ export class StaffController {
     @Body(new ZodPipe(StaffInputZ)) body: StaffInput,
   ) {
     return this.staff.create(ctx, user, req.location!, body);
+  }
+
+  /** People of the other locations who could start here. */
+  @Get('others')
+  others(@Tenant() ctx: TenantContext, @Req() req: AuthedRequest) {
+    return this.staff.candidates(ctx, req.location!);
+  }
+
+  @Post(':id/link')
+  link(
+    @Tenant() ctx: TenantContext,
+    @CurrentPrincipal() user: Principal,
+    @Req() req: AuthedRequest,
+    @Param('id', IdPipe) id: string,
+    @Body(new ZodPipe(StaffLinkZ)) body: StaffLink,
+  ) {
+    return this.staff.link(ctx, user, req.location!, id, body);
   }
 
   @Put(':id')

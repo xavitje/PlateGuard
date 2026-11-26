@@ -127,6 +127,22 @@ describe('Staff admin', () => {
   });
 });
 
+describe('Staff at several locations', () => {
+  it('brings someone from another location here with roles and a PIN for here', async () => {
+    renderPage(<StaffPage />);
+    fireEvent.click(await screen.findByRole('button', { name: /New person/ }));
+    fireEvent.change(await screen.findByLabelText(/^Already works at another location/), {
+      target: { value: 'u-noor' },
+    });
+    expect(screen.queryByLabelText('Name')).toBeNull();
+    const save = screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement;
+    expect(save.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText(/^PIN/), { target: { value: '4321' } });
+    fireEvent.click(save);
+    expect(await screen.findByText(/also at Noord/)).toBeTruthy();
+  });
+});
+
 describe('Restaurant profile admin', () => {
   it('renames the restaurant and gives it an address; the session shows the new name', async () => {
     const client = createMemoryClient();

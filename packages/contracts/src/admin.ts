@@ -245,7 +245,23 @@ export interface StaffMember {
   hasPin: boolean;
   /** Five wrong PINs in a row: a manager sets a new PIN to unlock. */
   locked: boolean;
+  /** Names of the other locations of the restaurant where this person has a role. */
+  elsewhere: string[];
 }
+
+/** Someone who works at another location of the restaurant, but not here yet. */
+export interface StaffCandidate {
+  id: string;
+  name: string;
+  locations: string[];
+}
+
+/** Brings someone from another location here: their roles and PIN for this location. */
+export const StaffLinkZ = z.strictObject({
+  roles: StaffInputZ.shape.roles,
+  pin: PinZ,
+});
+export type StaffLink = z.infer<typeof StaffLinkZ>;
 
 // ─── Menu import ───────────────────────────────────────────────────────────
 

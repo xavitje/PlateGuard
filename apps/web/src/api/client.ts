@@ -10,6 +10,8 @@ import type {
   FloorDraft,
   FloorLayout,
   StaffDraft,
+  StaffCandidate,
+  StaffLink,
   StaffMember,
   TableDraft,
   AllergenResponse,
@@ -94,6 +96,9 @@ export interface AdminClient {
   updateStaff(location: string, id: string, body: Omit<StaffDraft, 'pin'>): Promise<StaffMember[]>;
   setStaffPin(location: string, id: string, pin: string): Promise<StaffMember[]>;
   removeStaff(location: string, id: string): Promise<StaffMember[]>;
+  /** People of the other locations of the restaurant who do not work here yet. */
+  staffCandidates(location: string): Promise<StaffCandidate[]>;
+  linkStaff(location: string, id: string, body: StaffLink): Promise<StaffMember[]>;
   settings(location: string): Promise<LocationSettings>;
   saveSettings(location: string, body: LocationSettings): Promise<void>;
   /** The restaurant's name, address and photo. Owner only. */
@@ -266,6 +271,8 @@ export function createHttpClient(
       setStaffPin: (l, id, pin) =>
         call(adm(l, `staff/${id}/pin`), { method: 'PUT', body: { pin } }),
       removeStaff: (l, id) => call(adm(l, `staff/${id}`), { method: 'DELETE' }),
+      staffCandidates: (l) => call(adm(l, 'staff/others')),
+      linkStaff: (l, id, body) => call(adm(l, `staff/${id}/link`), { method: 'POST', body }),
       settings: (l) => call(adm(l, 'settings')),
       saveSettings: (l, body) => call(adm(l, 'settings'), { method: 'PUT', body }),
       profile: (l) => call(adm(l, 'profile')),

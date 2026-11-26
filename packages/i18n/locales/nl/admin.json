@@ -194,7 +194,12 @@
     "remove": "Verwijderen van deze locatie",
     "removeConfirm": "{name} verwijderen van deze locatie? De rollen hier en de pincode vervallen.",
     "removeYes": "Ja, verwijderen",
-    "deviceLink": "Log een nieuw apparaat in met deze link. Het kent dan dit restaurant:"
+    "deviceLink": "Log een nieuw apparaat in met deze link. Het kent dan dit restaurant:",
+    "alsoAt": "ook in {places}",
+    "from": "Werkt al op een andere locatie?",
+    "fromHint": "Kies de persoon, dan blijft het één account met één geschiedenis. Rollen en pincode gelden alleen voor deze locatie.",
+    "fromNone": "Nee, een nieuw persoon",
+    "pinHereHint": "De pincode voor de tablets van deze locatie. Mag dezelfde zijn als op de andere locatie."
   },
   "printers": {
     "intro": "Koppel PlateGuard aan de systemen in je restaurant: de keukenprinter en de kassa.",

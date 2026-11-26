@@ -194,7 +194,12 @@
     "remove": "Remove from this location",
     "removeConfirm": "Remove {name} from this location? Their roles here and their PIN go.",
     "removeYes": "Yes, remove",
-    "deviceLink": "Sign in a new device with this link. It then knows this restaurant:"
+    "deviceLink": "Sign in a new device with this link. It then knows this restaurant:",
+    "alsoAt": "also at {places}",
+    "from": "Already works at another location?",
+    "fromHint": "Pick the person, so they stay one account with one history. Roles and PIN apply to this location only.",
+    "fromNone": "No, a new person",
+    "pinHereHint": "The PIN for the tablets of this location. It may be the same as at the other location."
   },
   "printers": {
     "intro": "Connect PlateGuard to the systems in your restaurant: the kitchen printer and the till.",

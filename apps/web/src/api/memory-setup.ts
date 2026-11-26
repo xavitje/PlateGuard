@@ -1,4 +1,4 @@
-import type { AdminFloor, StaffMember } from '@plateguard/contracts';
+import type { AdminFloor, StaffCandidate, StaffMember } from '@plateguard/contracts';
 import { DEMO_FLOORS, DEMO_TABLES } from '../demo';
 import { ApiError, type AdminClient } from './client';
 import { placed } from './layout';
@@ -15,6 +15,8 @@ type Setup = Pick<
   | 'updateStaff'
   | 'setStaffPin'
   | 'removeStaff'
+  | 'staffCandidates'
+  | 'linkStaff'
 >;
 
 /** The floor plan and staff editors in memory, for tests. Same rules as the API. */
@@ -38,9 +40,27 @@ export function createMemorySetup(me: string): Setup {
     })),
   }));
   let staff: StaffMember[] = [
-    { id: me, name: 'Demo Waiter', roles: [], orgRoles: ['OWNER'], hasPin: true, locked: false },
-    { id: 'u-sam', name: 'Sam', roles: ['WAITER'], orgRoles: [], hasPin: true, locked: true },
+    {
+      id: me,
+      name: 'Demo Waiter',
+      roles: [],
+      orgRoles: ['OWNER'],
+      hasPin: true,
+      locked: false,
+      elsewhere: [],
+    },
+    {
+      id: 'u-sam',
+      name: 'Sam',
+      roles: ['WAITER'],
+      orgRoles: [],
+      hasPin: true,
+      locked: true,
+      elsewhere: [],
+    },
   ];
+  // Works at the other demo location, not here yet.
+  let candidates: StaffCandidate[] = [{ id: 'u-noor', name: 'Noor', locations: ['Noord'] }];
   let nextId = 1;
   const copy = () => structuredClone(floors);
   const people = () => structuredClone(staff).sort((a, b) => a.name.localeCompare(b.name));
@@ -117,6 +137,7 @@ export function createMemorySetup(me: string): Setup {
         orgRoles: [],
         hasPin: !!body.pin,
         locked: false,
+        elsewhere: [],
       });
       return people();
     },
@@ -129,6 +150,22 @@ export function createMemorySetup(me: string): Setup {
         staff.find((s) => s.id === id)!,
         { hasPin: true, locked: false },
       );
+      return people();
+    },
+    staffCandidates: async () => structuredClone(candidates),
+    linkStaff: async (_, id, body) => {
+      const c = candidates.find((x) => x.id === id);
+      if (!c) throw new ApiError(404, 'STAFF_NOT_FOUND');
+      candidates = candidates.filter((x) => x !== c);
+      staff.push({
+        id,
+        name: c.name,
+        roles: body.roles,
+        orgRoles: [],
+        hasPin: true,
+        locked: false,
+        elsewhere: c.locations,
+      });
       return people();
     },
     removeStaff: async (_, id) => {

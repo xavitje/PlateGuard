@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { StaffMember } from '@plateguard/contracts';
+import type { StaffCandidate, StaffMember } from '@plateguard/contracts';
 import { hashPin, verifyPin } from '@plateguard/db';
 import type { Role } from '@plateguard/domain';
 import { randomUUID } from 'node:crypto';
@@ -16,36 +16,75 @@ export class StaffRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   list(ctx: TenantContext, location: Location): Promise<StaffMember[]> {
-    return this.prisma.forTenant(ctx, async (tx) => {
-      const [roles, pins] = await Promise.all([
+    return this.people(ctx, location).then((p) => p.here);
+  }
+
+  /** People with a role at another location of the organization and none here. */
+  candidates(ctx: TenantContext, location: Location): Promise<StaffCandidate[]> {
+    return this.people(ctx, location).then((p) => p.others);
+  }
+
+  /**
+   * Every role assignment of the organization (role_assignment is organization scoped), split
+   * into the people of this location and the people of the other locations.
+   */
+  private async people(ctx: TenantContext, location: Location) {
+    const [roles, pins, names] = await Promise.all([
+      this.prisma.forTenant(ctx, (tx) =>
         tx.roleAssignment.findMany({
-          where: {
-            organizationId: location.organizationId,
-            OR: [{ locationId: location.id }, { locationId: null }],
-          },
+          where: { organizationId: location.organizationId },
           include: { user: { select: { id: true, name: true } } },
         }),
+      ),
+      this.prisma.forTenant(ctx, (tx) =>
         tx.staffPin.findMany({ where: { locationId: location.id } }),
-      ]);
-      const people = new Map<string, StaffMember>();
-      for (const r of roles) {
-        const p = people.get(r.userId) ?? {
+      ),
+      // Only names: the other locations are outside this location's row-level security context.
+      this.prisma
+        .system()
+        .location.findMany({
+          where: { organizationId: location.organizationId },
+          select: { id: true, name: true },
+        })
+        .then((ls) => new Map(ls.map((l) => [l.id, l.name]))),
+    ]);
+    const here = new Map<string, StaffMember>();
+    const elsewhere = new Map<string, { name: string; locations: Set<string> }>();
+    for (const r of roles) {
+      if (r.locationId === null || r.locationId === location.id) {
+        const p = here.get(r.userId) ?? {
           id: r.userId,
           name: r.user.name,
           roles: [],
           orgRoles: [],
           hasPin: false,
           locked: false,
+          elsewhere: [],
         };
         (r.locationId ? p.roles : p.orgRoles).push(r.role as Role);
-        people.set(r.userId, p);
+        here.set(r.userId, p);
+      } else {
+        const e = elsewhere.get(r.userId) ?? { name: r.user.name, locations: new Set<string>() };
+        e.locations.add(names.get(r.locationId) ?? '');
+        elsewhere.set(r.userId, e);
       }
-      for (const pin of pins) {
-        const p = people.get(pin.userId);
-        if (p) Object.assign(p, { hasPin: true, locked: pin.failedTries >= MAX_PIN_TRIES });
-      }
-      return [...people.values()].sort((a, b) => a.name.localeCompare(b.name));
-    });
+    }
+    for (const pin of pins) {
+      const p = here.get(pin.userId);
+      if (p) Object.assign(p, { hasPin: true, locked: pin.failedTries >= MAX_PIN_TRIES });
+    }
+    for (const [id, e] of elsewhere) {
+      const p = here.get(id);
+      if (p) p.elsewhere = [...e.locations].sort();
+    }
+    const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
+    return {
+      here: [...here.values()].sort(byName),
+      others: [...elsewhere]
+        .filter(([id]) => !here.has(id))
+        .map(([id, e]) => ({ id, name: e.name, locations: [...e.locations].sort() }))
+        .sort(byName),
+    };
   }
 
   /**
@@ -102,6 +141,20 @@ export class StaffRepository {
         where: { userId: id, organizationId: location.organizationId, locationId: location.id },
       });
       await tx.roleAssignment.createMany({ data: assignments(id, location, input.roles) });
+    });
+  }
+
+  /** Someone from another location of the organization starts here with these roles and PIN. */
+  async link(
+    ctx: TenantContext,
+    location: Location,
+    id: string,
+    input: { roles: Role[]; pin: string },
+  ): Promise<void> {
+    const pinHash = await hashPin(input.pin);
+    await this.prisma.forTenant(ctx, async (tx) => {
+      await tx.roleAssignment.createMany({ data: assignments(id, location, input.roles) });
+      await tx.staffPin.create({ data: { userId: id, locationId: location.id, pinHash } });
     });
   }
 
