@@ -7,6 +7,7 @@ import { useCan } from '../admin/hooks';
 import { ALLERGEN_NAMES } from '../allergens';
 import { OutcomeBadge } from '../components/OutcomeBadge';
 import { useKitchen, useKitchenAction, useSession } from '../service/ServiceProvider';
+import { PlatformBanner } from '../shell/TabsLayout';
 
 const REASONS = ['unsafe', 'missing', 'wrong'] as const;
 
@@ -35,6 +36,9 @@ export function KitchenPage() {
       data-theme="kitchen"
       className="min-h-dvh bg-mist px-2 pt-[max(env(safe-area-inset-top),8px)] pb-[max(env(safe-area-inset-bottom),8px)] text-ink sm:px-4 sm:pt-[max(env(safe-area-inset-top),16px)] sm:pb-[max(env(safe-area-inset-bottom),16px)]"
     >
+      <div className="mx-auto max-w-6xl">
+        <PlatformBanner />
+      </div>
       <div className="mx-auto grid max-w-6xl gap-3 rounded-[22px] bg-bg p-3 sm:gap-4 sm:p-[18px] md:grid-cols-[minmax(0,1fr)_minmax(0,1.45fr)]">
         <header className="flex flex-wrap items-center justify-between gap-2 md:col-span-2">
           <h1 className="text-[22px] font-semibold tracking-[-0.02em]">{t('kitchen:title')}</h1>
