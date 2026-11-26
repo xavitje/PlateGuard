@@ -210,10 +210,11 @@ export interface PlatformLoginResponse {
 }
 
 /**
- * The plans a restaurant (organization) can be on. For now only a label: nothing is limited by
- * plan yet. shortcut: a fixed list, add a plan here when it exists.
+ * The plans a restaurant (organization) can be on, as named on the landing page (Free, Kitchen,
+ * Complete). For now only a label: nothing is limited by plan yet.
+ * shortcut: a fixed list, add a plan here when it exists.
  */
-export const PLANS = ['free', 'pro'] as const;
+export const PLANS = ['free', 'kitchen', 'full'] as const;
 export const PlanZ = z.enum(PLANS);
 export type Plan = z.infer<typeof PlanZ>;
 

@@ -56,10 +56,10 @@ describe.skipIf(!process.env.DATABASE_URL)('restaurants on request', () => {
       name: 'Gina',
       email: `gina-${tag}@example.com`,
       pin: '2468',
-      plan: 'pro',
+      plan: 'kitchen',
     });
     const made = list.find((r) => r.name === `Trattoria ${tag}`)!;
-    expect(made).toMatchObject({ plan: 'pro', ownerEmail: `gina-${tag}@example.com` });
+    expect(made).toMatchObject({ plan: 'kitchen', ownerEmail: `gina-${tag}@example.com` });
     const loc = made.locations[0]!;
     expect(loc).toMatchObject({ slug: `trattoria-${tag}`, staff: 1 });
     // The owner signs in there with first name and PIN, like after the free start.
@@ -105,7 +105,7 @@ describe.skipIf(!process.env.DATABASE_URL)('restaurants on request', () => {
   });
 
   it('refuses an unknown restaurant, location or person', async () => {
-    await expect(platform.setPlan(admin, randomUUID(), 'pro')).rejects.toMatchObject({
+    await expect(platform.setPlan(admin, randomUUID(), 'kitchen')).rejects.toMatchObject({
       status: 404,
     });
     await expect(platform.staffOf(randomUUID())).rejects.toMatchObject({ status: 404 });

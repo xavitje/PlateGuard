@@ -19,7 +19,8 @@
   "plan": "Plan",
   "plans": {
     "free": "Gratis",
-    "pro": "Pro"
+    "kitchen": "Keuken",
+    "full": "Compleet"
   },
   "create": "Restaurant aanmaken",
   "since": "Sinds {date}",

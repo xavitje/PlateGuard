@@ -76,13 +76,13 @@ describe('PlatformPage', () => {
     fireEvent.change(screen.getByLabelText("Owner's start PIN", { exact: false }), {
       target: { value: '2468' },
     });
-    fireEvent.change(screen.getByLabelText('Plan'), { target: { value: 'pro' } });
+    fireEvent.change(screen.getByLabelText('Plan'), { target: { value: 'kitchen' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create restaurant' }));
     expect(await screen.findByRole('heading', { name: 'Café Zuid' })).toBeTruthy();
     const created = fetch.mock.calls.find(
       ([, i]) => i?.method === 'POST' && i.body?.toString().includes('Café'),
     );
-    expect(JSON.parse(String(created?.[1]?.body))).toMatchObject({ plan: 'pro', pin: '2468' });
+    expect(JSON.parse(String(created?.[1]?.body))).toMatchObject({ plan: 'kitchen', pin: '2468' });
     expect(localStorage.getItem('pg.platform')).toBe('p-token');
     expect(localStorage.getItem('pg.session')).toBeNull();
     const meCall = fetch.mock.calls.find(([u]) => u === '/api/platform/me');

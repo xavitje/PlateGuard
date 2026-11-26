@@ -19,7 +19,8 @@
   "plan": "Plan",
   "plans": {
     "free": "Free",
-    "pro": "Pro"
+    "kitchen": "Kitchen",
+    "full": "Complete"
   },
   "create": "Create restaurant",
   "since": "Since {date}",
