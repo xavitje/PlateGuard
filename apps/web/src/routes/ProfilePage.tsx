@@ -1,10 +1,14 @@
 import { SUPPORTED_LOCALES, type Locale } from '@plateguard/i18n';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 import { Link } from 'react-router';
+import { input } from '../admin/ui';
+import { segmentItem, segmentTrack } from '../components/segment';
 import { rememberLocale } from '../i18n';
 import { useMe, useSession } from '../service/ServiceProvider';
 import { workspaces, WORKSPACE_PATH } from '../shell/home';
 import { PageTitle } from '../shell/TabsLayout';
+import { applyTheme, storedTheme, THEMES, type Theme } from '../theme';
 
 export function ProfilePage() {
   const { t, i18n } = useTranslation();
@@ -14,6 +18,11 @@ export function ProfilePage() {
   const choose = (code: Locale) => {
     rememberLocale(code);
     void i18n.changeLanguage(code);
+  };
+  const [theme, setTheme] = useState(storedTheme);
+  const chooseTheme = (th: Theme) => {
+    applyTheme(th);
+    setTheme(th);
   };
 
   const row =
@@ -29,26 +38,41 @@ export function ProfilePage() {
       )}
 
       <h2 className="mx-1.5 mt-4 mb-2 text-[13px] font-semibold tracking-normal text-soft">
-        {t('profile:language')}
+        {t('profile:appearance')}
       </h2>
-      <section
-        className="rounded-[18px] bg-card px-3.5"
-        role="radiogroup"
-        aria-label={t('profile:language')}
-      >
-        {SUPPORTED_LOCALES.map((l) => (
+      <div role="radiogroup" aria-label={t('profile:appearance')} className={segmentTrack}>
+        {THEMES.map((th) => (
           <button
-            key={l.code}
+            key={th}
+            type="button"
             role="radio"
-            aria-checked={i18n.language === l.code}
-            onClick={() => choose(l.code)}
-            className={row}
+            aria-checked={theme === th}
+            onClick={() => chooseTheme(th)}
+            className={segmentItem(theme === th)}
           >
-            {l.name}
-            {i18n.language === l.code && <span className="font-semibold text-brand-ink">✓</span>}
+            {t(`profile:themes.${th}`)}
           </button>
         ))}
-      </section>
+      </div>
+
+      <label
+        htmlFor="profile-language"
+        className="mx-1.5 mt-4 mb-2 block text-[13px] font-semibold tracking-normal text-soft"
+      >
+        {t('profile:language')}
+      </label>
+      <select
+        id="profile-language"
+        className={input}
+        value={i18n.language}
+        onChange={(e) => choose(e.target.value as Locale)}
+      >
+        {SUPPORTED_LOCALES.map((l) => (
+          <option key={l.code} value={l.code}>
+            {l.name}
+          </option>
+        ))}
+      </select>
       <p className="mx-1.5 mt-2 text-[13px] text-soft">{t('profile:languageNote')}</p>
 
       {places.length > 1 && (

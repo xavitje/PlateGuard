@@ -1,6 +1,12 @@
 {
   "tab": "Profiel",
   "title": "Profiel",
+  "appearance": "Weergave",
+  "themes": {
+    "system": "Apparaat",
+    "light": "Licht",
+    "dark": "Donker"
+  },
   "language": "Taal",
   "languageNote": "Engels is de standaard. Je beheerder kan meer talen toevoegen.",
   "switchUser": "Gebruiker wisselen",

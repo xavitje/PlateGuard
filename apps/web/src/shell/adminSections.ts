@@ -9,7 +9,7 @@ export const ADMIN_SECTIONS: { slug: string; key: string; permission?: Permissio
   { slug: 'floor-plan', key: 'admin:nav.floorPlan', permission: 'floorplan.edit' },
   { slug: 'staff', key: 'admin:nav.staff', permission: 'staff.manage' },
   { slug: 'integrations', key: 'admin:nav.integrations', permission: 'integrations.manage' },
-  { slug: 'webhooks', key: 'admin:nav.webhooks' },
+  { slug: 'webhooks', key: 'admin:nav.webhooks', permission: 'webhooks.manage' },
   { slug: 'incidents', key: 'admin:nav.incidents', permission: 'incident.manage' },
   { slug: 'dashboard', key: 'admin:nav.dashboard', permission: 'dashboard.view' },
 ];

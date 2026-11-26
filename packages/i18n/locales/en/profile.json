@@ -1,6 +1,12 @@
 {
   "tab": "Profile",
   "title": "Profile",
+  "appearance": "Appearance",
+  "themes": {
+    "system": "Device",
+    "light": "Light",
+    "dark": "Dark"
+  },
   "language": "Language",
   "languageNote": "English is the default. Your admin can add more languages.",
   "switchUser": "Switch user",
