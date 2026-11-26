@@ -5,6 +5,7 @@ import type {
   PlatformMe,
   PlatformNewRestaurant,
   PlatformRestaurant,
+  PlatformStats,
   StaffDraft,
   StaffMember,
 } from '@plateguard/contracts';
@@ -34,6 +35,7 @@ const staffPath = (locationId: string) => `/locations/${encodeURIComponent(locat
 export const platformApi = {
   login: (body: PlatformLogin) => call<PlatformLoginResponse>('/login', 'POST', body),
   me: () => call<PlatformMe>('/me'),
+  stats: () => call<PlatformStats>('/stats'),
   restaurants: () => call<PlatformRestaurant[]>('/restaurants'),
   createRestaurant: (body: PlatformNewRestaurant) =>
     call<PlatformRestaurant[]>('/restaurants', 'POST', body),

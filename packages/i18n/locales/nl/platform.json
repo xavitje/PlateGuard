@@ -35,5 +35,25 @@
   "newPin": "Nieuwe pincode",
   "setPin": "Pincode zetten",
   "noPin": "Geen pincode",
-  "pick": "Kies een restaurant, of maak een nieuw."
+  "pick": "Kies een restaurant, of maak een nieuw.",
+  "stats": {
+    "title": "Over de hele app",
+    "restaurants": "Restaurants",
+    "locations": "{count, plural, one {# locatie} other {# locaties}}",
+    "active7": "Actief, laatste 7 dagen",
+    "active30": "Actief, laatste 30 dagen",
+    "activeHint": "Restaurants met minstens één bord.",
+    "incidents30": "Incidenten, laatste 30 dagen",
+    "severity": "{high} hoog · {medium} middel · {low} laag",
+    "weekly": "Per week",
+    "week": "Week van",
+    "signups": "Nieuwe restaurants",
+    "plates": "Borden",
+    "warnings": "Met allergiewaarschuwing",
+    "overrides": "Overrides",
+    "incidents": "Incidenten"
+  },
+  "plates30": "{count, plural, one {# bord} other {# borden}} in de laatste 30 dagen",
+  "lastActivity": "Laatste bord: {date}",
+  "noActivity": "Nog geen borden"
 }

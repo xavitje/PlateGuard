@@ -5,6 +5,7 @@ import { button } from '../admin/ui';
 import { ApiError } from '../api/client';
 import { platformApi } from '../api/platform';
 import { PlatformRestaurants } from './PlatformRestaurants';
+import { PlatformStats } from './PlatformStats';
 import { getPlatformToken, setPlatformToken } from '../session';
 
 const field =
@@ -62,7 +63,10 @@ export function PlatformPage() {
           }}
         />
       ) : signedIn ? (
-        <PlatformRestaurants />
+        <>
+          <PlatformStats />
+          <PlatformRestaurants />
+        </>
       ) : me.isError ? (
         <p role="alert" className="mx-1 text-sm text-red">
           {t('common:loadError')}

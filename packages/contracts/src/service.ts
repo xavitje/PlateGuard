@@ -234,4 +234,34 @@ export interface PlatformRestaurant {
   /** Email of the first owner, the restaurant's contact. */
   ownerEmail: string | null;
   locations: { id: string; name: string; slug: string; staff: number }[];
+  /** Plates in the last 30 days, all locations together. */
+  plates30: number;
+  /** The last plate, at any location; null before the first. */
+  lastActivity: string | null;
+}
+
+/** One week (starting Monday, UTC) of activity across all restaurants. */
+export interface PlatformWeek {
+  /** The Monday, as YYYY-MM-DD. */
+  week: string;
+  signups: number;
+  plates: number;
+  /** Plates whose allergy check was anything but clear. */
+  warnings: number;
+  overrides: number;
+  incidents: number;
+}
+
+/** GET /platform/stats: counts across the whole app. Never guest data. */
+export interface PlatformStats {
+  restaurants: number;
+  locations: number;
+  byPlan: Record<string, number>;
+  /** Restaurants with at least one plate in the last 7 and 30 days. */
+  active7: number;
+  active30: number;
+  /** The last 8 weeks, oldest first; the last one is the current week so far. */
+  weeks: PlatformWeek[];
+  /** Incidents reported in the last 30 days, per severity. */
+  incidents30: { LOW: number; MEDIUM: number; HIGH: number };
 }

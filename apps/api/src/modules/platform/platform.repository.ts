@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { PlatformRestaurant } from '@plateguard/contracts';
+import type { PlatformRestaurant, PlatformStats, PlatformWeek } from '@plateguard/contracts';
 import { audit, verifyPin } from '@plateguard/db';
 import { PrismaService } from '../../common/prisma.service.js';
 
@@ -61,7 +61,18 @@ export class PlatformRepository {
         },
       },
     });
+    const since = new Date(Date.now() - 30 * DAY);
+    const activity = await this.prisma.system().$queryRaw<
+      { organization_id: string; plates30: bigint; last: Date | null }[]
+    >`SELECT l.organization_id,
+        count(*) FILTER (WHERE p.created_at >= ${since}) AS plates30,
+        max(p.created_at) AS last
+      FROM plate_order p JOIN location l ON l.id = p.location_id
+      GROUP BY l.organization_id`;
+    const byOrg = new Map(activity.map((a) => [a.organization_id, a]));
     return orgs.map((o) => ({
+      plates30: Number(byOrg.get(o.id)?.plates30 ?? 0),
+      lastActivity: byOrg.get(o.id)?.last?.toISOString() ?? null,
       id: o.id,
       name: o.name,
       plan: o.plan,
@@ -98,4 +109,71 @@ export class PlatformRepository {
       audit(tx, ctx, { ...e, locationId, payload: { ...e.payload, platformAdmin: admin } }),
     );
   }
+
+  /** Counts across every restaurant: how many, how active, what happened per week. */
+  async stats(now = new Date()): Promise<PlatformStats> {
+    const db = this.prisma.system();
+    const weeks = lastWeeks(now, 8);
+    const from = new Date(`${weeks[0]}T00:00:00Z`);
+    const day7 = new Date(now.getTime() - 7 * DAY);
+    const day30 = new Date(now.getTime() - 30 * DAY);
+    const [orgs, locations, active, weekly, severity] = await Promise.all([
+      db.organization.groupBy({ by: ['plan'], _count: { _all: true } }),
+      db.location.count(),
+      db.$queryRaw<{ active7: bigint; active30: bigint }[]>`SELECT
+          count(DISTINCT l.organization_id) FILTER (WHERE p.created_at >= ${day7}) AS active7,
+          count(DISTINCT l.organization_id) AS active30
+        FROM plate_order p JOIN location l ON l.id = p.location_id
+        WHERE p.created_at >= ${day30}`,
+      db.$queryRaw<{ kind: keyof Omit<PlatformWeek, 'week'>; week: Date; n: bigint }[]>`
+        SELECT 'signups' AS kind, date_trunc('week', created_at) AS week, count(*) AS n
+          FROM organization WHERE created_at >= ${from} GROUP BY 2
+        UNION ALL SELECT 'plates', date_trunc('week', created_at), count(*)
+          FROM plate_order WHERE created_at >= ${from} GROUP BY 2
+        UNION ALL SELECT 'warnings', date_trunc('week', created_at), count(*)
+          FROM assessment WHERE created_at >= ${from}
+          AND outcome NOT IN ('CLEAR', 'CLEAR_WITH_NOTE') GROUP BY 2
+        UNION ALL SELECT 'overrides', date_trunc('week', at), count(*)
+          FROM override WHERE at >= ${from} GROUP BY 2
+        UNION ALL SELECT 'incidents', date_trunc('week', reported_at), count(*)
+          FROM incident WHERE reported_at >= ${from} GROUP BY 2`,
+      db.incident.groupBy({
+        by: ['severity'],
+        where: { reportedAt: { gte: day30 } },
+        _count: { _all: true },
+      }),
+    ]);
+    const rows = new Map<string, PlatformWeek>(
+      weeks.map((week) => [
+        week,
+        { week, signups: 0, plates: 0, warnings: 0, overrides: 0, incidents: 0 },
+      ]),
+    );
+    for (const r of weekly) {
+      const row = rows.get(r.week.toISOString().slice(0, 10));
+      if (row) row[r.kind] = Number(r.n);
+    }
+    const sev = { LOW: 0, MEDIUM: 0, HIGH: 0 };
+    for (const s of severity) sev[s.severity] = s._count._all;
+    return {
+      restaurants: orgs.reduce((n, o) => n + o._count._all, 0),
+      locations,
+      byPlan: Object.fromEntries(orgs.map((o) => [o.plan, o._count._all])),
+      active7: Number(active[0]?.active7 ?? 0),
+      active30: Number(active[0]?.active30 ?? 0),
+      weeks: [...rows.values()],
+      incidents30: sev,
+    };
+  }
+}
+
+const DAY = 24 * 60 * 60 * 1000;
+
+/** The Mondays (UTC, YYYY-MM-DD) of the last n weeks, oldest first, this week last. */
+export function lastWeeks(now: Date, n: number): string[] {
+  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7));
+  return Array.from({ length: n }, (_, i) =>
+    new Date(monday.getTime() - (n - 1 - i) * 7 * DAY).toISOString().slice(0, 10),
+  );
 }

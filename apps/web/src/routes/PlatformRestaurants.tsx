@@ -7,6 +7,7 @@ import { Field, input, MasterDetail, primary, SaveError, button } from '../admin
 import { platformApi } from '../api/platform';
 
 const RESTAURANTS = ['platform', 'restaurants'];
+const STATS = ['platform', 'stats'];
 const pinOk = (pin: string) => /^\d{4,6}$/.test(pin);
 
 /** Every restaurant: make one on request, set its plan, and manage its people. */
@@ -64,6 +65,7 @@ function NewRestaurant({ onDone }: { onDone: (list: PlatformRestaurant[]) => voi
     mutationFn: () => platformApi.createRestaurant({ restaurant, name, email, pin, plan }),
     onSuccess: (list) => {
       queries.setQueryData(RESTAURANTS, list);
+      void queries.invalidateQueries({ queryKey: STATS });
       onDone(list);
     },
   });
@@ -130,9 +132,9 @@ function PlanSelect({
         disabled={disabled}
         onChange={(e) => onChange(e.target.value as Plan)}
       >
-        {PLANS.map((p) => (
+        {[...(PLANS.includes(value as Plan) ? [] : [value]), ...PLANS].map((p) => (
           <option key={p} value={p}>
-            {t(`platform:plans.${p}`)}
+            {t(`platform:plans.${p}`, { defaultValue: p })}
           </option>
         ))}
       </select>
@@ -145,7 +147,10 @@ function Restaurant({ restaurant }: { restaurant: PlatformRestaurant }) {
   const queries = useQueryClient();
   const plan = useMutation({
     mutationFn: (p: Plan) => platformApi.setPlan(restaurant.id, p),
-    onSuccess: (list) => queries.setQueryData(RESTAURANTS, list),
+    onSuccess: (list) => {
+      queries.setQueryData(RESTAURANTS, list);
+      void queries.invalidateQueries({ queryKey: STATS });
+    },
   });
   return (
     <div className="grid gap-5">
@@ -159,6 +164,14 @@ function Restaurant({ restaurant }: { restaurant: PlatformRestaurant }) {
           {restaurant.ownerEmail
             ? t('platform:contact', { email: restaurant.ownerEmail })
             : t('platform:noContact')}
+        </p>
+        <p className="text-[13.5px] text-soft">
+          {t('platform:plates30', { count: restaurant.plates30 })} ·{' '}
+          {restaurant.lastActivity
+            ? t('platform:lastActivity', {
+                date: new Date(restaurant.lastActivity).toLocaleDateString(i18n.language),
+              })
+            : t('platform:noActivity')}
         </p>
       </div>
       <PlanSelect
@@ -182,6 +195,7 @@ function LocationPeople({ location }: { location: PlatformRestaurant['locations'
   const saved = (list: StaffMember[]) => {
     queries.setQueryData(key, list);
     void queries.invalidateQueries({ queryKey: RESTAURANTS });
+    void queries.invalidateQueries({ queryKey: STATS });
   };
   const [name, setName] = useState('');
   const [role, setRole] = useState<Role>('WAITER');
