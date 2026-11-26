@@ -67,7 +67,7 @@ export function TabsLayout() {
           inAdmin ? 'max-w-[1240px]' : 'max-w-3xl lg:max-w-[880px]'
         }`}
       >
-        {me?.platformAdmin && <PlatformBanner name={me.locations[0]?.name ?? ''} />}
+        <PlatformBanner />
         <Outlet />
       </main>
       <nav
@@ -258,16 +258,18 @@ export function PageTitle({ children }: { children: string }) {
 }
 
 /** While a platform admin works in a restaurant as its owner: say so, and the way back. */
-function PlatformBanner({ name }: { name: string }) {
+export function PlatformBanner() {
   const { t } = useTranslation();
+  const me = useMe().data;
   const { signOut } = useSession();
   const navigate = useNavigate();
+  if (!me?.platformAdmin) return null;
   return (
     <div
       role="status"
       className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-[12px] bg-brand-soft px-4 py-2.5 text-[14px] text-brand-ink"
     >
-      <span>{t('platform:viewing', { name })}</span>
+      <span>{t('platform:viewing', { name: me.locations[0]?.name ?? '' })}</span>
       <button
         type="button"
         className="press min-h-10 rounded-[10px] bg-card px-3 font-semibold"
