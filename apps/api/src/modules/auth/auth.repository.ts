@@ -106,6 +106,25 @@ export class AuthRepository {
     return verifyPin(pin, pinHash);
   }
 
+  /**
+   * Counts a try before the PIN is compared, in one statement, so parallel guesses each count.
+   * Returns the tries including this one, or null when the PIN is already locked.
+   */
+  async reserveTry(userId: string, locationId: string, max: number): Promise<number | null> {
+    const rows = await this.prisma.system().$queryRaw<{ failed_tries: number }[]>`
+      UPDATE staff_pin SET failed_tries = failed_tries + 1
+      WHERE user_id = ${userId}::uuid AND location_id = ${locationId}::uuid AND failed_tries < ${max}
+      RETURNING failed_tries`;
+    return rows[0]?.failed_tries ?? null;
+  }
+
+  /** Gives back a try counted for someone whose PIN was not the one typed (a same first name). */
+  releaseTry(userId: string, locationId: string) {
+    return this.prisma.system().$executeRaw`
+      UPDATE staff_pin SET failed_tries = greatest(failed_tries - 1, 0)
+      WHERE user_id = ${userId}::uuid AND location_id = ${locationId}::uuid`;
+  }
+
   setFailedTries(userId: string, locationId: string, failedTries: number) {
     return this.prisma.system().staffPin.update({
       where: { userId_locationId: { userId, locationId } },
