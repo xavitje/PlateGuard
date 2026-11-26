@@ -84,13 +84,16 @@ export class PosRepository {
     ctx: TenantContext,
     locationId: string,
     id: string,
-    input: { config: Prisma.InputJsonObject; secrets: Uint8Array },
+    input: { config: Prisma.InputJsonObject; secrets?: Uint8Array },
     event: string,
   ): Promise<void> {
     return this.prisma.forTenant(ctx, async (tx) => {
       await tx.integrationConnection.update({
         where: { id, locationId },
-        data: { config: input.config, encryptedSecrets: new Uint8Array(input.secrets) },
+        data: {
+          config: input.config,
+          ...(input.secrets ? { encryptedSecrets: new Uint8Array(input.secrets) } : {}),
+        },
       });
       await audit(tx, ctx, {
         locationId,

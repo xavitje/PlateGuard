@@ -20,6 +20,8 @@ export const CanonicalOrderLineZ = z.object({
   seat: z.number().int().positive().optional(),
   course: z.number().int().nonnegative().optional(),
   modifiers: z.array(z.string()).default([]),
+  /** What the waiter typed on the line in the till. Read for allergies ("geen noten"). */
+  note: z.string().optional(),
 });
 
 export const CanonicalOrderZ = z.object({

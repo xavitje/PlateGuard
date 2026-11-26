@@ -5,6 +5,7 @@ import { MenuPage } from './admin/MenuPage';
 import { RecipesPage } from './admin/RecipesPage';
 import { IncidentsPage } from './admin/IncidentsPage';
 import { IntegrationsPage } from './admin/IntegrationsPage';
+import { WebhooksPage } from './admin/WebhooksPage';
 import { RestaurantPage } from './admin/RestaurantPage';
 import { StaffPage } from './admin/StaffPage';
 import { StartPage } from './admin/StartPage';
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
           { path: 'floor-plan', element: <FloorPlanPage /> },
           { path: 'staff', element: <StaffPage /> },
           { path: 'integrations', element: <IntegrationsPage /> },
+          { path: 'webhooks', element: <WebhooksPage /> },
           { path: 'incidents', element: <IncidentsPage /> },
           { path: 'dashboard', element: <DashboardPage /> },
           { path: ':section', element: <AdminSection /> },

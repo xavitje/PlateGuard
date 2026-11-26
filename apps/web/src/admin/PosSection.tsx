@@ -2,6 +2,9 @@ import type { PosConnection, PosEvent, PosSyncResult } from '@plateguard/contrac
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
+import { EU14 } from '@plateguard/domain';
+import { ALLERGEN_NAMES } from '../allergens';
 import { ApiError } from '../api/client';
 import { useClient, useLocationId } from '../service/ServiceProvider';
 import { useAdmin, useAdminSave } from './hooks';
@@ -152,15 +155,20 @@ function Connected({ connection: c }: { connection: PosConnection }) {
         )}
       </div>
       <PosError error={disconnect.error} />
-      <Webhook connection={c} />
+      <p className="text-[14px]">
+        {t('admin:pos.webhookElsewhere')}{' '}
+        <Link to="/admin/webhooks" className="font-medium text-brand">
+          {t('admin:nav.webhooks')}
+        </Link>
+      </p>
       <Items />
+      <AllergyButtons />
       <TestOrder />
-      <Events />
     </div>
   );
 }
 
-function Webhook({ connection: c }: { connection: PosConnection }) {
+export function Webhook({ connection: c }: { connection: PosConnection }) {
   const { t, i18n } = useTranslation();
   const url = `${window.location.origin}${c.webhookPath}`;
   const [signatureKey, setKey] = useState('');
@@ -245,7 +253,10 @@ function Webhook({ connection: c }: { connection: PosConnection }) {
   );
 }
 
-function usePosRead<T>(kind: 'posItems' | 'posEvents', fn: (l: string) => Promise<T>) {
+function usePosRead<T>(
+  kind: 'posItems' | 'posEvents' | 'posAllergyButtons',
+  fn: (l: string) => Promise<T>,
+) {
   const loc = useLocationId();
   return useQuery({
     queryKey: ['admin', kind, loc],
@@ -334,14 +345,15 @@ function TestOrder() {
   const dishes = useAdmin('dishes').data ?? [];
   const linked = dishes.filter((d) => items.some((i) => i.dishId === d.id));
   const [table, setTable] = useState('');
-  const [lines, setLines] = useState<{ seat: number; dishId: string }[]>([{ seat: 1, dishId: '' }]);
+  type Line = { seat: number; dishId: string; note: string };
+  const [lines, setLines] = useState<Line[]>([{ seat: 1, dishId: '', note: '' }]);
   const [result, setResult] = useState<PosSyncResult | null>(null);
   const place = useAdminSave(
-    (c, l, body: { table: string; lines: { seat: number; dishId: string }[] }) =>
+    (c, l, body: { table: string; lines: { seat: number; dishId: string; note?: string }[] }) =>
       c.posTestOrder(l, body),
   );
   const seats = tables.find((x) => x.label === table)?.seats ?? 1;
-  const setLine = (i: number, patch: Partial<{ seat: number; dishId: string }>) =>
+  const setLine = (i: number, patch: Partial<Line>) =>
     setLines(lines.map((l, j) => (j === i ? { ...l, ...patch } : l)));
   return (
     <div className={step}>
@@ -352,7 +364,10 @@ function TestOrder() {
         onSubmit={(e) => {
           e.preventDefault();
           setResult(null);
-          place.mutate([{ table, lines: lines.filter((l) => l.dishId) }], { onSuccess: setResult });
+          const picked = lines
+            .filter((l) => l.dishId)
+            .map(({ note, ...l }) => (note.trim() ? { ...l, note: note.trim() } : l));
+          place.mutate([{ table, lines: picked }], { onSuccess: setResult });
         }}
       >
         <Field label={t('admin:pos.table')}>
@@ -404,6 +419,15 @@ function TestOrder() {
                 ))}
               </select>
             </Field>
+            <Field label={t('admin:pos.note')}>
+              <input
+                className={`${input} w-44`}
+                maxLength={120}
+                placeholder={t('admin:pos.notePlaceholder')}
+                value={line.note}
+                onChange={(e) => setLine(i, { note: e.target.value })}
+              />
+            </Field>
             {lines.length > 1 && (
               <button
                 type="button"
@@ -421,7 +445,7 @@ function TestOrder() {
             type="button"
             className={button}
             disabled={lines.length >= 20}
-            onClick={() => setLines([...lines, { seat: 1, dishId: '' }])}
+            onClick={() => setLines([...lines, { seat: 1, dishId: '', note: '' }])}
           >
             {t('admin:pos.addLine')}
           </button>
@@ -441,7 +465,7 @@ function TestOrder() {
   );
 }
 
-function Events() {
+export function Events() {
   const { t, i18n } = useTranslation();
   const client = useClient();
   const events = usePosRead('posEvents', (l) => client.admin.posEvents(l));
@@ -489,6 +513,7 @@ function Events() {
 /** One message from the POS: the order, and per line whether it became a plate and why not. */
 function EventRow({ event: e, time }: { event: PosEvent; time: string }) {
   const { t } = useTranslation();
+  const name = useAllergenName();
   const o = e.order;
   const problem =
     !!e.rejected ||
@@ -499,6 +524,9 @@ function EventRow({ event: e, time }: { event: PosEvent; time: string }) {
     <li className="grid gap-1 rounded-[10px] border border-line px-3 py-2">
       <div className="flex flex-wrap items-baseline gap-x-3">
         <span className="tabular-nums text-soft">{time}</span>
+        <span className="rounded-full bg-mist px-2 text-[12.5px] font-medium">
+          {t(`admin:pos.log.source.${e.source}`)}
+        </span>
         {o?.table && (
           <span className="font-medium">{t('admin:pos.log.table', { table: o.table })}</span>
         )}
@@ -538,6 +566,11 @@ function EventRow({ event: e, time }: { event: PosEvent; time: string }) {
                   {l.reason &&
                     `: ${t(`admin:pos.log.reason.${l.reason}`, { defaultValue: l.reason })}`}
                 </span>
+                {l.fromPos && (
+                  <span className="font-medium text-ink">
+                    {t('admin:pos.log.fromPos', { list: l.fromPos.map(name).join(', ') })}
+                  </span>
+                )}
               </li>
             ))}
           </ul>
@@ -551,5 +584,69 @@ function EventRow({ event: e, time }: { event: PosEvent; time: string }) {
       )}
       {e.status === 'FAILED' && e.error && o && <p className="text-red">{e.error}</p>}
     </li>
+  );
+}
+
+/** An allergen code by its name in the app's language; anything else as it came. */
+function useAllergenName() {
+  const { i18n } = useTranslation();
+  const lang = i18n.language.startsWith('nl') ? 'nl' : 'en';
+  return (code: string) => ALLERGEN_NAMES[code]?.[lang] ?? code;
+}
+
+/** The till's buttons, and which allergy each one means. */
+function AllergyButtons() {
+  const { t } = useTranslation();
+  const client = useClient();
+  const name = useAllergenName();
+  const read = usePosRead('posAllergyButtons', (l) => client.admin.posAllergyButtons(l));
+  const set = useAdminSave((c, l, body: { name: string; allergen: string | null }) =>
+    c.setPosAllergyButton(l, body),
+  );
+  const list = read.data?.buttons;
+  return (
+    <div className={step}>
+      <h3 className="font-semibold">{t('admin:pos.buttonsTitle')}</h3>
+      <p className="text-[14px] text-soft">{t('admin:pos.buttonsHow')}</p>
+      <PosError error={read.error ?? set.error} />
+      {list === undefined ? (
+        read.isLoading && <p className="text-soft">{t('common:loading')}</p>
+      ) : list.length === 0 ? (
+        <p className="text-[14px]">{t('admin:pos.buttonsNone')}</p>
+      ) : (
+        <ul className="grid gap-1">
+          {list.map((b) => (
+            <li
+              key={b.name}
+              className="grid items-center gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,16rem)]"
+            >
+              <span className="text-[14.5px]">{b.name}</span>
+              <select
+                aria-label={t('admin:pos.buttonFor', { name: b.name })}
+                className={input}
+                value={b.allergen ?? ''}
+                onChange={(e) =>
+                  set.mutate([{ name: b.name, allergen: e.target.value || null }], {
+                    onSuccess: () => void read.refetch(),
+                  })
+                }
+              >
+                <option value="">
+                  {b.recognized.length > 0
+                    ? t('admin:pos.buttonAuto', { found: b.recognized.map(name).join(', ') })
+                    : t('admin:pos.buttonAutoNothing')}
+                </option>
+                <option value="NONE">{t('admin:pos.buttonNever')}</option>
+                {EU14.map((code) => (
+                  <option key={code} value={code}>
+                    {name(code)}
+                  </option>
+                ))}
+              </select>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

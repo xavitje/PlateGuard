@@ -1,9 +1,11 @@
 import { Body, Controller, Delete, Get, Post, Put, Param } from '@nestjs/common';
 import {
+  PosAllergyButtonInputZ,
   PosConnectInputZ,
   PosMappingInputZ,
   PosTestOrderInputZ,
   PosWebhookInputZ,
+  type PosAllergyButtonInput,
   type PosConnectInput,
   type PosMappingInput,
   type PosTestOrderInput,
@@ -71,6 +73,22 @@ export class PosController {
     @Body(new ZodPipe(PosMappingInputZ)) body: PosMappingInput,
   ) {
     return this.pos.map(ctx, locationId, body);
+  }
+
+  @Get('allergy-buttons')
+  @RequirePermission('integrations.manage')
+  allergyButtons(@Tenant() ctx: TenantContext, @Param('locationId') locationId: string) {
+    return this.pos.allergyButtons(ctx, locationId);
+  }
+
+  @Put('allergy-buttons')
+  @RequirePermission('integrations.manage')
+  setAllergyButton(
+    @Tenant() ctx: TenantContext,
+    @Param('locationId') locationId: string,
+    @Body(new ZodPipe(PosAllergyButtonInputZ)) body: PosAllergyButtonInput,
+  ) {
+    return this.pos.setAllergyButton(ctx, locationId, body);
   }
 
   @Post('items/push')

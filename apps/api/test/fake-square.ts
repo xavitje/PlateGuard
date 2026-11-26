@@ -5,6 +5,7 @@ export function fakeSquare(token = 'sandbox-token-0123456789abcdef', locationId 
   const items: { id: string; name: string; variationId: string }[] = [];
   const orders = new Map<string, SquareOrder & { updated_at: string }>();
   const calls: string[] = [];
+  const modifiers = ['Allergie: melk', 'Extra kaas', 'Zonder P'];
   let n = 0;
   const json = (status: number, body: unknown) =>
     new Response(JSON.stringify(body), {
@@ -40,6 +41,18 @@ export function fakeSquare(token = 'sandbox-token-0123456789abcdef', locationId 
       return json(200, { id_mappings });
     }
     if (method === 'GET' && path === '/v2/catalog/list') {
+      if (url.searchParams.get('types') === 'MODIFIER_LIST')
+        return json(200, {
+          objects: [
+            {
+              id: 'ML1',
+              type: 'MODIFIER_LIST',
+              modifier_list_data: {
+                modifiers: modifiers.map((name) => ({ modifier_data: { name } })),
+              },
+            },
+          ],
+        });
       return json(200, {
         objects: items.map((i) => ({
           id: i.id,
@@ -93,5 +106,5 @@ export function fakeSquare(token = 'sandbox-token-0123456789abcdef', locationId 
     return id;
   };
 
-  return { http, token, locationId, items, orders, calls, ring };
+  return { http, token, locationId, items, orders, calls, ring, modifiers };
 }

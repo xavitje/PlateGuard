@@ -1,4 +1,10 @@
-import type { PosConnection, PosEvent, PosItem, PosSyncResult } from '@plateguard/contracts';
+import type {
+  PosAllergyButton,
+  PosConnection,
+  PosEvent,
+  PosItem,
+  PosSyncResult,
+} from '@plateguard/contracts';
 import type { ResolvedDish } from '@plateguard/domain';
 import { ApiError, type AdminClient } from './client';
 
@@ -14,6 +20,8 @@ type PosAdmin = Pick<
   | 'posTestOrder'
   | 'syncPos'
   | 'posEvents'
+  | 'posAllergyButtons'
+  | 'setPosAllergyButton'
 >;
 
 const none = (): PosSyncResult => ({
@@ -32,6 +40,10 @@ export function createMemoryPos(dishes: ResolvedDish[]): PosAdmin {
   let connection: PosConnection | null = null;
   let items: PosItem[] = [];
   const events: PosEvent[] = [];
+  const buttons: PosAllergyButton[] = [
+    { name: 'Allergie: noten', recognized: ['NUTS'], allergen: null },
+    { name: 'Extra kaas', recognized: [], allergen: null },
+  ];
   let next = 1;
   const status = async () => ({ connection: structuredClone(connection), secretsReady: true });
   const need = () => {
@@ -93,6 +105,7 @@ export function createMemoryPos(dishes: ResolvedDish[]): PosAdmin {
         id: `event-${next}`,
         receivedAt: new Date().toISOString(),
         status: 'DONE',
+        source: 'TEST',
         orderId: `order-${next++}`,
         result,
         order: {
@@ -103,6 +116,7 @@ export function createMemoryPos(dishes: ResolvedDish[]): PosAdmin {
             seat: l.seat,
             quantity: 1,
             outcome: 'PLACED' as const,
+            ...(l.note ? { fromPos: [l.note] } : {}),
           })),
         },
         rejected: null,
@@ -115,5 +129,15 @@ export function createMemoryPos(dishes: ResolvedDish[]): PosAdmin {
       return none();
     },
     posEvents: async () => ({ events: structuredClone(events) }),
+    posAllergyButtons: async () => {
+      need();
+      return { buttons: structuredClone(buttons) };
+    },
+    setPosAllergyButton: async (_, body) => {
+      need();
+      const b = buttons.find((x) => x.name === body.name);
+      if (b) b.allergen = body.allergen;
+      return { buttons: structuredClone(buttons) };
+    },
   };
 }

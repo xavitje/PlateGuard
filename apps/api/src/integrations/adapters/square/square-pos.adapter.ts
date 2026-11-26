@@ -43,6 +43,7 @@ interface CatalogObject {
   id: string;
   type: string;
   is_deleted?: boolean;
+  modifier_list_data?: { modifiers?: { modifier_data?: { name?: string } }[] };
   item_data?: {
     name?: string;
     variations?: { id: string; item_variation_data?: { name?: string } }[];
@@ -131,6 +132,25 @@ export class SquarePosAdapter implements SandboxPos {
       if (!cursor) break;
     }
     return items.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async listModifiers(conn: Connection): Promise<string[]> {
+    const names = new Set<string>();
+    let cursor: string | undefined;
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const q = new URLSearchParams({ types: 'MODIFIER_LIST', ...(cursor ? { cursor } : {}) });
+      const res = await this.api(conn).call<{ objects?: CatalogObject[]; cursor?: string }>(
+        'GET',
+        `/v2/catalog/list?${q}`,
+      );
+      for (const o of res.objects ?? [])
+        if (!o.is_deleted)
+          for (const m of o.modifier_list_data?.modifiers ?? [])
+            if (m.modifier_data?.name) names.add(m.modifier_data.name);
+      cursor = res.cursor;
+      if (!cursor) break;
+    }
+    return [...names].sort((a, b) => a.localeCompare(b));
   }
 
   async pullOrders(conn: Connection, since: Date): Promise<CanonicalOrder[]> {
@@ -243,7 +263,7 @@ export class SquarePosAdapter implements SandboxPos {
 
   async placeOrder(
     conn: Connection,
-    order: { table: string; lines: { externalItemId: string; seat: number }[] },
+    order: { table: string; lines: { externalItemId: string; seat: number; note?: string }[] },
   ): Promise<string> {
     const res = await this.api(conn).call<{ order: SquareOrder }>('POST', '/v2/orders', {
       idempotency_key: randomUUID(),
@@ -254,7 +274,7 @@ export class SquarePosAdapter implements SandboxPos {
         line_items: order.lines.map((l) => ({
           catalog_object_id: l.externalItemId,
           quantity: '1',
-          note: `Stoel ${l.seat}`,
+          note: [`Stoel ${l.seat}`, l.note].filter(Boolean).join(' · ').slice(0, 500),
           metadata: { seat: String(l.seat) },
         })),
       },

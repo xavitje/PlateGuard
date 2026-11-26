@@ -234,7 +234,7 @@
     "connectedTo": "Square location {id}",
     "disconnect": "Disconnect",
     "confirmDisconnect": "Disconnect for good",
-    "webhookTitle": "1. Webhook: orders arrive by themselves",
+    "webhookTitle": "Webhook: orders arrive by themselves",
     "webhookStep1": "In the Square Developer Dashboard, open Webhooks → Subscriptions, make sure Sandbox is selected, and press Add subscription.",
     "webhookStep2": "Paste the URL below as the notification URL and tick the events order.created and order.updated. Save.",
     "webhookStep3": "Open the subscription, copy its Signature key and paste it here.",
@@ -245,14 +245,14 @@
     "signatureKey": "Signature key",
     "webhookSave": "Save",
     "webhookReplace": "Replace key",
-    "itemsTitle": "2. Link the till's items to dishes",
+    "itemsTitle": "Link the till's items to dishes",
     "itemsHow": "Each item in Square stands for one dish. The test account starts empty: put the published menu in it with one press.",
     "push": "Put the menu in Square",
     "pushing": "Putting the menu in Square…",
     "noItems": "No items in Square yet.",
     "dishFor": "Dish for {name}",
     "notLinked": "Not linked",
-    "testTitle": "3. Test order",
+    "testTitle": "Test order",
     "testHow": "Rings up an order in the Square test account the way a till would, with the table and the seats. PlateGuard takes it in at once; the webhook then brings the same order again, without doubling it.",
     "table": "Table",
     "pickTable": "Choose a table",
@@ -265,7 +265,7 @@
     "placing": "Ringing up…",
     "linkFirst": "Link at least one item to a dish first.",
     "placed": "Order rung up:",
-    "eventsTitle": "4. What came in",
+    "eventsTitle": "What came in",
     "refresh": "Refresh",
     "sync": "Fetch open orders",
     "syncing": "Fetching…",
@@ -326,8 +326,23 @@
         "SEAT_NOT_AT_TABLE": "the table has fewer seats",
         "DISH_NOT_FOUND": "the dish is not on the published menu",
         "TABLE_NOT_FOUND": "table not on the floor plan"
-      }
-    }
+      },
+      "source": {
+        "WEBHOOK": "Webhook",
+        "TEST": "Test order"
+      },
+      "fromPos": "allergy from the till: {list}"
+    },
+    "buttonsTitle": "Allergy buttons in the till",
+    "buttonsHow": "When the waiter taps a button such as \"Allergy: milk\", or types \"no nuts\" on a line, PlateGuard puts that allergy on the seat and judges the plate with it. PlateGuard reads most names by itself; set a button by hand when the name says something else.",
+    "buttonsNone": "The till has no buttons or modifiers yet.",
+    "buttonFor": "Allergy for {name}",
+    "buttonAuto": "Automatic: {found}",
+    "buttonAutoNothing": "Automatic: no allergy",
+    "buttonNever": "Never an allergy",
+    "note": "Note on the line",
+    "notePlaceholder": "e.g. no nuts",
+    "webhookElsewhere": "The webhook and the log of what came in are under Webhooks."
   },
   "incidents": {
     "title": "Incidents",
@@ -517,5 +532,10 @@
     "card": "Allergen card (PDF)",
     "nextTitle": "Later: kitchen and POS",
     "nextText": "Want the waiter to record allergies per seat, the kitchen to get an allergy ticket and the cook to scan the plate? Add that when you are ready, with a link to your POS too."
+  },
+  "webhooks": {
+    "intro": "Messages your till sends to PlateGuard by itself: new orders and changes. Here you see the address to give the till, and every message that came in, with what PlateGuard did with it.",
+    "none": "No till is linked yet. Link one under Integrations first; its webhook then shows here.",
+    "toIntegrations": "To Integrations"
   }
 }

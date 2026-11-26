@@ -9,6 +9,8 @@ import {
 } from '@nestjs/common';
 import type {
   CanonicalOrder,
+  PosAllergyButtonInput,
+  PosAllergyButtonsResponse,
   PosConnectInput,
   PosEventsResponse,
   PosItemsResponse,
@@ -18,7 +20,9 @@ import type {
   PosSyncResult,
   PosTestOrderInput,
   PosWebhookInput,
+  SeatUpdate,
 } from '@plateguard/contracts';
+import { allergiesFromText, DEFAULT_SEVERITY, type GuestAllergy } from '@plateguard/domain';
 import { ConnectionsRepository } from '../../integrations/core/connections.repository.js';
 import { InboxDispatcher } from '../../integrations/core/inbox-dispatcher.js';
 import { InboxRepository } from '../../integrations/core/inbox.repository.js';
@@ -35,6 +39,13 @@ import { openSecrets, sealSecrets, secretKey } from '../../integrations/core/sec
 import type { TenantContext } from '../auth/permissions.js';
 import { MenuRepository } from '../service/menu.repository.js';
 import { ServiceService } from '../service/service.service.js';
+import {
+  allergyButtonsOf,
+  allergyKey,
+  allergyLabel,
+  buttonKey,
+  lineAllergies,
+} from './pos-allergies.js';
 import { POS_PROVIDER, PosRepository, type PosRow } from './pos.repository.js';
 
 /** Pulling picks up the orders of the last hours: a service, not the whole day. */
@@ -195,6 +206,40 @@ export class PosService implements OnModuleInit {
     return this.items(ctx, locationId);
   }
 
+  /** The till's buttons, with what each means as an allergy: read from its name, or set by hand. */
+  async allergyButtons(ctx: TenantContext, locationId: string): Promise<PosAllergyButtonsResponse> {
+    const { row, conn } = await this.require(ctx, locationId);
+    const adapter = this.adapterFor(row.provider);
+    const names = adapter.listModifiers ? await this.call(() => adapter.listModifiers!(conn)) : [];
+    const set = allergyButtonsOf(row.config);
+    return {
+      buttons: names.map((name) => ({
+        name,
+        recognized: allergiesFromText(name).map(allergyLabel),
+        allergen: set[buttonKey(name)] ?? null,
+      })),
+    };
+  }
+
+  async setAllergyButton(
+    ctx: TenantContext,
+    locationId: string,
+    input: PosAllergyButtonInput,
+  ): Promise<PosAllergyButtonsResponse> {
+    const { row } = await this.require(ctx, locationId);
+    const buttons = { ...allergyButtonsOf(row.config) };
+    if (input.allergen) buttons[buttonKey(input.name)] = input.allergen;
+    else delete buttons[buttonKey(input.name)];
+    await this.repo.update(
+      ctx,
+      locationId,
+      row.id,
+      { config: { ...(row.config as object), allergyButtons: buttons } },
+      'integration.allergy_button_set',
+    );
+    return this.allergyButtons(ctx, locationId);
+  }
+
   /**
    * Test accounts start empty: puts every dish of the published menu that is not linked yet in
    * it. An item already in the POS with the dish's name is linked instead of made again.
@@ -237,7 +282,7 @@ export class PosService implements OnModuleInit {
     const lines = input.lines.map((l) => {
       const externalItemId = byDish.get(l.dishId);
       if (!externalItemId) throw new BadRequestException({ code: 'DISH_NOT_IN_POS' });
-      return { externalItemId, seat: l.seat };
+      return { externalItemId, seat: l.seat, ...(l.note ? { note: l.note } : {}) };
     });
     const adapter = this.sandbox();
     const orderId = await this.call(() => adapter.placeOrder(conn, { table: input.table, lines }));
@@ -275,6 +320,7 @@ export class PosService implements OnModuleInit {
         id: e.id,
         receivedAt: e.receivedAt.toISOString(),
         status: e.status,
+        source: (e.payload as { test?: boolean }).test ? ('TEST' as const) : ('WEBHOOK' as const),
         orderId: (e.payload as unknown as InboundEvent).externalOrderId ?? null,
         ...this.stored(e.result),
         rejected: (e.payload as { rejected?: string }).rejected ?? null,
@@ -364,8 +410,39 @@ export class PosService implements OnModuleInit {
     const userId = ctx.userId ?? (row.config.connectedById as string | undefined);
     if (!order.externalTableRef || !userId) return skip('NO_TABLE', { noTable: 1 });
     const table = order.externalTableRef;
-    const found = await this.service.table(ctx, locationId, table).catch(codeOf);
+    let found = await this.service.table(ctx, locationId, table).catch(codeOf);
     if (found === 'TABLE_NOT_FOUND') return skip('TABLE_NOT_FOUND', { noTable: 1 });
+    // Allergies tapped or typed in the till go on the seat first, so every plate of that guest
+    // is judged with them. Added to what the seat has; never taken away.
+    const buttons = allergyButtonsOf(row.config);
+    const fromPos = new Map<CanonicalOrder['lines'][number], GuestAllergy[]>();
+    for (const line of order.lines) {
+      const a = lineAllergies(line, buttons);
+      if (a.length > 0) fromPos.set(line, a);
+    }
+    if (typeof found === 'object' && found) {
+      for (const [line, extra] of fromPos) {
+        const seat = found.bySeat.find((s) => s.seat === line.seat);
+        if (!seat) continue; // no seat, or not at this table: the line itself says why
+        const known = new Set(seat.allergies.map((a) => allergyKey(a as GuestAllergy)));
+        const added = extra.filter((a) => !known.has(allergyKey(a)));
+        if (added.length === 0) continue;
+        found = await this.service.saveSeat(
+          ctx,
+          locationId,
+          table,
+          seat.seat,
+          {
+            allergies: [
+              ...added.map((a) => ({ ...a, severity: a.severity ?? DEFAULT_SEVERITY })),
+              ...seat.allergies,
+            ] as SeatUpdate['allergies'],
+            noAllergy: false,
+          },
+          userId,
+        );
+      }
+    }
     const allergic = new Set(
       typeof found === 'object' && found
         ? found.bySeat.filter((s) => s.allergies.length > 0).map((s) => s.seat)
@@ -373,7 +450,13 @@ export class PosService implements OnModuleInit {
     );
     const mappings = await this.repo.mappings(ctx, row.id);
     for (const line of order.lines) {
-      const entry = { name: line.name, seat: line.seat ?? null, quantity: line.quantity };
+      const tapped = fromPos.get(line);
+      const entry = {
+        name: line.name,
+        seat: line.seat ?? null,
+        quantity: line.quantity,
+        ...(tapped ? { fromPos: tapped.map(allergyLabel) } : {}),
+      };
       const dishId = mappings.get(line.externalItemId);
       if (!dishId) {
         r.unmapped += line.quantity;

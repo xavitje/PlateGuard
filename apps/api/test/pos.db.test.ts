@@ -335,6 +335,46 @@ describe.skipIf(!hasDb)('Square test link', () => {
     expect((await send(old)).order).toEqual({ table: '7', skipped: 'CLOSED', lines: [] });
   });
 
+  it('an allergy typed or tapped in the till goes on the seat and judges the plate', async () => {
+    const result = await pos.testOrder(ctx, loc, {
+      table: '7',
+      lines: [{ dishId: soup, seat: 3, note: 'glutenallergie' }],
+    });
+    expect(result).toMatchObject({ plates: 1, withoutAllergy: 0 });
+    const seat3 = (await service.table(ctx, loc, '7')).bySeat.find((s) => s.seat === 3)!;
+    expect(seat3.allergies).toEqual([{ allergen: 'GLUTEN', severity: 'SEVERE' }]);
+    expect(seat3.orders.at(-1)!.outcome).toBe('DO_NOT_SERVE');
+    const { events } = await pos.events(ctx, loc);
+    expect(events[0]!.order?.lines[0]).toMatchObject({ outcome: 'PLACED', fromPos: ['GLUTEN'] });
+    // Seat 2's own, milder entry is kept: the till only adds.
+    await pos.testOrder(ctx, loc, {
+      table: '7',
+      lines: [{ dishId: salad, seat: 2, note: 'geen gluten' }],
+    });
+    const seat2 = (await service.table(ctx, loc, '7')).bySeat.find((s) => s.seat === 2)!;
+    expect(seat2.allergies).toEqual([{ allergen: 'GLUTEN', severity: 'ALLERGY' }]);
+  });
+
+  it('lists the till buttons with what they mean, and a button can be set by hand', async () => {
+    expect((await pos.allergyButtons(ctx, loc)).buttons).toEqual([
+      { name: 'Allergie: melk', recognized: ['MILK'], allergen: null },
+      { name: 'Extra kaas', recognized: [], allergen: null },
+      { name: 'Zonder P', recognized: [], allergen: null },
+    ]);
+    const after = await pos.setAllergyButton(ctx, loc, { name: 'Zonder P', allergen: 'PEANUTS' });
+    expect(after.buttons[2]).toEqual({ name: 'Zonder P', recognized: [], allergen: 'PEANUTS' });
+    await pos.setAllergyButton(ctx, loc, { name: 'Allergie: melk', allergen: 'NONE' });
+    // Hand-set wins over reading the name; NONE means never an allergy.
+    const { lineAllergies, allergyButtonsOf } = await import('../src/modules/pos/pos-allergies.js');
+    const { connection } = await pos.status(ctx, loc);
+    const row = await db.integrationConnection.findUniqueOrThrow({ where: { id: connection!.id } });
+    const buttons = allergyButtonsOf(row.config as Record<string, unknown>);
+    const line = { externalLineId: 'l', externalItemId: 'i', name: 'x', quantity: 1 };
+    expect(lineAllergies({ ...line, modifiers: ['Zonder P', 'Allergie: melk'] }, buttons)).toEqual([
+      { allergen: 'PEANUTS' },
+    ]);
+  });
+
   it('disconnecting removes the secrets and audits every step', async () => {
     const { connection } = await pos.status(ctx, loc);
     await pos.disconnect(ctx, loc);

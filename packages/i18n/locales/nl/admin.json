@@ -234,7 +234,7 @@
     "connectedTo": "Square-locatie {id}",
     "disconnect": "Ontkoppelen",
     "confirmDisconnect": "Definitief ontkoppelen",
-    "webhookTitle": "1. Webhook: bestellingen komen vanzelf binnen",
+    "webhookTitle": "Webhook: bestellingen komen vanzelf binnen",
     "webhookStep1": "Open in het Square Developer Dashboard Webhooks → Subscriptions, controleer dat Sandbox gekozen is en klik op Add subscription.",
     "webhookStep2": "Plak de URL hieronder als notification URL en vink de events order.created en order.updated aan. Sla op.",
     "webhookStep3": "Open de subscription, kopieer de Signature key en plak die hier.",
@@ -245,14 +245,14 @@
     "signatureKey": "Signature key",
     "webhookSave": "Opslaan",
     "webhookReplace": "Sleutel vervangen",
-    "itemsTitle": "2. Kassa-artikelen aan gerechten koppelen",
+    "itemsTitle": "Kassa-artikelen aan gerechten koppelen",
     "itemsHow": "Elk artikel in Square staat voor één gerecht. Het testaccount begint leeg: zet de gepubliceerde menukaart er met één klik in.",
     "push": "Menukaart in Square zetten",
     "pushing": "Menukaart in Square zetten…",
     "noItems": "Nog geen artikelen in Square.",
     "dishFor": "Gerecht voor {name}",
     "notLinked": "Niet gekoppeld",
-    "testTitle": "3. Testbestelling",
+    "testTitle": "Testbestelling",
     "testHow": "Slaat een bestelling aan in het Square-testaccount zoals een kassa dat doet, met tafel en stoelen. PlateGuard neemt hem meteen over; de webhook brengt dezelfde bestelling daarna nog een keer, zonder dubbele borden.",
     "table": "Tafel",
     "pickTable": "Kies een tafel",
@@ -265,7 +265,7 @@
     "placing": "Aanslaan…",
     "linkFirst": "Koppel eerst minstens één artikel aan een gerecht.",
     "placed": "Bestelling aangeslagen:",
-    "eventsTitle": "4. Wat binnenkwam",
+    "eventsTitle": "Wat binnenkwam",
     "refresh": "Vernieuwen",
     "sync": "Open bestellingen ophalen",
     "syncing": "Ophalen…",
@@ -326,8 +326,23 @@
         "SEAT_NOT_AT_TABLE": "de tafel heeft minder stoelen",
         "DISH_NOT_FOUND": "het gerecht staat niet op de gepubliceerde kaart",
         "TABLE_NOT_FOUND": "tafel staat niet in de plattegrond"
-      }
-    }
+      },
+      "source": {
+        "WEBHOOK": "Webhook",
+        "TEST": "Testbestelling"
+      },
+      "fromPos": "allergie uit de kassa: {list}"
+    },
+    "buttonsTitle": "Allergieknoppen in de kassa",
+    "buttonsHow": "Tikt de bediening een knop aan zoals \"Allergie: melk\", of typt ze \"geen noten\" bij een regel, dan zet PlateGuard die allergie op de stoel en beoordeelt het bord ermee. De meeste namen leest PlateGuard zelf; stel een knop met de hand in als de naam iets anders zegt.",
+    "buttonsNone": "De kassa heeft nog geen knoppen of opties.",
+    "buttonFor": "Allergie voor {name}",
+    "buttonAuto": "Automatisch: {found}",
+    "buttonAutoNothing": "Automatisch: geen allergie",
+    "buttonNever": "Nooit een allergie",
+    "note": "Notitie bij de regel",
+    "notePlaceholder": "bijv. geen noten",
+    "webhookElsewhere": "De webhook en het logboek van wat binnenkwam staan onder Webhooks."
   },
   "incidents": {
     "title": "Incidenten",
@@ -517,5 +532,10 @@
     "card": "Allergenenkaart (PDF)",
     "nextTitle": "Later: keuken en kassa",
     "nextText": "Wil je dat de bediening allergieën per stoel noteert, dat de keuken een allergieticket krijgt en de kok het bord scant? Dat voeg je toe wanneer je zover bent, ook met een koppeling naar je kassa."
+  },
+  "webhooks": {
+    "intro": "Berichten die je kassa uit zichzelf naar PlateGuard stuurt: nieuwe bestellingen en wijzigingen. Hier zie je het adres voor de kassa, en elk bericht dat binnenkwam, met wat PlateGuard ermee deed.",
+    "none": "Er is nog geen kassa gekoppeld. Koppel er eerst een onder Koppelingen; de webhook verschijnt dan hier.",
+    "toIntegrations": "Naar Koppelingen"
   }
 }

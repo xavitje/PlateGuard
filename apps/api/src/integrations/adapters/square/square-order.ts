@@ -82,6 +82,7 @@ export function toCanonicalOrder(order: SquareOrder): CanonicalOrder {
           ...(s !== undefined ? { seat: s } : {}),
           ...(c !== undefined ? { course: c } : {}),
           modifiers: (l.modifiers ?? []).flatMap((m) => (m.name ? [m.name] : [])),
+          ...(l.note?.trim() ? { note: l.note.trim() } : {}),
         },
       ];
     }),

@@ -92,6 +92,8 @@ export interface PosAdapter extends IntegrationAdapter {
   verifyWebhook?(req: RawRequest, conn: Connection): boolean;
   parseWebhook?(req: RawRequest): InboundEvent[];
   annotateOrder?(conn: Connection, ref: ExternalOrderRef, note: string): Promise<void>;
+  /** The names of the till's buttons and modifiers, to say which ones mean an allergy. */
+  listModifiers?(conn: Connection): Promise<string[]>;
 }
 
 export interface KdsAdapter extends IntegrationAdapter {
@@ -131,7 +133,7 @@ export interface SandboxPos extends PosAdapter {
   /** Rings up an order the way a till would; answers its external id. */
   placeOrder(
     conn: Connection,
-    order: { table: string; lines: { externalItemId: string; seat: number }[] },
+    order: { table: string; lines: { externalItemId: string; seat: number; note?: string }[] },
   ): Promise<string>;
 }
 
