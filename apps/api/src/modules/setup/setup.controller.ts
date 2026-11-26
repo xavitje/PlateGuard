@@ -4,12 +4,14 @@ import {
   FloorLayoutZ,
   FloorOrderZ,
   LocationProfileZ,
+  NewLocationZ,
   StaffInputZ,
   StaffPinZ,
   TableInputZ,
   type FloorInput,
   type FloorLayout,
   type LocationProfile,
+  type NewLocation,
   type StaffInput,
   type TableInput,
 } from '@plateguard/contracts';
@@ -24,6 +26,7 @@ import {
   type TenantContext,
 } from '../auth/permissions.js';
 import { FloorplanService } from './floorplan.service.js';
+import { LocationsService } from './locations.service.js';
 import { ProfileService } from './profile.service.js';
 import { StaffService } from './staff.service.js';
 
@@ -170,5 +173,36 @@ export class ProfileController {
     @Body(new ZodPipe(LocationProfileZ)) body: LocationProfile,
   ) {
     return this.profile.save(ctx, locationId, body);
+  }
+}
+
+/** Every location of the restaurant: list, add, rename. Only an owner. */
+@Controller('locations/:locationId/admin/locations')
+@RequirePermission('org.locations.manage')
+export class LocationsController {
+  constructor(private readonly locations: LocationsService) {}
+
+  @Get()
+  list(@Tenant() ctx: TenantContext, @Req() req: AuthedRequest) {
+    return this.locations.list(ctx, req.location!);
+  }
+
+  @Post()
+  create(
+    @Tenant() ctx: TenantContext,
+    @Req() req: AuthedRequest,
+    @Body(new ZodPipe(NewLocationZ)) body: NewLocation,
+  ) {
+    return this.locations.create(ctx, req.location!, body);
+  }
+
+  @Put(':id')
+  update(
+    @Tenant() ctx: TenantContext,
+    @Req() req: AuthedRequest,
+    @Param('id', IdPipe) id: string,
+    @Body(new ZodPipe(LocationProfileZ)) body: LocationProfile,
+  ) {
+    return this.locations.update(ctx, req.location!, id, body);
   }
 }
