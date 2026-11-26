@@ -11,6 +11,7 @@ import { KitchenModule } from './modules/kitchen/kitchen.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { IncidentModule } from './modules/incident/incident.module.js';
 import { PosModule } from './modules/pos/pos.module.js';
+import { PlatformModule } from './modules/platform/platform.module.js';
 import { PrintModule } from './modules/print/print.module.js';
 import { HealthController } from './modules/health/health.controller.js';
 import { SafetyModule } from './modules/safety/safety.module.js';
@@ -39,6 +40,7 @@ import { SetupModule } from './modules/setup/setup.module.js';
     RecipesModule,
     SetupModule,
     IntegrationsModule,
+    PlatformModule,
   ],
   controllers: [HealthController],
   // Order matters: SessionGuard sets who and where, PermissionGuard checks can().

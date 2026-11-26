@@ -12,9 +12,17 @@ export function StaffPage() {
   const { t } = useTranslation();
   const rows = useAdmin('staff').data ?? [];
   const [selected, setSelected] = useState<string | null>(null);
+  const slug = useMe().data?.locations[0]?.slug;
+  const signInLink = slug ? `${window.location.origin}/login?location=${slug}` : null;
   return (
     <>
       <PageHeader title={t('admin:nav.staff')} description={t('admin:staff.intro')} />
+      {signInLink && (
+        <p className="mb-4 text-sm text-soft">
+          {t('admin:staff.deviceLink')}{' '}
+          <span className="font-mono text-ink select-all break-all">{signInLink}</span>
+        </p>
+      )}
       <MasterDetail
         items={rows.map((m) => ({
           id: m.id,

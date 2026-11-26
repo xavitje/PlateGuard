@@ -15,6 +15,7 @@ import { GuestMenuPage } from './routes/GuestMenuPage';
 import { KitchenPage } from './routes/KitchenPage';
 import { LandingPage } from './routes/LandingPage';
 import { LoginPage } from './routes/LoginPage';
+import { PlatformPage } from './routes/PlatformPage';
 import { ProfilePage } from './routes/ProfilePage';
 import { SignupPage } from './routes/SignupPage';
 import { TableDetailPage } from './routes/TableDetailPage';
@@ -28,7 +29,8 @@ import { TabsLayout } from './shell/TabsLayout';
  *  - the public site at "/" (signed out) with the free start at /signup,
  *  - the app: tables, alerts, profile and admin in one frame (sidebar on a laptop, tab bar on a phone),
  *  - kitchen display, full screen without tabs (device mode),
- *  - public guest menu per location.
+ *  - public guest menu per location,
+ *  - platform administration at /platform, for the people who run PlateGuard itself.
  */
 export const router = createBrowserRouter([
   {
@@ -63,6 +65,7 @@ export const router = createBrowserRouter([
   { path: 'login', element: <LoginPage /> },
   { path: 'kitchen', element: <KitchenPage /> },
   { path: 'menu/:slug', element: <GuestMenuPage /> },
+  { path: 'platform', element: <PlatformPage /> },
 ]);
 
 /** "/": the site for a visitor, the app for someone signed in. */

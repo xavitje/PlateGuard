@@ -5,7 +5,7 @@ import { createMemoryClient } from '../api/memory-client';
 import { I18nProvider } from '../i18n';
 import { ServiceProvider } from '../service/ServiceProvider';
 import { TabsLayout } from '../shell/TabsLayout';
-import { LoginPage } from './LoginPage';
+import { LoginPage, placeSlug } from './LoginPage';
 import type { Role } from '@plateguard/domain';
 
 function renderApp(role: Role = 'WAITER') {
@@ -28,12 +28,25 @@ function renderApp(role: Role = 'WAITER') {
   return router;
 }
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  localStorage.clear();
+});
+
+/** A new device first says which restaurant it is for. */
+async function chooseRestaurant() {
+  fireEvent.change(await screen.findByLabelText('Restaurant'), {
+    target: { value: 'https://plateguard.app/login?location=de-haven-demo' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+}
 
 describe('LoginPage', () => {
   it('sends a signed-out device to sign in, then back to the tables', async () => {
     const router = renderApp();
     expect(screen.queryByRole('button', { name: 'Demo Waiter' })).toBeNull();
+    expect(screen.queryByLabelText('PIN')).toBeNull();
+    await chooseRestaurant();
     fireEvent.change(await screen.findByLabelText('First name'), { target: { value: 'Someone' } });
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
@@ -56,9 +69,17 @@ describe('LoginPage', () => {
     ['MANAGER', 'Admin screen'],
   ] as const)('one sign-in: a %s starts on their own screen', async (role, screenText) => {
     renderApp(role);
+    await chooseRestaurant();
     fireEvent.change(await screen.findByLabelText('First name'), { target: { value: 'Demo' } });
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText(screenText)).toBeTruthy();
+  });
+
+  it('reads the restaurant from its address or a link', () => {
+    expect(placeSlug(' De-Haven ')).toBe('de-haven');
+    expect(placeSlug('https://x.nl/login?location=bistro-2&a=1')).toBe('bistro-2');
+    expect(placeSlug('https://x.nl/menu/cafe-t-hoekje')).toBe('cafe-t-hoekje');
+    expect(placeSlug('   ')).toBe('');
   });
 });

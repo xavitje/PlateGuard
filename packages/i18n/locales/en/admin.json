@@ -191,7 +191,8 @@
     "unlock": "Set PIN and unlock",
     "remove": "Remove from this location",
     "removeConfirm": "Remove {name} from this location? Their roles here and their PIN go.",
-    "removeYes": "Yes, remove"
+    "removeYes": "Yes, remove",
+    "deviceLink": "Sign in a new device with this link. It then knows this restaurant:"
   },
   "printers": {
     "intro": "Connect PlateGuard to the systems in your restaurant: the kitchen printer and the till.",

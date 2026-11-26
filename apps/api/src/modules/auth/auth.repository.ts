@@ -67,13 +67,10 @@ export class AuthRepository {
       .then((n) => n > 0);
   }
 
-  /**
-   * Everyone with a PIN on this location, or on any location when none is given (a new device),
-   * with their name to match the typed first name.
-   */
-  pins(locationId?: string) {
+  /** Everyone with a PIN on this one location, with their name to match the typed first name. */
+  pins(locationId: string) {
     return this.prisma.system().staffPin.findMany({
-      where: locationId ? { locationId } : {},
+      where: { locationId },
       select: {
         userId: true,
         locationId: true,

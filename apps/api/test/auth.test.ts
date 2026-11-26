@@ -134,32 +134,29 @@ describe.skipIf(!process.env.DATABASE_URL)('PIN login', () => {
     ).rejects.toMatchObject({ status: 401 });
   });
 
-  it('on a new device the PIN finds the location, or asks when it fits several', async () => {
-    const res = await auth.loginWithPin({ name: 'Sam', pin: '1234' });
-    expect(res.me.locations.map((l) => l.id)).toEqual([loc]);
-
+  it('compares the PIN with this location only, never with every restaurant', async () => {
     await db.roleAssignment.create({
       data: { userId: waiter, organizationId: org, locationId: other, role: 'WAITER' },
     });
     await db.staffPin.create({
-      data: { userId: waiter, locationId: other, pinHash: await hashPin('1234') },
+      data: { userId: waiter, locationId: other, pinHash: await hashPin('9999') },
     });
-    await expect(auth.loginWithPin({ name: 'Sam', pin: '1234' })).rejects.toMatchObject({
-      status: 409,
-      response: {
-        code: 'LOCATION_CHOICE',
-        details: {
-          locations: [
-            { id: other, name: 'Other' },
-            { id: loc, name: 'Front' },
-          ].sort((a, b) => a.name.localeCompare(b.name)),
-        },
-      },
+    // Sam's PIN of the other location does not open this one, and costs nothing there.
+    await expect(
+      auth.loginWithPin({ locationId: loc, name: 'Sam', pin: '9999' }),
+    ).rejects.toMatchObject({ status: 401 });
+    const there = await db.staffPin.findUniqueOrThrow({
+      where: { userId_locationId: { userId: waiter, locationId: other } },
     });
-    const there = await auth.loginWithPin({ locationId: other, name: 'Sam', pin: '1234' });
-    expect(there.me.locations.map((l) => l.id)).toEqual([other]);
+    expect(there.failedTries).toBe(0);
+    const res = await auth.loginWithPin({ locationId: other, name: 'Sam', pin: '9999' });
+    expect(res.me.locations.map((l) => l.id)).toEqual([other]);
     await db.staffPin.delete({
       where: { userId_locationId: { userId: waiter, locationId: other } },
+    });
+    await db.staffPin.update({
+      where: { userId_locationId: { userId: waiter, locationId: loc } },
+      data: { failedTries: 0 },
     });
   });
 

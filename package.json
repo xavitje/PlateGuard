@@ -18,6 +18,7 @@
     "db:migrate": "pnpm --filter @plateguard/db migrate:deploy",
     "db:seed": "pnpm --filter @plateguard/db seed",
     "db:reset": "pnpm --filter @plateguard/db reset && pnpm db:seed",
+    "platform:admin": "pnpm build:packages && pnpm --filter @plateguard/api build && node --env-file-if-exists=.env apps/api/dist/platform-admin.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:db": "pnpm --filter @plateguard/db test"

@@ -48,3 +48,9 @@ export function deviceLocation(search = ''): string | null {
 export function rememberLocation(slug: string): void {
   write(LOCATION_KEY, slug);
 }
+
+/** The platform admin's session (/platform), apart from the shift session of the device. */
+const PLATFORM_KEY = 'pg.platform';
+
+export const getPlatformToken = (): string | null => read(PLATFORM_KEY);
+export const setPlatformToken = (token: string | null): void => write(PLATFORM_KEY, token);

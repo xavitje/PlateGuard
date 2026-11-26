@@ -1,0 +1,13 @@
+{
+  "title": "Platform",
+  "intro": "Beheer van PlateGuard zelf, los van elk restaurant.",
+  "email": "E-mail",
+  "password": "Wachtwoord",
+  "code": "Code uit je authenticator-app",
+  "signIn": "Inloggen",
+  "signOut": "Uitloggen",
+  "invalid": "Dat lukte niet. Controleer je e-mail, wachtwoord en code.",
+  "locked": "Te veel pogingen. Wacht een kwartier en probeer het opnieuw.",
+  "signedInAs": "Ingelogd als {email}.",
+  "comingNext": "Restaurants, gebruikers en statistieken komen hier in de volgende stappen."
+}
