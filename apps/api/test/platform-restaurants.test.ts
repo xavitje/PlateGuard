@@ -7,7 +7,7 @@ import { AuthRepository } from '../src/modules/auth/auth.repository.js';
 import { AuthService, MAX_PIN_TRIES } from '../src/modules/auth/auth.service.js';
 import { issuePlatformToken, issueToken } from '../src/modules/auth/token.js';
 import { PlatformGuard } from '../src/modules/platform/platform.guard.js';
-import { PlatformRepository } from '../src/modules/platform/platform.repository.js';
+import { lastWeeks, PlatformRepository } from '../src/modules/platform/platform.repository.js';
 import { RestaurantsService } from '../src/modules/platform/restaurants.service.js';
 import { StaffRepository } from '../src/modules/setup/staff.repository.js';
 
@@ -34,6 +34,19 @@ describe('platform guard', () => {
     await expect(
       guard.canActivate(ctx(`Bearer ${issuePlatformToken(randomUUID()).token}`)),
     ).rejects.toMatchObject({ status: 401 });
+  });
+});
+
+describe('weeks in the stats', () => {
+  it('are the last Mondays, this week last', () => {
+    // Wednesday 26 November 2026.
+    expect(lastWeeks(new Date(Date.UTC(2026, 10, 26, 22)), 3)).toEqual([
+      '2026-11-09',
+      '2026-11-16',
+      '2026-11-23',
+    ]);
+    expect(lastWeeks(new Date(Date.UTC(2026, 10, 23)), 1)).toEqual(['2026-11-23']);
+    expect(lastWeeks(new Date(Date.UTC(2026, 10, 29, 23)), 1)).toEqual(['2026-11-23']);
   });
 });
 
@@ -102,6 +115,26 @@ describe.skipIf(!process.env.DATABASE_URL)('restaurants on request', () => {
     expect(
       events.every((e) => (e.payload as { platformAdmin?: string }).platformAdmin === admin),
     ).toBe(true);
+  });
+
+  it('counts across the app: restaurants, plans and sign-ups this week', async () => {
+    const before = await platform.stats();
+    await platform.create(admin, {
+      restaurant: `Stats ${tag}`,
+      name: 'Noor',
+      email: `noor-${tag}@example.com`,
+      pin: '1593',
+      plan: 'full',
+    });
+    const after = await platform.stats();
+    expect(after.restaurants).toBe(before.restaurants + 1);
+    expect(after.locations).toBe(before.locations + 1);
+    expect(after.byPlan.full).toBe((before.byPlan.full ?? 0) + 1);
+    expect(after.weeks).toHaveLength(8);
+    expect(after.weeks.at(-1)!.signups).toBe(before.weeks.at(-1)!.signups + 1);
+    expect(after.weeks.at(-1)!.week).toBe(lastWeeks(new Date(), 1)[0]);
+    const row = (await platform.list()).find((r) => r.name === `Stats ${tag}`);
+    expect(row).toMatchObject({ plates30: 0, lastActivity: null });
   });
 
   it('refuses an unknown restaurant, location or person', async () => {

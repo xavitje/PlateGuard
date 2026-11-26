@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import type {
   Plan,
   PlatformRestaurant,
+  PlatformStats,
   Signup,
   StaffInput,
   StaffMember,
@@ -26,6 +27,10 @@ export class RestaurantsService {
 
   list(): Promise<PlatformRestaurant[]> {
     return this.repo.restaurants();
+  }
+
+  stats(): Promise<PlatformStats> {
+    return this.repo.stats();
   }
 
   /** The same restaurant as the free start makes, without signing anyone in. */

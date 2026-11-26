@@ -52,6 +52,11 @@ export class PlatformController {
 export class PlatformRestaurantsController {
   constructor(private readonly restaurants: RestaurantsService) {}
 
+  @Get('stats')
+  stats() {
+    return this.restaurants.stats();
+  }
+
   @Get('restaurants')
   list() {
     return this.restaurants.list();

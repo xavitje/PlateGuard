@@ -35,5 +35,25 @@
   "newPin": "New PIN",
   "setPin": "Set PIN",
   "noPin": "No PIN",
-  "pick": "Pick a restaurant, or make a new one."
+  "pick": "Pick a restaurant, or make a new one.",
+  "stats": {
+    "title": "Across the app",
+    "restaurants": "Restaurants",
+    "locations": "{count, plural, one {# location} other {# locations}}",
+    "active7": "Active, last 7 days",
+    "active30": "Active, last 30 days",
+    "activeHint": "Restaurants with at least one plate.",
+    "incidents30": "Incidents, last 30 days",
+    "severity": "{high} high · {medium} medium · {low} low",
+    "weekly": "Per week",
+    "week": "Week of",
+    "signups": "New restaurants",
+    "plates": "Plates",
+    "warnings": "With an allergy warning",
+    "overrides": "Overrides",
+    "incidents": "Incidents"
+  },
+  "plates30": "{count, plural, one {# plate} other {# plates}} in the last 30 days",
+  "lastActivity": "Last plate: {date}",
+  "noActivity": "No plates yet"
 }

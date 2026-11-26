@@ -20,6 +20,21 @@ const bistro = {
   createdAt: '2026-11-01T10:00:00.000Z',
   ownerEmail: 'owner@example.com',
   locations: [{ id: 'loc-1', name: 'Bistro Noord', slug: 'bistro-noord', staff: 1 }],
+  plates30: 12,
+  lastActivity: '2026-11-25T19:00:00.000Z',
+};
+
+const stats = {
+  restaurants: 1,
+  locations: 1,
+  byPlan: { free: 1 },
+  active7: 1,
+  active30: 1,
+  weeks: [
+    { week: '2026-11-16', signups: 0, plates: 4, warnings: 1, overrides: 0, incidents: 0 },
+    { week: '2026-11-23', signups: 1, plates: 8, warnings: 3, overrides: 1, incidents: 2 },
+  ],
+  incidents30: { LOW: 1, MEDIUM: 0, HIGH: 1 },
 };
 
 describe('PlatformPage', () => {
@@ -40,6 +55,7 @@ describe('PlatformPage', () => {
       }
       if (url === '/api/platform/restaurants') return json(200, restaurants);
       if (url.endsWith('/staff')) return json(200, []);
+      if (url === '/api/platform/stats') return json(200, stats);
       return json(404, {});
     });
     vi.stubGlobal('fetch', fetch);
@@ -65,7 +81,10 @@ describe('PlatformPage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText('Signed in as rafi@example.com.')).toBeTruthy();
+    expect(await screen.findByText('1 high · 0 medium · 1 low')).toBeTruthy();
+    expect(screen.getByRole('table', { name: 'Per week' })).toBeTruthy();
     fireEvent.click(await screen.findByRole('button', { name: /Bistro Noord/ }));
+    expect(await screen.findByText(/12 plates in the last 30 days/)).toBeTruthy();
     expect(await screen.findByText(/Contact: owner@example.com/)).toBeTruthy();
     expect(screen.getByText(/login\?location=bistro-noord/)).toBeTruthy();
 
