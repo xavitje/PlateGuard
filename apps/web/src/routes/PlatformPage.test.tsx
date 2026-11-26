@@ -4,6 +4,8 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { createMemoryClient } from '../api/memory-client';
 import { I18nProvider } from '../i18n';
 import { ServiceProvider } from '../service/ServiceProvider';
+import { TabsLayout } from '../shell/TabsLayout';
+import { LoginPage } from './LoginPage';
 import { PlatformPage } from './PlatformPage';
 
 afterEach(() => {
@@ -49,6 +51,12 @@ describe('PlatformPage', () => {
           ? json(200, { token: 'p-token', expiresAt: '', me: { email: 'rafi@example.com' } })
           : json(401, { code: 'LOGIN_INVALID' });
       }
+      if (url === '/api/platform/reset-password') {
+        const body = JSON.parse(String(init?.body)) as { code: string; password: string };
+        return body.code === '654321' && body.password === 'a new long password'
+          ? json(200, { token: 'p-token', expiresAt: '', me: { email: 'rafi@example.com' } })
+          : json(401, { code: 'LOGIN_INVALID' });
+      }
       if (url === '/api/platform/me') return json(200, { email: 'rafi@example.com' });
       if (url === '/api/platform/restaurants' && init?.method === 'POST') {
         const body = JSON.parse(String(init.body)) as { restaurant: string; plan: string };
@@ -73,8 +81,12 @@ describe('PlatformPage', () => {
     vi.stubGlobal('fetch', fetch);
     const router = createMemoryRouter(
       [
+        { path: '/login', element: <LoginPage /> },
         { path: '/platform', element: <PlatformPage /> },
-        { path: '/admin', element: <p>Restaurant admin</p> },
+        {
+          element: <TabsLayout />,
+          children: [{ path: '/admin', element: <p>Restaurant admin</p> }],
+        },
       ],
       { initialEntries: ['/platform'] },
     );
@@ -85,10 +97,15 @@ describe('PlatformPage', () => {
         </ServiceProvider>
       </I18nProvider>,
     );
-    fireEvent.change(await screen.findByLabelText('Email'), {
+    // No sign-in of its own: the one sign-in screen, where an email asks for password and code.
+    fireEvent.change(await screen.findByLabelText('First name or email'), {
       target: { value: 'rafi@example.com' },
     });
+    expect(screen.queryByLabelText('PIN')).toBeNull();
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'long password' } });
+    expect(screen.getByLabelText('Password').getAttribute('type')).toBe('password');
+    fireEvent.click(screen.getByRole('button', { name: 'Show' }));
+    expect(screen.getByLabelText('Password').getAttribute('type')).toBe('text');
     fireEvent.change(screen.getByLabelText('Code from your authenticator app'), {
       target: { value: '000000' },
     });
@@ -100,6 +117,7 @@ describe('PlatformPage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText('Signed in as rafi@example.com.')).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/platform');
     expect(await screen.findByText('1 high · 0 medium · 1 low')).toBeTruthy();
     expect(screen.getByRole('table', { name: 'Per week' })).toBeTruthy();
     fireEvent.click(await screen.findByRole('button', { name: /Bistro Noord/ }));
@@ -132,10 +150,34 @@ describe('PlatformPage', () => {
     expect(await screen.findByText('Restaurant admin')).toBeTruthy();
     expect(localStorage.getItem('pg.session')).toBe('owner-token');
     expect(localStorage.getItem('pg.platform')).toBe('p-token');
-    await router.navigate('/platform');
+    // The way back leads to the platform, not to sign in.
+    fireEvent.click(await screen.findByRole('button', { name: 'Back to platform' }));
+    expect(await screen.findByText('Signed in as rafi@example.com.')).toBeTruthy();
+    expect(localStorage.getItem('pg.session')).toBeNull();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
-    expect(await screen.findByLabelText('Email')).toBeTruthy();
+    expect(await screen.findByLabelText('First name or email')).toBeTruthy();
     expect(localStorage.getItem('pg.platform')).toBeNull();
+
+    // Forgot password: the authenticator code sets a new one and signs in.
+    fireEvent.change(screen.getByLabelText('First name or email'), {
+      target: { value: 'rafi@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Forgot password?' }));
+    fireEvent.change(screen.getByLabelText('Code from your authenticator app'), {
+      target: { value: '654321' },
+    });
+    fireEvent.change(screen.getByLabelText('New password', { exact: false }), {
+      target: { value: 'short' },
+    });
+    expect(screen.getByRole('button', { name: 'Set new password' })).toHaveProperty(
+      'disabled',
+      true,
+    );
+    fireEvent.change(screen.getByLabelText('New password', { exact: false }), {
+      target: { value: 'a new long password' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Set new password' }));
+    expect(await screen.findByText('Signed in as rafi@example.com.')).toBeTruthy();
   });
 });

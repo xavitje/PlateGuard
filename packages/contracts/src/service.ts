@@ -200,6 +200,17 @@ export const PlatformLoginZ = z.strictObject({
 });
 export type PlatformLogin = z.infer<typeof PlatformLoginZ>;
 
+/**
+ * POST /platform/reset-password: a forgotten password, reset with the authenticator code
+ * (there is no mail yet). Signs in with the new password, which must be long.
+ */
+export const PlatformResetZ = z.strictObject({
+  email: z.string().trim().toLowerCase().max(200).pipe(z.email()),
+  code: z.string().regex(/^\d{6}$/),
+  password: z.string().min(12).max(200),
+});
+export type PlatformReset = z.infer<typeof PlatformResetZ>;
+
 /** GET /platform/me: the signed-in platform admin. */
 export interface PlatformMe {
   email: string;

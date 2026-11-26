@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
-import type { PlatformLogin, PlatformLoginResponse } from '@plateguard/contracts';
+import type { PlatformLogin, PlatformLoginResponse, PlatformReset } from '@plateguard/contracts';
 import { issuePlatformToken } from '../auth/token.js';
 import { PlatformRepository } from './platform.repository.js';
 import { matchTotp } from './totp.js';
@@ -21,16 +21,35 @@ export class PlatformService {
    * was wrong; the fifth in a row locks the account for a quarter of an hour.
    */
   async login(input: PlatformLogin, now = Date.now()): Promise<PlatformLoginResponse> {
-    const admin = await this.repo.findByEmail(input.email);
-    const passwordOk = await this.repo.passwordMatches(
-      input.password,
-      admin?.passwordHash ?? DUMMY_HASH,
+    return this.signIn(input.email, input.code, now, (hash) =>
+      this.repo.passwordMatches(input.password, hash),
     );
+  }
+
+  /**
+   * A forgotten password: email and authenticator code set a new one and sign in. Same
+   * lockout and one-use code as signing in, so it can't be used to guess codes.
+   * shortcut: the code alone proves who it is, upgrade to an emailed link once mail exists.
+   */
+  async resetPassword(input: PlatformReset, now = Date.now()): Promise<PlatformLoginResponse> {
+    const res = await this.signIn(input.email, input.code, now, () => Promise.resolve(true));
+    await this.repo.setPassword(res.me.email, input.password);
+    return res;
+  }
+
+  private async signIn(
+    email: string,
+    code: string,
+    now: number,
+    passwordMatches: (hash: string) => Promise<boolean>,
+  ): Promise<PlatformLoginResponse> {
+    const admin = await this.repo.findByEmail(email);
+    const passwordOk = await passwordMatches(admin?.passwordHash ?? DUMMY_HASH);
     if (!admin) throw new UnauthorizedException({ code: 'LOGIN_INVALID' });
     if (admin.lockedUntil && admin.lockedUntil.getTime() > now)
       throw new HttpException({ code: 'LOGIN_LOCKED' }, HttpStatus.LOCKED);
 
-    const step = matchTotp(admin.totpSecret, input.code, now);
+    const step = matchTotp(admin.totpSecret, code, now);
     const codeOk = step !== null && step > (admin.totpLastStep ?? -1);
     if (!passwordOk || !codeOk) {
       const tries = admin.failedTries + 1;

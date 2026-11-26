@@ -4,6 +4,7 @@ import type {
   PlatformLogin,
   PlatformLoginResponse,
   PlatformMe,
+  PlatformReset,
   PlatformNewRestaurant,
   PlatformRestaurant,
   PlatformStats,
@@ -35,6 +36,8 @@ const staffPath = (locationId: string) => `/locations/${encodeURIComponent(locat
 
 export const platformApi = {
   login: (body: PlatformLogin) => call<PlatformLoginResponse>('/login', 'POST', body),
+  resetPassword: (body: PlatformReset) =>
+    call<PlatformLoginResponse>('/reset-password', 'POST', body),
   me: () => call<PlatformMe>('/me'),
   stats: () => call<PlatformStats>('/stats'),
   restaurants: () => call<PlatformRestaurant[]>('/restaurants'),

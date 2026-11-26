@@ -64,7 +64,8 @@ export function ServiceProvider({
   const signOut = useCallback(() => {
     setToken(null);
     setSignedIn(false);
-    qc.clear();
+    // The platform screen has its own session: leaving a restaurant keeps it working.
+    qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'platform' });
   }, [qc]);
   const signIn = useCallback(
     (res: LoginResponse) => {
