@@ -1,7 +1,7 @@
 import { SUPPORTED_LOCALES, type Locale } from '@plateguard/i18n';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { input } from '../admin/ui';
 import { segmentItem, segmentTrack } from '../components/segment';
 import { rememberLocale } from '../i18n';
@@ -14,6 +14,12 @@ export function ProfilePage() {
   const { t, i18n } = useTranslation();
   const me = useMe().data;
   const { signOut } = useSession();
+  const navigate = useNavigate();
+  // A shift session holds one location: another one means signing in there, with the PIN for there.
+  const switchTo = (slug: string) => {
+    signOut();
+    void navigate(`/login?location=${encodeURIComponent(slug)}`);
+  };
   const places = workspaces(me?.locations[0]?.permissions ?? []);
   const choose = (code: Locale) => {
     rememberLocale(code);
@@ -95,6 +101,27 @@ export function ProfilePage() {
             ))}
           </nav>
         </div>
+      )}
+
+      {me && me.elsewhere.length > 0 && (
+        <>
+          <h2 className="mx-1.5 mt-4 mb-2 text-[13px] font-semibold tracking-normal text-soft">
+            {t('profile:otherLocations')}
+          </h2>
+          <nav aria-label={t('profile:otherLocations')} className="rounded-[18px] bg-card px-3.5">
+            {me.elsewhere.map((l) => (
+              <button key={l.id} type="button" className={row} onClick={() => switchTo(l.slug)}>
+                <span className="grid">
+                  {l.name}
+                  <span className="text-[13px] text-soft">{t('profile:switchHint')}</span>
+                </span>
+                <span aria-hidden className="text-soft">
+                  ›
+                </span>
+              </button>
+            ))}
+          </nav>
+        </>
       )}
 
       <section className="mt-4 rounded-[18px] bg-card px-3.5">

@@ -41,11 +41,10 @@ export class AuthService {
     const full = { ...stored, grants: principal.grants };
     const orgIds = [...new Set(full.grants.map((g) => g.organizationId))];
     const all = await this.auth.locationsOf(orgIds);
-    const locations = all.filter(
-      (l) =>
-        (!sessionLocation || l.id === sessionLocation) &&
-        allowedLocationIds(full, l.organizationId, [l.id]).includes(l.id),
+    const allowed = all.filter((l) =>
+      allowedLocationIds(full, l.organizationId, [l.id]).includes(l.id),
     );
+    const locations = allowed.filter((l) => !sessionLocation || l.id === sessionLocation);
     return {
       ...(platformAdmin ? { platformAdmin } : {}),
       user: { id: full.userId, name: full.name, locale: full.locale },
@@ -53,6 +52,9 @@ export class AuthService {
         ...l,
         permissions: PERMISSIONS.filter((p) => can(full, p, l)),
       })),
+      elsewhere: allowed
+        .filter((l) => !locations.includes(l))
+        .map(({ id, name, slug }) => ({ id, name, slug })),
     };
   }
 

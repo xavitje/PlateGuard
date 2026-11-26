@@ -174,6 +174,22 @@ describe.skipIf(!process.env.DATABASE_URL)('PIN login', () => {
     ).rejects.toMatchObject({ status: 423 });
   });
 
+  it('names the other locations someone works at, to sign in there', async () => {
+    const kim = (await db.user.create({ data: { name: 'Kim' } })).id;
+    await db.roleAssignment.createMany({
+      data: [
+        { userId: kim, organizationId: org, locationId: loc, role: 'COOK' },
+        { userId: kim, organizationId: org, locationId: other, role: 'WAITER' },
+      ],
+    });
+    await db.staffPin.create({
+      data: { userId: kim, locationId: loc, pinHash: await hashPin('5678') },
+    });
+    const res = await auth.loginWithPin({ locationId: loc, name: 'Kim', pin: '5678' });
+    expect(res.me.locations.map((l) => l.id)).toEqual([loc]);
+    expect(res.me.elsewhere).toEqual([{ id: other, name: 'Other', slug: `pin-${other}` }]);
+  });
+
   it('counts every one of many parallel guesses, so they cannot share one try', async () => {
     const lex = (await db.user.create({ data: { name: 'Lex' } })).id;
     await db.roleAssignment.create({
