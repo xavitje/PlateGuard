@@ -39,7 +39,7 @@ pnpm dev:api                    # http://localhost:3000/api/health
 pnpm dev:web                    # http://localhost:5173, sign in as Demo Waiter with PIN 1234
 ```
 
-The seed sets two development PINs on the demo location: Demo Waiter 1234 and Demo Owner 2580. The seed only fills
+The seed sets two development PINs on the demo location: Demo Waiter 1234 and Demo Owner 2580. On a Vercel production deploy (`VERCEL_ENV=production`) the seed removes these PINs instead, so nobody can sign in to the demo there; its guest menu stays public as the sample. The seed only fills
 an empty demo location; `pnpm db:reset` rebuilds a development database from scratch and deletes all
 its data, so never point it at a real one.
 

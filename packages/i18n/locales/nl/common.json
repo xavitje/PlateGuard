@@ -20,5 +20,16 @@
   "loading": "Laden…",
   "loadError": "PlateGuard is niet bereikbaar. Controleer de verbinding en probeer het opnieuw.",
   "saveError": "Niet opgeslagen. Controleer de verbinding en probeer het opnieuw.",
-  "mainNav": "Hoofdmenu"
+  "mainNav": "Hoofdmenu",
+  "error": {
+    "notFound": {
+      "title": "Pagina niet gevonden",
+      "lead": "Dit adres bestaat niet, of het is verplaatst. Controleer de link, of begin opnieuw."
+    },
+    "crashed": {
+      "title": "Er ging iets mis",
+      "lead": "Deze pagina werkt even niet. Wat je hebt opgeslagen is niet verloren. Ga terug naar het begin en probeer het opnieuw."
+    },
+    "home": "Terug naar het begin"
+  }
 }

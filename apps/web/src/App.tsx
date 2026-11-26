@@ -11,6 +11,7 @@ import { StaffPage } from './admin/StaffPage';
 import { StartPage } from './admin/StartPage';
 import { AdminLayout, AdminSection } from './routes/AdminPage';
 import { AlertsPage } from './routes/AlertsPage';
+import { ErrorPage } from './routes/ErrorPage';
 import { GuestMenuPage } from './routes/GuestMenuPage';
 import { KitchenPage } from './routes/KitchenPage';
 import { LandingPage } from './routes/LandingPage';
@@ -34,38 +35,45 @@ import { TabsLayout } from './shell/TabsLayout';
  */
 export const router = createBrowserRouter([
   {
-    element: <TabsLayout />,
+    // One error screen for every route: a crash anywhere, and every unknown address below.
+    errorElement: <ErrorPage />,
     children: [
-      { path: 'tables', element: <TablesPage /> },
-      { path: 'tables/:label', element: <TableDetailPage /> },
-      { path: 'alerts', element: <AlertsPage /> },
-      { path: 'profile', element: <ProfilePage /> },
       {
-        path: 'admin',
-        element: <AdminLayout />,
+        element: <TabsLayout />,
         children: [
-          { index: true, element: <Navigate to="recipes" replace /> },
-          { path: 'start', element: <StartPage /> },
-          { path: 'restaurant', element: <RestaurantPage /> },
-          { path: 'recipes', element: <RecipesPage /> },
-          { path: 'menus', element: <MenuPage /> },
-          { path: 'floor-plan', element: <FloorPlanPage /> },
-          { path: 'staff', element: <StaffPage /> },
-          { path: 'integrations', element: <IntegrationsPage /> },
-          { path: 'webhooks', element: <WebhooksPage /> },
-          { path: 'incidents', element: <IncidentsPage /> },
-          { path: 'dashboard', element: <DashboardPage /> },
-          { path: ':section', element: <AdminSection /> },
+          { path: 'tables', element: <TablesPage /> },
+          { path: 'tables/:label', element: <TableDetailPage /> },
+          { path: 'alerts', element: <AlertsPage /> },
+          { path: 'profile', element: <ProfilePage /> },
+          {
+            path: 'admin',
+            element: <AdminLayout />,
+            children: [
+              { index: true, element: <Navigate to="recipes" replace /> },
+              { path: 'start', element: <StartPage /> },
+              { path: 'restaurant', element: <RestaurantPage /> },
+              { path: 'recipes', element: <RecipesPage /> },
+              { path: 'menus', element: <MenuPage /> },
+              { path: 'floor-plan', element: <FloorPlanPage /> },
+              { path: 'staff', element: <StaffPage /> },
+              { path: 'integrations', element: <IntegrationsPage /> },
+              { path: 'webhooks', element: <WebhooksPage /> },
+              { path: 'incidents', element: <IncidentsPage /> },
+              { path: 'dashboard', element: <DashboardPage /> },
+              { path: ':section', element: <AdminSection /> },
+            ],
+          },
         ],
       },
+      { index: true, element: <Home /> },
+      { path: 'signup', element: <SignupPage /> },
+      { path: 'login', element: <LoginPage /> },
+      { path: 'kitchen', element: <KitchenPage /> },
+      { path: 'menu/:slug', element: <GuestMenuPage /> },
+      { path: 'platform', element: <PlatformPage /> },
+      { path: '*', element: <ErrorPage /> },
     ],
   },
-  { index: true, element: <Home /> },
-  { path: 'signup', element: <SignupPage /> },
-  { path: 'login', element: <LoginPage /> },
-  { path: 'kitchen', element: <KitchenPage /> },
-  { path: 'menu/:slug', element: <GuestMenuPage /> },
-  { path: 'platform', element: <PlatformPage /> },
 ]);
 
 /** "/": the site for a visitor, the app for someone signed in. */

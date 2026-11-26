@@ -90,18 +90,25 @@ async function seedDemo() {
     });
   }
 
-  // Demo PINs, for development only: owner 2580, waiter 1234.
-  for (const [userId, pin] of [
+  // Demo PINs, for development only: owner 2580, waiter 1234. They are public (README), so a
+  // production deploy removes them: the demo stays as a sample guest menu nobody can sign in to.
+  const demoPins = [
     [DEMO_OWNER, '2580'],
     [DEMO_WAITER, '1234'],
-  ] as const) {
-    const pinHash = await hashPin(pin);
-    await prisma.staffPin.upsert({
-      where: { userId_locationId: { userId, locationId: DEMO_LOCATION } },
-      update: {},
-      create: { userId, locationId: DEMO_LOCATION, pinHash },
+  ] as const;
+  if (process.env.VERCEL_ENV === 'production')
+    await prisma.staffPin.deleteMany({
+      where: { locationId: DEMO_LOCATION, userId: { in: demoPins.map(([id]) => id) } },
     });
-  }
+  else
+    for (const [userId, pin] of demoPins) {
+      const pinHash = await hashPin(pin);
+      await prisma.staffPin.upsert({
+        where: { userId_locationId: { userId, locationId: DEMO_LOCATION } },
+        update: {},
+        create: { userId, locationId: DEMO_LOCATION, pinHash },
+      });
+    }
 
   // Floors, tables and the open tables in service only go into a new demo location; the menu
   // below also tops up an existing one.
