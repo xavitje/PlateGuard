@@ -40,7 +40,8 @@
     "INCIDENT_NOT_FOUND": "This incident no longer exists.",
     "PIN_TAKEN": "Someone else here with the same first name already has this PIN. Choose another one.",
     "MENU_IMPORT_NOT_CONFIGURED": "Menu import is not set up yet: the server has no AI key.",
-    "MENU_IMPORT_FAILED": "The menu could not be read. Try again, or with a sharper photo."
+    "MENU_IMPORT_FAILED": "The menu could not be read. Try again, or with a sharper photo.",
+    "EMAIL_TAKEN": "This email already belongs to an account. Use another one."
   },
   "fields": {
     "name": "Name",

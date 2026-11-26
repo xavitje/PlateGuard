@@ -99,6 +99,13 @@ export class AuthRepository {
       .then((n) => n > 0);
   }
 
+  /** The guest menu address for a new restaurant: a taken one gets a short number behind it. */
+  async freeSlug(base: string): Promise<string> {
+    let slug = base;
+    for (let n = 2; await this.slugTaken(slug); n++) slug = `${base}-${n}`;
+    return slug;
+  }
+
   slugTaken(slug: string): Promise<boolean> {
     return this.prisma
       .system()
@@ -107,8 +114,8 @@ export class AuthRepository {
   }
 
   /**
-   * The free start: a new organization on the free plan with one location, and its owner with a
-   * PIN there. One transaction, so a failed step leaves nothing half made.
+   * A new organization (the free plan, unless the platform admin picks another) with one
+   * location, and its owner with a PIN there. One transaction, so a failed step leaves nothing half made.
    */
   async createRestaurant(input: {
     restaurant: string;
@@ -116,10 +123,13 @@ export class AuthRepository {
     name: string;
     email: string;
     pin: string;
-  }): Promise<{ userId: string; locationId: string }> {
+    plan?: string;
+  }): Promise<{ userId: string; locationId: string; organizationId: string }> {
     const pinHash = await hashPin(input.pin);
     return this.prisma.system().$transaction(async (tx) => {
-      const org = await tx.organization.create({ data: { name: input.restaurant, plan: 'free' } });
+      const org = await tx.organization.create({
+        data: { name: input.restaurant, plan: input.plan ?? 'free' },
+      });
       const location = await tx.location.create({
         data: {
           organizationId: org.id,
@@ -136,7 +146,7 @@ export class AuthRepository {
         data: { userId: user.id, organizationId: org.id, locationId: null, role: 'OWNER' },
       });
       await tx.staffPin.create({ data: { userId: user.id, locationId: location.id, pinHash } });
-      return { userId: user.id, locationId: location.id };
+      return { userId: user.id, locationId: location.id, organizationId: org.id };
     });
   }
 }

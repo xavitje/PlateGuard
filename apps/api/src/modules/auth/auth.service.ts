@@ -107,14 +107,12 @@ export class AuthService {
 
   /**
    * The free start: makes the restaurant and signs the owner in on it. The guest menu address
-   * comes from the restaurant name; a taken one gets a short number behind it.
+   * comes from the restaurant name.
    */
   async signup(input: Signup): Promise<LoginResponse> {
     if (await this.auth.emailTaken(input.email))
       throw new ConflictException({ code: 'EMAIL_TAKEN' });
-    const base = slugify(input.restaurant);
-    let slug = base;
-    for (let n = 2; await this.auth.slugTaken(slug); n++) slug = `${base}-${n}`;
+    const slug = await this.auth.freeSlug(slugify(input.restaurant));
     const { userId, locationId } = await this.auth.createRestaurant({ ...input, slug });
     const principal = await this.auth.findPrincipal(userId);
     if (!principal) throw new ForbiddenException({ code: 'FORBIDDEN' });

@@ -13,8 +13,18 @@ afterEach(() => {
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
+const bistro = {
+  id: 'org-1',
+  name: 'Bistro Noord',
+  plan: 'free',
+  createdAt: '2026-11-01T10:00:00.000Z',
+  ownerEmail: 'owner@example.com',
+  locations: [{ id: 'loc-1', name: 'Bistro Noord', slug: 'bistro-noord', staff: 1 }],
+};
+
 describe('PlatformPage', () => {
   it('signs in with email, password and code, apart from the shift session', async () => {
+    const restaurants = [bistro];
     const fetch = vi.fn(async (url: string, init?: RequestInit) => {
       if (url === '/api/platform/login') {
         const body = JSON.parse(String(init?.body)) as { code: string };
@@ -23,6 +33,13 @@ describe('PlatformPage', () => {
           : json(401, { code: 'LOGIN_INVALID' });
       }
       if (url === '/api/platform/me') return json(200, { email: 'rafi@example.com' });
+      if (url === '/api/platform/restaurants' && init?.method === 'POST') {
+        const body = JSON.parse(String(init.body)) as { restaurant: string; plan: string };
+        restaurants.unshift({ ...bistro, id: 'org-2', name: body.restaurant, plan: body.plan });
+        return json(201, restaurants);
+      }
+      if (url === '/api/platform/restaurants') return json(200, restaurants);
+      if (url.endsWith('/staff')) return json(200, []);
       return json(404, {});
     });
     vi.stubGlobal('fetch', fetch);
@@ -48,6 +65,24 @@ describe('PlatformPage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText('Signed in as rafi@example.com.')).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: /Bistro Noord/ }));
+    expect(await screen.findByText(/Contact: owner@example.com/)).toBeTruthy();
+    expect(screen.getByText(/login\?location=bistro-noord/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: '+ New restaurant' }));
+    fireEvent.change(screen.getByLabelText('Restaurant name'), { target: { value: 'Café Zuid' } });
+    fireEvent.change(screen.getByLabelText("Owner's first name"), { target: { value: 'Ana' } });
+    fireEvent.change(screen.getByLabelText("Owner's email"), { target: { value: 'ana@x.nl' } });
+    fireEvent.change(screen.getByLabelText("Owner's start PIN", { exact: false }), {
+      target: { value: '2468' },
+    });
+    fireEvent.change(screen.getByLabelText('Plan'), { target: { value: 'kitchen' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create restaurant' }));
+    expect(await screen.findByRole('heading', { name: 'Café Zuid' })).toBeTruthy();
+    const created = fetch.mock.calls.find(
+      ([, i]) => i?.method === 'POST' && i.body?.toString().includes('Café'),
+    );
+    expect(JSON.parse(String(created?.[1]?.body))).toMatchObject({ plan: 'kitchen', pin: '2468' });
     expect(localStorage.getItem('pg.platform')).toBe('p-token');
     expect(localStorage.getItem('pg.session')).toBeNull();
     const meCall = fetch.mock.calls.find(([u]) => u === '/api/platform/me');
