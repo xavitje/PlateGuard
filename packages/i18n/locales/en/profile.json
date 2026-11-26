@@ -26,5 +26,7 @@
       "name": "Admin",
       "hint": "Recipes, menu, staff, incidents"
     }
-  }
+  },
+  "otherLocations": "Other locations",
+  "switchHint": "Sign in there with your PIN for that location. This device then works for that location."
 }

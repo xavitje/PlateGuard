@@ -46,6 +46,8 @@ const meFor = (role: Role) => ({
       permissions: [...ROLE_PERMISSIONS[role]],
     },
   ],
+  // A second location of the demo restaurant, to try switching.
+  elsewhere: [{ id: 'noord', name: 'Noord', slug: 'demo-noord' }],
 });
 
 /**

@@ -56,6 +56,8 @@ export interface MeResponse {
     /** What this user may do here. The UI hides what is not allowed; the API enforces it. */
     permissions: Permission[];
   }[];
+  /** Other locations this user may work at. A shift session holds one: switching signs in there. */
+  elsewhere: { id: string; name: string; slug: string }[];
 }
 
 export interface TableSummary {

@@ -26,5 +26,7 @@
       "name": "Beheer",
       "hint": "Recepten, kaart, personeel, incidenten"
     }
-  }
+  },
+  "otherLocations": "Andere locaties",
+  "switchHint": "Log daar in met je pincode van die locatie. Dit apparaat werkt daarna voor die locatie."
 }
