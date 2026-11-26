@@ -1,10 +1,29 @@
 import { z } from 'zod';
+import { AllergenCodeZ } from './common.js';
 
-/** Connecting a Square test account: the sandbox access token and the Square location. */
-export const PosConnectInputZ = z.strictObject({
-  accessToken: z.string().trim().min(20).max(500),
-  squareLocationId: z.string().trim().min(4).max(100),
-});
+/**
+ * Connecting a till. Square: a sandbox access token and the Square location. Lightspeed
+ * K-Series: an access token and the business location (until the OAuth sign-in exists).
+ * MplusKASSA: nothing; Mplus calls PlateGuard, its secret is set with the webhook.
+ */
+export const PosConnectInputZ = z.discriminatedUnion('provider', [
+  z.strictObject({
+    provider: z.literal('square'),
+    accessToken: z.string().trim().min(20).max(500),
+    squareLocationId: z.string().trim().min(4).max(100),
+  }),
+  z.strictObject({
+    provider: z.literal('lightspeed-k'),
+    accessToken: z.string().trim().min(20).max(2000),
+    businessLocationId: z
+      .string()
+      .trim()
+      .regex(/^\d{1,20}$/),
+    environment: z.enum(['demo', 'production']),
+  }),
+  z.strictObject({ provider: z.literal('mplus') }),
+]);
+export type PosProvider = PosConnectInput['provider'];
 export type PosConnectInput = z.infer<typeof PosConnectInputZ>;
 
 /** After making the webhook in Square: its signature key, and the URL exactly as given there. */
@@ -24,7 +43,14 @@ export type PosMappingInput = z.infer<typeof PosMappingInputZ>;
 export const PosTestOrderInputZ = z.strictObject({
   table: z.string().trim().min(1).max(20),
   lines: z
-    .array(z.strictObject({ dishId: z.uuid(), seat: z.number().int().positive().max(50) }))
+    .array(
+      z.strictObject({
+        dishId: z.uuid(),
+        seat: z.number().int().positive().max(50),
+        /** Typed on the line in the till, such as "notenallergie". */
+        note: z.string().trim().max(120).optional(),
+      }),
+    )
     .min(1)
     .max(20),
 });
@@ -34,10 +60,13 @@ export interface PosConnection {
   id: string;
   provider: string;
   status: 'ACTIVE' | 'ERROR';
-  /** The Square location's name, as Square reports it. */
+  /** The till location's name, as the till reports it. */
   locationName: string;
-  squareLocationId: string;
+  /** The till's own id for the location (Square location, Lightspeed business location). */
+  externalLocationId: string;
   sandbox: boolean;
+  /** False for tills that send no webhooks (Lightspeed): PlateGuard fetches their orders. */
+  webhooks: boolean;
   /** Path of the webhook on this server; the browser adds its own origin. */
   webhookPath: string;
   /** The URL the webhook was saved with, or null before it was set up. */
@@ -92,6 +121,8 @@ export interface PosLineLog {
   outcome: PosLineOutcome;
   /** For FAILED: the error code, such as SEAT_NOT_AT_TABLE or DISH_NOT_FOUND. */
   reason?: string;
+  /** Allergies the till gave for this line (button or note), added to the seat: codes or text. */
+  fromPos?: string[];
 }
 
 /** Why a whole order was left alone. */
@@ -108,6 +139,8 @@ export interface PosEvent {
   id: string;
   receivedAt: string;
   status: 'PENDING' | 'PROCESSING' | 'DONE' | 'FAILED' | 'DEAD';
+  /** WEBHOOK: sent by the till. TEST: a test order placed from admin. */
+  source: 'WEBHOOK' | 'TEST';
   orderId: string | null;
   result: PosSyncResult | null;
   /** The order line by line. Missing for messages handled before this log existed. */
@@ -119,4 +152,27 @@ export interface PosEvent {
 
 export interface PosEventsResponse {
   events: PosEvent[];
+}
+
+/**
+ * How a modifier or till button counts as an allergy. A code: always that allergen. NONE: never
+ * an allergy ("Extra kaas"). null: PlateGuard reads the name itself ("Allergie: melk").
+ */
+export const PosAllergyButtonInputZ = z.strictObject({
+  name: z.string().trim().min(1).max(120),
+  allergen: z.union([AllergenCodeZ, z.literal('NONE')]).nullable(),
+});
+export type PosAllergyButtonInput = z.infer<typeof PosAllergyButtonInputZ>;
+
+export interface PosAllergyButton {
+  /** The modifier's name in the till. */
+  name: string;
+  /** What PlateGuard reads in the name on its own: allergen codes, or the text for the cook. */
+  recognized: string[];
+  /** Set by hand; null when PlateGuard's own reading is used. */
+  allergen: string | null;
+}
+
+export interface PosAllergyButtonsResponse {
+  buttons: PosAllergyButton[];
 }

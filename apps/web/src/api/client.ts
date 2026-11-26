@@ -35,6 +35,8 @@ import type {
   IncidentReport,
   IncidentsResponse,
   DashboardResponse,
+  PosAllergyButtonInput,
+  PosAllergyButtonsResponse,
   PosConnectInput,
   PosEventsResponse,
   PosItemsResponse,
@@ -115,6 +117,12 @@ export interface AdminClient {
   posTestOrder(location: string, body: PosTestOrderInput): Promise<PosSyncResult>;
   syncPos(location: string): Promise<PosSyncResult>;
   posEvents(location: string): Promise<PosEventsResponse>;
+  /** The till's buttons and modifiers, with the allergy each one means. */
+  posAllergyButtons(location: string): Promise<PosAllergyButtonsResponse>;
+  setPosAllergyButton(
+    location: string,
+    body: PosAllergyButtonInput,
+  ): Promise<PosAllergyButtonsResponse>;
   /** The management figures over the last days, per location the user may see. */
   dashboard(location: string, days: number): Promise<DashboardResponse>;
   incidents(location: string): Promise<IncidentsResponse>;
@@ -271,6 +279,9 @@ export function createHttpClient(
       posTestOrder: (l, body) => call(adm(l, 'pos/test-order'), { method: 'POST', body }),
       syncPos: (l) => call(adm(l, 'pos/sync'), { method: 'POST' }),
       posEvents: (l) => call(adm(l, 'pos/events')),
+      posAllergyButtons: (l) => call(adm(l, 'pos/allergy-buttons')),
+      setPosAllergyButton: (l, body) =>
+        call(adm(l, 'pos/allergy-buttons'), { method: 'PUT', body }),
       dashboard: (l, days) => call(`${loc(l)}/dashboard?days=${days}`),
       incidents: (l) => call(`${loc(l)}/incidents`),
       incident: (l, id) => call(`${loc(l)}/incidents/${id}`),

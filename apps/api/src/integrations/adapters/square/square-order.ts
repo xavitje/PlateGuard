@@ -5,6 +5,7 @@
  * ("stoel 2", "seat 2", "S2"); the course optionally in the line's metadata ("course").
  */
 import type { CanonicalOrder } from '@plateguard/contracts';
+import { seatInText, tableInText } from '../../core/pos-text.js';
 
 export interface SquareLineItem {
   uid?: string;
@@ -28,13 +29,10 @@ export interface SquareOrder {
   line_items?: SquareLineItem[];
 }
 
-const TABLE_WORDS = /^(?:tafel|table|tbl|t)\s*[:#.-]?\s*/i;
-const SEAT_IN_TEXT = /(?:^|\b)(?:stoel|seat|s)\s*[:#.-]?\s*(\d{1,2})\b/i;
-
 /** "Tafel 12" → "12". Empty text gives undefined. */
 export function tableOf(order: SquareOrder): string | undefined {
   for (const raw of [order.metadata?.table, order.ticket_name, order.reference_id]) {
-    const label = raw?.trim().replace(TABLE_WORDS, '').trim();
+    const label = tableInText(raw);
     if (label) return label;
   }
   return undefined;
@@ -43,8 +41,7 @@ export function tableOf(order: SquareOrder): string | undefined {
 export function seatOf(line: SquareLineItem): number | undefined {
   const fromMeta = Number(line.metadata?.seat);
   if (Number.isInteger(fromMeta) && fromMeta > 0) return fromMeta;
-  const m = line.note?.match(SEAT_IN_TEXT);
-  return m ? Number(m[1]) : undefined;
+  return seatInText(line.note);
 }
 
 function courseOf(line: SquareLineItem): number | undefined {
@@ -82,6 +79,7 @@ export function toCanonicalOrder(order: SquareOrder): CanonicalOrder {
           ...(s !== undefined ? { seat: s } : {}),
           ...(c !== undefined ? { course: c } : {}),
           modifiers: (l.modifiers ?? []).flatMap((m) => (m.name ? [m.name] : [])),
+          ...(l.note?.trim() ? { note: l.note.trim() } : {}),
         },
       ];
     }),

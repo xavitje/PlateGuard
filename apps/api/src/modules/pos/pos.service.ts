@@ -9,6 +9,8 @@ import {
 } from '@nestjs/common';
 import type {
   CanonicalOrder,
+  PosAllergyButtonInput,
+  PosAllergyButtonsResponse,
   PosConnectInput,
   PosEventsResponse,
   PosItemsResponse,
@@ -18,11 +20,14 @@ import type {
   PosSyncResult,
   PosTestOrderInput,
   PosWebhookInput,
+  SeatUpdate,
 } from '@plateguard/contracts';
+import { allergiesFromText, DEFAULT_SEVERITY, type GuestAllergy } from '@plateguard/domain';
 import { ConnectionsRepository } from '../../integrations/core/connections.repository.js';
 import { InboxDispatcher } from '../../integrations/core/inbox-dispatcher.js';
 import { InboxRepository } from '../../integrations/core/inbox.repository.js';
 import {
+  canVerifyWebhooks,
   isPosAdapter,
   isSandboxPos,
   type Connection,
@@ -35,7 +40,14 @@ import { openSecrets, sealSecrets, secretKey } from '../../integrations/core/sec
 import type { TenantContext } from '../auth/permissions.js';
 import { MenuRepository } from '../service/menu.repository.js';
 import { ServiceService } from '../service/service.service.js';
-import { POS_PROVIDER, PosRepository, type PosRow } from './pos.repository.js';
+import {
+  allergyButtonsOf,
+  allergyKey,
+  allergyLabel,
+  buttonKey,
+  lineAllergies,
+} from './pos-allergies.js';
+import { PosRepository, type PosRow } from './pos.repository.js';
 
 /** Pulling picks up the orders of the last hours: a service, not the whole day. */
 const PULL_WINDOW_MS = 12 * 3600_000;
@@ -96,6 +108,7 @@ export class PosService implements OnModuleInit {
     if (!row) return { connection: null, secretsReady };
     const last = await this.repo.lastEventAt(ctx, row.id);
     const c = row.config;
+    const adapter = this.registry.get(row.provider);
     return {
       secretsReady,
       connection: {
@@ -103,8 +116,9 @@ export class PosService implements OnModuleInit {
         provider: row.provider,
         status: row.status === 'ACTIVE' ? 'ACTIVE' : 'ERROR',
         locationName: typeof c.locationName === 'string' ? c.locationName : '',
-        squareLocationId: typeof c.squareLocationId === 'string' ? c.squareLocationId : '',
-        sandbox: c.environment !== 'production',
+        externalLocationId: String(c.squareLocationId ?? c.businessLocationId ?? ''),
+        sandbox: c.environment === 'sandbox' || c.environment === 'demo',
+        webhooks: !!adapter && canVerifyWebhooks(adapter),
         webhookPath: `/hooks/${row.provider}/${row.id}`,
         webhookUrl: typeof c.webhookUrl === 'string' ? c.webhookUrl : null,
         lastEventAt: last?.toISOString() ?? null,
@@ -121,21 +135,28 @@ export class PosService implements OnModuleInit {
     if (!secretKey()) throw new ServiceUnavailableException({ code: 'SECRET_KEY_MISSING' });
     if (await this.repo.current(ctx, locationId))
       throw new ConflictException({ code: 'POS_ALREADY_CONNECTED' });
-    const config = {
-      squareLocationId: input.squareLocationId,
-      environment: 'sandbox',
-      connectedById: userId,
-    };
-    const secrets = { accessToken: input.accessToken };
-    const probe: Connection = { id: 'new', locationId, provider: POS_PROVIDER, config, secrets };
-    const result = await this.adapter().connect(probe);
+    const { provider } = input;
+    const config: Record<string, string> = { connectedById: userId };
+    const secrets: Record<string, string> = {};
+    if (input.provider === 'square') {
+      Object.assign(config, { squareLocationId: input.squareLocationId, environment: 'sandbox' });
+      secrets.accessToken = input.accessToken;
+    } else if (input.provider === 'lightspeed-k') {
+      Object.assign(config, {
+        businessLocationId: input.businessLocationId,
+        environment: input.environment,
+      });
+      secrets.accessToken = input.accessToken;
+    }
+    const probe: Connection = { id: 'new', locationId, provider, config, secrets };
+    const result = await this.adapterFor(provider).connect(probe);
     if (!result.ok)
       throw new BadRequestException({
         code: 'POS_CONNECT_FAILED',
         details: { reason: result.error },
       });
     await this.repo.create(ctx, locationId, {
-      provider: POS_PROVIDER,
+      provider,
       config: { ...config, ...result.info },
       secrets: sealSecrets(secrets),
     });
@@ -157,7 +178,11 @@ export class PosService implements OnModuleInit {
       row.id,
       {
         config: { ...(row.config as object), webhookUrl: input.url },
-        secrets: sealSecrets({ ...conn.secrets, signatureKey: input.signatureKey }),
+        // Square calls it the signature key, Mplus the secret key: the same job.
+        secrets: sealSecrets({
+          ...conn.secrets,
+          [row.provider === 'mplus' ? 'webhookSecret' : 'signatureKey']: input.signatureKey,
+        }),
       },
       'integration.webhook_set',
     );
@@ -173,7 +198,7 @@ export class PosService implements OnModuleInit {
   async items(ctx: TenantContext, locationId: string): Promise<PosItemsResponse> {
     const { row, conn } = await this.require(ctx, locationId);
     const [items, mappings] = await Promise.all([
-      this.call(() => this.adapter().listMenuItems(conn)),
+      this.call(() => this.adapterFor(row.provider).listMenuItems(conn)),
       this.repo.mappings(ctx, row.id),
     ]);
     return {
@@ -195,6 +220,40 @@ export class PosService implements OnModuleInit {
     return this.items(ctx, locationId);
   }
 
+  /** The till's buttons, with what each means as an allergy: read from its name, or set by hand. */
+  async allergyButtons(ctx: TenantContext, locationId: string): Promise<PosAllergyButtonsResponse> {
+    const { row, conn } = await this.require(ctx, locationId);
+    const adapter = this.adapterFor(row.provider);
+    const names = adapter.listModifiers ? await this.call(() => adapter.listModifiers!(conn)) : [];
+    const set = allergyButtonsOf(row.config);
+    return {
+      buttons: names.map((name) => ({
+        name,
+        recognized: allergiesFromText(name).map(allergyLabel),
+        allergen: set[buttonKey(name)] ?? null,
+      })),
+    };
+  }
+
+  async setAllergyButton(
+    ctx: TenantContext,
+    locationId: string,
+    input: PosAllergyButtonInput,
+  ): Promise<PosAllergyButtonsResponse> {
+    const { row } = await this.require(ctx, locationId);
+    const buttons = { ...allergyButtonsOf(row.config) };
+    if (input.allergen) buttons[buttonKey(input.name)] = input.allergen;
+    else delete buttons[buttonKey(input.name)];
+    await this.repo.update(
+      ctx,
+      locationId,
+      row.id,
+      { config: { ...(row.config as object), allergyButtons: buttons } },
+      'integration.allergy_button_set',
+    );
+    return this.allergyButtons(ctx, locationId);
+  }
+
   /**
    * Test accounts start empty: puts every dish of the published menu that is not linked yet in
    * it. An item already in the POS with the dish's name is linked instead of made again.
@@ -204,7 +263,7 @@ export class PosService implements OnModuleInit {
     const [menu, mappings, existing] = await Promise.all([
       this.menu.current(ctx, locationId, 'en'),
       this.repo.mappings(ctx, row.id),
-      this.call(() => this.adapter().listMenuItems(conn)),
+      this.call(() => this.adapterFor(row.provider).listMenuItems(conn)),
     ]);
     const linked = new Set(mappings.values());
     const key = (name: string) => name.trim().toLocaleLowerCase();
@@ -220,7 +279,7 @@ export class PosService implements OnModuleInit {
       if (found) links.push({ externalItemId: found, dishId: d.id });
       else missing.push({ key: d.id, name: d.name });
     }
-    const created = await this.call(() => this.sandbox().pushMenu(conn, missing));
+    const created = await this.call(() => this.sandbox(row.provider).pushMenu(conn, missing));
     for (const [dishId, externalItemId] of created) links.push({ externalItemId, dishId });
     if (links.length > 0) await this.repo.setMappings(ctx, locationId, row.id, links);
     return this.items(ctx, locationId);
@@ -237,9 +296,9 @@ export class PosService implements OnModuleInit {
     const lines = input.lines.map((l) => {
       const externalItemId = byDish.get(l.dishId);
       if (!externalItemId) throw new BadRequestException({ code: 'DISH_NOT_IN_POS' });
-      return { externalItemId, seat: l.seat };
+      return { externalItemId, seat: l.seat, ...(l.note ? { note: l.note } : {}) };
     });
-    const adapter = this.sandbox();
+    const adapter = this.sandbox(row.provider);
     const orderId = await this.call(() => adapter.placeOrder(conn, { table: input.table, lines }));
     const order = await this.call(async () => (await adapter.getOrder?.(conn, orderId)) ?? null);
     if (!order) return empty();
@@ -259,7 +318,7 @@ export class PosService implements OnModuleInit {
   async sync(ctx: TenantContext, locationId: string): Promise<PosSyncResult> {
     const { row, conn } = await this.require(ctx, locationId);
     const orders = await this.call(() =>
-      this.adapter().pullOrders(conn, new Date(Date.now() - PULL_WINDOW_MS)),
+      this.adapterFor(row.provider).pullOrders(conn, new Date(Date.now() - PULL_WINDOW_MS)),
     );
     let total = empty();
     for (const order of orders) total = add(total, (await this.ingest(ctx, row, order)).result);
@@ -275,6 +334,7 @@ export class PosService implements OnModuleInit {
         id: e.id,
         receivedAt: e.receivedAt.toISOString(),
         status: e.status,
+        source: (e.payload as { test?: boolean }).test ? ('TEST' as const) : ('WEBHOOK' as const),
         orderId: (e.payload as unknown as InboundEvent).externalOrderId ?? null,
         ...this.stored(e.result),
         rejected: (e.payload as { rejected?: string }).rejected ?? null,
@@ -364,8 +424,44 @@ export class PosService implements OnModuleInit {
     const userId = ctx.userId ?? (row.config.connectedById as string | undefined);
     if (!order.externalTableRef || !userId) return skip('NO_TABLE', { noTable: 1 });
     const table = order.externalTableRef;
-    const found = await this.service.table(ctx, locationId, table).catch(codeOf);
+    let found = await this.service.table(ctx, locationId, table).catch(codeOf);
     if (found === 'TABLE_NOT_FOUND') return skip('TABLE_NOT_FOUND', { noTable: 1 });
+    // Allergies tapped or typed in the till go on the seat first, so every plate of that guest
+    // is judged with them. Added to what the seat has; never taken away.
+    const buttons = allergyButtonsOf(row.config);
+    const fromPos = new Map<CanonicalOrder['lines'][number], GuestAllergy[]>();
+    for (const line of order.lines) {
+      const a = lineAllergies(line, buttons);
+      if (a.length > 0) fromPos.set(line, a);
+    }
+    if (typeof found === 'object' && found) {
+      for (const [line, extra] of fromPos) {
+        // No seat, or not at this table: the line itself says why when it is placed.
+        if (!line.seat || line.seat > found.seats) continue;
+        // A seat nobody sat at yet has no entry.
+        const seat = found.bySeat.find((s) => s.seat === line.seat) ?? {
+          seat: line.seat,
+          allergies: [],
+        };
+        const known = new Set(seat.allergies.map((a) => allergyKey(a as GuestAllergy)));
+        const added = extra.filter((a) => !known.has(allergyKey(a)));
+        if (added.length === 0) continue;
+        found = await this.service.saveSeat(
+          ctx,
+          locationId,
+          table,
+          seat.seat,
+          {
+            allergies: [
+              ...added.map((a) => ({ ...a, severity: a.severity ?? DEFAULT_SEVERITY })),
+              ...seat.allergies,
+            ] as SeatUpdate['allergies'],
+            noAllergy: false,
+          },
+          userId,
+        );
+      }
+    }
     const allergic = new Set(
       typeof found === 'object' && found
         ? found.bySeat.filter((s) => s.allergies.length > 0).map((s) => s.seat)
@@ -373,7 +469,13 @@ export class PosService implements OnModuleInit {
     );
     const mappings = await this.repo.mappings(ctx, row.id);
     for (const line of order.lines) {
-      const entry = { name: line.name, seat: line.seat ?? null, quantity: line.quantity };
+      const tapped = fromPos.get(line);
+      const entry = {
+        name: line.name,
+        seat: line.seat ?? null,
+        quantity: line.quantity,
+        ...(tapped ? { fromPos: tapped.map(allergyLabel) } : {}),
+      };
       const dishId = mappings.get(line.externalItemId);
       if (!dishId) {
         r.unmapped += line.quantity;
@@ -437,7 +539,8 @@ export class PosService implements OnModuleInit {
       config: row.config,
       secrets: openSecrets(row.encryptedSecrets),
     };
-    if (!conn.secrets.accessToken)
+    // Secrets that cannot be opened come back empty. Mplus has no token: it calls us.
+    if (!secretKey() || (row.provider !== 'mplus' && !conn.secrets.accessToken))
       throw new ServiceUnavailableException({ code: 'SECRET_KEY_MISSING' });
     return { row, conn };
   }
@@ -448,13 +551,10 @@ export class PosService implements OnModuleInit {
     return adapter;
   }
 
-  private adapter(): PosAdapter {
-    return this.adapterFor(POS_PROVIDER);
-  }
-
-  private sandbox(): SandboxPos {
-    const adapter = this.registry.get(POS_PROVIDER);
-    if (!isSandboxPos(adapter)) throw new Error(`No sandbox POS ${POS_PROVIDER}`);
+  /** Only a test account (Square's sandbox) can be filled and rung up from PlateGuard. */
+  private sandbox(provider: string): SandboxPos {
+    const adapter = this.registry.get(provider);
+    if (!isSandboxPos(adapter)) throw new BadRequestException({ code: 'POS_NOT_A_TEST_ACCOUNT' });
     return adapter;
   }
 

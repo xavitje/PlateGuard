@@ -221,20 +221,16 @@
     "once": "Dit adres zie je maar één keer. Kwijt? Vraag een nieuw adres aan: het oude werkt dan niet meer."
   },
   "pos": {
-    "title": "Kassa (Square-testaccount)",
-    "how": "Wat op de kassa wordt aangeslagen, wordt in PlateGuard een bord op de juiste stoel, beoordeeld op de allergieën die de bediening heeft vastgelegd, en gaat naar de keuken. Voorlopig met een gratis Square Developer-testaccount (sandbox). Zet de tafel in de bestelling (\"Tafel 12\") en de stoel in de notitie van elke regel (\"stoel 2\").",
+    "title": "Kassa",
+    "how": "Wat op de kassa wordt aangeslagen, wordt in PlateGuard een bord op de juiste stoel, beoordeeld op de allergieën van de gast, en er gaat een allergiebon naar de keuken naast de gewone kassabon. De allergie komt van de bediening in PlateGuard, of rechtstreeks uit de kassa: een knop zoals \"Allergie: melk\" of een notitie zoals \"geen noten\". Zet ook de stoel in de kassa (\"Stoel 2\"), als knop of in de notitie van de regel.",
     "noSecretKey": "De server heeft nog geen sleutel om de geheimen van de kassa versleuteld op te slaan. Voeg in Vercel de omgevingsvariabele INTEGRATION_SECRET_KEY toe (een lange willekeurige tekst) en deploy opnieuw.",
-    "connectStep1": "Open in het Square Developer Dashboard je applicatie, zet hem op Sandbox en kopieer bij Credentials het Sandbox Access token.",
-    "connectStep2": "Kopieer bij Locations het ID van de testlocatie. Plak ze allebei hier: het token wordt versleuteld opgeslagen en nooit meer getoond.",
     "accessToken": "Sandbox access token",
-    "locationId": "Location ID",
     "connect": "Koppelen",
     "connecting": "Controleren bij Square…",
     "sandbox": "Testaccount",
-    "connectedTo": "Square-locatie {id}",
     "disconnect": "Ontkoppelen",
     "confirmDisconnect": "Definitief ontkoppelen",
-    "webhookTitle": "1. Webhook: bestellingen komen vanzelf binnen",
+    "webhookTitle": "Webhook: bestellingen komen vanzelf binnen",
     "webhookStep1": "Open in het Square Developer Dashboard Webhooks → Subscriptions, controleer dat Sandbox gekozen is en klik op Add subscription.",
     "webhookStep2": "Plak de URL hieronder als notification URL en vink de events order.created en order.updated aan. Sla op.",
     "webhookStep3": "Open de subscription, kopieer de Signature key en plak die hier.",
@@ -245,14 +241,14 @@
     "signatureKey": "Signature key",
     "webhookSave": "Opslaan",
     "webhookReplace": "Sleutel vervangen",
-    "itemsTitle": "2. Kassa-artikelen aan gerechten koppelen",
+    "itemsTitle": "Kassa-artikelen aan gerechten koppelen",
     "itemsHow": "Elk artikel in Square staat voor één gerecht. Het testaccount begint leeg: zet de gepubliceerde menukaart er met één klik in.",
     "push": "Menukaart in Square zetten",
     "pushing": "Menukaart in Square zetten…",
-    "noItems": "Nog geen artikelen in Square.",
+    "noItems": "Nog geen artikelen uit de kassa.",
     "dishFor": "Gerecht voor {name}",
     "notLinked": "Niet gekoppeld",
-    "testTitle": "3. Testbestelling",
+    "testTitle": "Testbestelling",
     "testHow": "Slaat een bestelling aan in het Square-testaccount zoals een kassa dat doet, met tafel en stoelen. PlateGuard neemt hem meteen over; de webhook brengt dezelfde bestelling daarna nog een keer, zonder dubbele borden.",
     "table": "Tafel",
     "pickTable": "Kies een tafel",
@@ -265,7 +261,7 @@
     "placing": "Aanslaan…",
     "linkFirst": "Koppel eerst minstens één artikel aan een gerecht.",
     "placed": "Bestelling aangeslagen:",
-    "eventsTitle": "4. Wat binnenkwam",
+    "eventsTitle": "Wat binnenkwam",
     "refresh": "Vernieuwen",
     "sync": "Open bestellingen ophalen",
     "syncing": "Ophalen…",
@@ -326,8 +322,45 @@
         "SEAT_NOT_AT_TABLE": "de tafel heeft minder stoelen",
         "DISH_NOT_FOUND": "het gerecht staat niet op de gepubliceerde kaart",
         "TABLE_NOT_FOUND": "tafel staat niet in de plattegrond"
-      }
-    }
+      },
+      "source": {
+        "WEBHOOK": "Webhook",
+        "TEST": "Testbestelling"
+      },
+      "fromPos": "allergie uit de kassa: {list}"
+    },
+    "buttonsTitle": "Allergieknoppen in de kassa",
+    "buttonsHow": "Tikt de bediening een knop aan zoals \"Allergie: melk\", of typt ze \"geen noten\" bij een regel, dan zet PlateGuard die allergie op de stoel en beoordeelt het bord ermee. De meeste namen leest PlateGuard zelf; stel een knop met de hand in als de naam iets anders zegt.",
+    "buttonsNone": "De kassa heeft nog geen knoppen of opties.",
+    "buttonFor": "Allergie voor {name}",
+    "buttonAuto": "Automatisch: {found}",
+    "buttonAutoNothing": "Automatisch: geen allergie",
+    "buttonNever": "Nooit een allergie",
+    "note": "Notitie bij de regel",
+    "notePlaceholder": "bijv. geen noten",
+    "webhookElsewhere": "De webhook en het logboek van wat binnenkwam staan onder Webhooks.",
+    "provider": "Welke kassa",
+    "providers": {
+      "square": "Square (testaccount)",
+      "lightspeed-k": "Lightspeed Restaurant (K-Series)",
+      "mplus": "MplusKASSA"
+    },
+    "connectHow": {
+      "square": "Open in het Square Developer Dashboard je applicatie, zet hem op Sandbox en kopieer bij Credentials het Sandbox Access token, en bij Locations het ID van de testlocatie. Het token wordt versleuteld opgeslagen en nooit meer getoond.",
+      "lightspeed-k": "Lightspeed stuurt zelf geen berichten: PlateGuard haalt de open rekeningen op. Plak een access token van de Lightspeed-API (scope orders-api) en het ID van de business location. Gebruik het demo-account van Lightspeed zolang PlateGuard nog geen Lightspeed-partner is.",
+      "mplus": "MplusKASSA stuurt elke bestelling zelf naar PlateGuard. Koppel hier eerst; stel daarna de webhook in Mplus in met het adres dat PlateGuard je geeft."
+    },
+    "locationIds": {
+      "square": "Location ID",
+      "lightspeed-k": "Business location ID"
+    },
+    "liveAccount": "Dit is het echte restaurantaccount, niet het demo-account",
+    "itemsHowLive": "Elk artikel in de kassa staat voor één gerecht. Artikelen verschijnen hier zodra ze een keer zijn aangeslagen.",
+    "noWebhooks": "Deze kassa stuurt zelf geen berichten. PlateGuard haalt de open rekeningen op: gebruik hieronder \"Open bestellingen ophalen\".",
+    "mplusStep1": "Open in MplusKASSA Beheer > Instellingen > Webhooks en voeg een subscription toe.",
+    "mplusStep2": "Plak de URL hieronder als endpoint URL, vul een subscription ID in en vink minstens addSessionLine, updateSessionLine en completeSession aan.",
+    "mplusStep3": "Bedenk een secret key (Base64), vul die in Mplus in en plak dezelfde sleutel hier.",
+    "mplusSecret": "Secret key"
   },
   "incidents": {
     "title": "Incidenten",
@@ -517,5 +550,10 @@
     "card": "Allergenenkaart (PDF)",
     "nextTitle": "Later: keuken en kassa",
     "nextText": "Wil je dat de bediening allergieën per stoel noteert, dat de keuken een allergieticket krijgt en de kok het bord scant? Dat voeg je toe wanneer je zover bent, ook met een koppeling naar je kassa."
+  },
+  "webhooks": {
+    "intro": "Berichten die je kassa uit zichzelf naar PlateGuard stuurt: nieuwe bestellingen en wijzigingen. Hier zie je het adres voor de kassa, en elk bericht dat binnenkwam, met wat PlateGuard ermee deed.",
+    "none": "Er is nog geen kassa gekoppeld. Koppel er eerst een onder Koppelingen; de webhook verschijnt dan hier.",
+    "toIntegrations": "Naar Koppelingen"
   }
 }
