@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { Principal, Role } from '@plateguard/domain';
-import { verifyPin } from '@plateguard/db';
+import { hashPin, verifyPin } from '@plateguard/db';
 import { PrismaService } from '../../common/prisma.service.js';
 
 export interface LocationRow {
@@ -92,6 +92,54 @@ export class AuthRepository {
     return this.prisma.system().staffPin.update({
       where: { userId_locationId: { userId, locationId } },
       data: { failedTries },
+    });
+  }
+
+  emailTaken(email: string): Promise<boolean> {
+    return this.prisma
+      .system()
+      .user.count({ where: { email } })
+      .then((n) => n > 0);
+  }
+
+  slugTaken(slug: string): Promise<boolean> {
+    return this.prisma
+      .system()
+      .location.count({ where: { slug } })
+      .then((n) => n > 0);
+  }
+
+  /**
+   * The free start: a new organization on the free plan with one location, and its owner with a
+   * PIN there. One transaction, so a failed step leaves nothing half made.
+   */
+  async createRestaurant(input: {
+    restaurant: string;
+    slug: string;
+    name: string;
+    email: string;
+    pin: string;
+  }): Promise<{ userId: string; locationId: string }> {
+    const pinHash = await hashPin(input.pin);
+    return this.prisma.system().$transaction(async (tx) => {
+      const org = await tx.organization.create({ data: { name: input.restaurant, plan: 'free' } });
+      const location = await tx.location.create({
+        data: {
+          organizationId: org.id,
+          name: input.restaurant,
+          slug: input.slug,
+          defaultLocale: 'nl',
+          kitchenLocale: 'nl',
+        },
+      });
+      const user = await tx.user.create({
+        data: { name: input.name, email: input.email, locale: 'nl' },
+      });
+      await tx.roleAssignment.create({
+        data: { userId: user.id, organizationId: org.id, locationId: null, role: 'OWNER' },
+      });
+      await tx.staffPin.create({ data: { userId: user.id, locationId: location.id, pinHash } });
+      return { userId: user.id, locationId: location.id };
     });
   }
 }

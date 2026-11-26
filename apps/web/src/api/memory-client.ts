@@ -278,6 +278,11 @@ export function createMemoryClient(
         me: ME,
       };
     },
+    signup: async () => ({
+      token: 'memory',
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      me: ME,
+    }),
     me: async () => ME,
     guestMenu: async (slug, _, avoid) => {
       if (slug !== 'demo') throw new ApiError(404, 'LOCATION_NOT_FOUND');

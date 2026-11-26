@@ -8,7 +8,8 @@
     "webhooks": "Webhooks",
     "staff": "Staff",
     "dashboard": "Dashboard",
-    "incidents": "Incidents"
+    "incidents": "Incidents",
+    "start": "Get started"
   },
   "comingSoon": "This section is built in a later phase.",
   "filter": "Filter",
@@ -479,5 +480,28 @@
     "save": "{count, plural, one {Add # dish to the draft} other {Add # dishes to the draft}}",
     "cancel": "Discard",
     "done": "{count, plural, one {# dish added to the menu draft.} other {# dishes added to the menu draft.}} Check the new ingredients under Ingredients before you publish."
+  },
+  "start": {
+    "title": "Get started",
+    "intro": "From your menu to a guest menu and an allergen card, in four steps.",
+    "done": "Done",
+    "step1": "Read in your menu",
+    "step1Text": "Upload a photo or PDF of your menu.",
+    "step1Done": "{count, plural, one {# dish is in your recipes.} other {# dishes are in your recipes.}}",
+    "step2": "Check the allergens",
+    "step2Text": "Ingredients read from your menu are not checked yet. Until you check them the guest sees 'unknown', never 'safe'.",
+    "step2Open": "{count, plural, one {# point left to check.} other {# points left to check.}}",
+    "step2Go": "Go to recipes",
+    "step3": "Publish the menu",
+    "step3Text": "Guests and staff only see the published version.",
+    "step3Go": "Go to menus",
+    "step4": "Share with guests",
+    "step4Text": "Put the link in a QR code on the table, and print the allergen card for the till.",
+    "guestLink": "Your guest menu",
+    "copy": "Copy link",
+    "copied": "Copied",
+    "card": "Allergen card (PDF)",
+    "nextTitle": "Later: kitchen and POS",
+    "nextText": "Want the waiter to record allergies per seat, the kitchen to get an allergy ticket and the cook to scan the plate? Add that when you are ready, with a link to your POS too."
   }
 }

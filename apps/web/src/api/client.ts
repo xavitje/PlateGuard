@@ -24,6 +24,7 @@ import type {
   LoginResponse,
   PinLogin,
   SignInLocationResponse,
+  Signup,
   AlertResponse,
   FloorResponse,
   MeResponse,
@@ -137,6 +138,8 @@ export interface ServiceClient {
   kitchen: KitchenClient;
   signInLocation(slug: string): Promise<SignInLocationResponse>;
   loginPin(body: PinLogin): Promise<LoginResponse>;
+  /** The free start: a new restaurant and its owner, signed in. */
+  signup(body: Signup): Promise<LoginResponse>;
   me(): Promise<MeResponse>;
   /** Public: the published allergen menu of a location, judged for what the guest avoids. */
   guestMenu(slug: string, locale: string, avoid: string[]): Promise<GuestMenuResponse>;
@@ -289,6 +292,7 @@ export function createHttpClient(
     },
     signInLocation: (slug) => call(`/auth/locations/${encodeURIComponent(slug)}`),
     loginPin: (body) => call('/auth/pin', { method: 'POST', body }),
+    signup: (body) => call('/auth/signup', { method: 'POST', body }),
     me: () => call('/me'),
     guestMenu: (slug, locale, avoid) =>
       call(

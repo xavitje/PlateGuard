@@ -4,7 +4,7 @@ import { hashPin, verifyPin } from '@plateguard/db';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaService } from '../src/common/prisma.service.js';
 import { AuthRepository } from '../src/modules/auth/auth.repository.js';
-import { AuthService, MAX_PIN_TRIES } from '../src/modules/auth/auth.service.js';
+import { AuthService, MAX_PIN_TRIES, slugify } from '../src/modules/auth/auth.service.js';
 import { issueToken, readToken, SESSION_SECONDS } from '../src/modules/auth/token.js';
 
 process.env.JWT_SECRET ??= 'test-secret-at-least-16';
@@ -36,6 +36,52 @@ describe('PIN hashes', () => {
     expect(await verifyPin('4321', a)).toBe(false);
     expect(await hashPin('1234')).not.toBe(a);
     await expect(hashPin('12')).rejects.toThrow();
+  });
+});
+
+describe('guest menu address from the restaurant name', () => {
+  it('keeps letters and digits, drops accents and signs', () => {
+    expect(slugify("Café 't Hoekje")).toBe('cafe-t-hoekje');
+    expect(slugify('  Brasserie   De Haven 2 ')).toBe('brasserie-de-haven-2');
+    expect(slugify('***')).toBe('restaurant');
+  });
+});
+
+describe.skipIf(!process.env.DATABASE_URL)('free start', () => {
+  const prisma = new PrismaService();
+  const auth = new AuthService(new AuthRepository(prisma));
+  const tag = randomUUID().slice(0, 8);
+  afterAll(() => prisma.onModuleDestroy());
+
+  it('makes the restaurant on the free plan and signs the owner in there', async () => {
+    const email = `owner-${tag}@example.com`;
+    const res = await auth.signup({
+      restaurant: `Bistro ${tag}`,
+      name: 'Rafi',
+      email,
+      pin: '4826',
+    });
+    const here = res.me.locations[0]!;
+    expect(here.slug).toBe(`bistro-${tag}`);
+    expect(here.permissions).toEqual(expect.arrayContaining(['menu.edit', 'menu.publish']));
+    expect(readToken(res.token)).toMatchObject({ loc: here.id });
+    const org = await prisma
+      .system()
+      .organization.findUnique({ where: { id: here.organizationId } });
+    expect(org?.plan).toBe('free');
+    const again = await auth.loginWithPin({ locationId: here.id, name: 'rafi', pin: '4826' });
+    expect(again.me.user.id).toBe(res.me.user.id);
+
+    const second = await auth.signup({
+      restaurant: `Bistro ${tag}`,
+      name: 'Sam',
+      email: `other-${tag}@example.com`,
+      pin: '1111',
+    });
+    expect(second.me.locations[0]?.slug).toBe(`bistro-${tag}-2`);
+    await expect(
+      auth.signup({ restaurant: 'X', name: 'Kim', email, pin: '1111' }),
+    ).rejects.toMatchObject({ status: 409, response: { code: 'EMAIL_TAKEN' } });
   });
 });
 

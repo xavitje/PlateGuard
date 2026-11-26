@@ -1,0 +1,71 @@
+{
+  "nav": {
+    "how": "Hoe het werkt",
+    "plans": "Prijzen",
+    "signIn": "Inloggen",
+    "start": "Gratis beginnen"
+  },
+  "hero": {
+    "title": "Je menukaart erin, een allergenenkaart eruit",
+    "lead": "Upload een foto of PDF van je kaart. PlateGuard leest de gerechten en ingrediënten, jij kijkt ze na, en je hebt een gastmenu waarop gasten hun allergieën aanklikken plus een allergenenkaart als PDF. Gratis om te beginnen.",
+    "start": "Gratis beginnen",
+    "sample": "Bekijk een voorbeeldmenu",
+    "note": "Geen kassakoppeling nodig. Geen creditcard.",
+    "cardTitle": "Gast vermijdt gluten en melk",
+    "cardSub": "Gastmenu, Brasserie De Haven",
+    "dish1": "Tomatensoep",
+    "dish2": "Biefstuk met jus en friet",
+    "dish2Why": "Zonder jus: de bediening weet wat er aan moet",
+    "dish3": "Paddenstoelenrisotto",
+    "dish4": "Dagspecial"
+  },
+  "how": {
+    "title": "Begin met wat je al hebt",
+    "lead": "Je hoeft geen recepten over te typen. Je kaart is het begin.",
+    "step1": "Kaart uploaden",
+    "step1Text": "Een foto of PDF van je menukaart. PlateGuard haalt de gerechten, onderdelen en ingrediënten eruit, met de allergenen die erin zitten.",
+    "step2": "Nakijken",
+    "step2Text": "Jij of je chef bevestigt per ingrediënt de allergenen. Tot dat gebeurd is ziet de gast 'onbekend', nooit 'veilig'.",
+    "step3": "Delen",
+    "step3Text": "Een QR-code op tafel naar je gastmenu, en de allergenenkaart als PDF bij de kassa. Elke versie met datum."
+  },
+  "why": {
+    "title": "Bescherming, zonder extra werk voor de bediening",
+    "nvwa": "Klaar voor de NVWA",
+    "nvwaText": "Je moet kunnen laten zien welke allergenen in je gerechten zitten. De allergenenkaart is dat overzicht, per gepubliceerde versie, klaar om te printen.",
+    "cost": "Eén incident kost meer",
+    "costText": "Een allergische reactie kost een gast zijn avond en jou je naam, een claim of een boete. Eén incident kost meer dan een jaar PlateGuard.",
+    "calm": "Rustig in de bediening",
+    "calmText": "Bij gasten zonder allergie verandert er niets. Alleen bij een allergietafel vraagt PlateGuard iets van de ober, en zegt per gerecht wat er moet gebeuren."
+  },
+  "plans": {
+    "title": "Begin gratis, groei als je wilt",
+    "free": "Gratis",
+    "freePrice": "€0",
+    "freeText": "Gastmenu met allergenenfilter, allergenenkaart als PDF en je kaart inlezen uit een foto of PDF. Geen kassakoppeling.",
+    "kitchen": "Keuken",
+    "kitchenText": "Gratis plus allergieën per stoel, een allergieticket in de keuken, de kok scant het bord en alles komt in het logboek.",
+    "full": "Compleet",
+    "fullText": "Keuken plus koppeling met je kassa, keukenscherm, incidenten en een dashboard per locatie.",
+    "onRequest": "Prijs op aanvraag",
+    "cta": "Gratis beginnen"
+  },
+  "footer": {
+    "disclaimer": "PlateGuard ondersteunt je allergenenproces. De verantwoordelijkheid blijft bij de zaak.",
+    "eu": "Gehost in de EU"
+  },
+  "signup": {
+    "title": "Gratis beginnen",
+    "lead": "Maak je restaurant aan. Daarna lees je je kaart in.",
+    "restaurant": "Naam van je restaurant",
+    "name": "Je voornaam",
+    "email": "E-mailadres",
+    "pin": "Kies een pincode",
+    "pinHint": "4 tot 6 cijfers. Je logt in met je voornaam en deze pincode, net als je personeel straks.",
+    "submit": "Restaurant aanmaken",
+    "emailTaken": "Er bestaat al een account met dit e-mailadres. Log in met je voornaam en pincode.",
+    "error": "Aanmaken lukte niet. Probeer het opnieuw.",
+    "haveAccount": "Al een account?",
+    "terms": "Gratis zolang je wilt: gastmenu en allergenenkaart. Keuken en kassakoppeling kun je later toevoegen."
+  }
+}
