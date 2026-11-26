@@ -13,6 +13,7 @@ type Reads =
   | 'menuDraft'
   | 'floors'
   | 'staff'
+  | 'staffCandidates'
   | 'settings'
   | 'profile'
   | 'locations'

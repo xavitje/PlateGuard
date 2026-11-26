@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { StaffInput, StaffMember } from '@plateguard/contracts';
+import type { StaffCandidate, StaffInput, StaffLink, StaffMember } from '@plateguard/contracts';
 import { can, type Principal } from '@plateguard/domain';
 import type { TenantContext } from '../auth/permissions.js';
 import { StaffRepository } from './staff.repository.js';
@@ -43,6 +43,27 @@ export class StaffService {
     if (id === user.userId) throw new ForbiddenException({ code: 'STAFF_SELF' });
     this.mayGrant(user, location, [...input.roles, ...member.roles]);
     await this.repo.update(ctx, location, id, input);
+    return this.list(ctx, location);
+  }
+
+  candidates(ctx: TenantContext, location: Location): Promise<StaffCandidate[]> {
+    return this.repo.candidates(ctx, location);
+  }
+
+  /** Someone who works at another location of the restaurant starts here too: one person, one history. */
+  async link(
+    ctx: TenantContext,
+    user: Principal,
+    location: Location,
+    id: string,
+    input: StaffLink,
+  ) {
+    const person = (await this.repo.candidates(ctx, location)).find((c) => c.id === id);
+    if (!person) throw new NotFoundException({ code: 'STAFF_NOT_FOUND' });
+    this.mayGrant(user, location, input.roles);
+    if (await this.repo.pinTaken(ctx, location, person.name, input.pin))
+      throw new ConflictException({ code: 'PIN_TAKEN' });
+    await this.repo.link(ctx, location, id, input);
     return this.list(ctx, location);
   }
 

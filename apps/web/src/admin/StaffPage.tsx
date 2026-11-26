@@ -32,6 +32,8 @@ export function StaffPage() {
               {m.locked
                 ? t('admin:staff.locked')
                 : [...m.orgRoles, ...m.roles].map((r) => t(`admin:staff.roles.${r}`)).join(', ')}
+              {m.elsewhere.length > 0 &&
+                ` · ${t('admin:staff.alsoAt', { places: m.elsewhere.join(', ') })}`}
             </span>
           ),
         }))}
@@ -70,19 +72,25 @@ function StaffForm({
   const [roles, setRoles] = useState<Role[]>(member?.roles ?? ['WAITER']);
   const [pin, setPin] = useState('');
   const [confirmRemove, setConfirmRemove] = useState(false);
+  // Someone of another location of the restaurant, brought here instead of made new.
+  const candidates = useAdmin('staffCandidates').data ?? [];
+  const [from, setFrom] = useState('');
+  const linked = candidates.find((c) => c.id === from);
   const create = useAdminSave((c, l) => c.createStaff(l, { name, roles, pin: pin || undefined }));
+  const link = useAdminSave((c, l, id: string) => c.linkStaff(l, id, { roles, pin }));
   const update = useAdminSave((c, l, id: string) => c.updateStaff(l, id, { name, roles }));
   const setPinM = useAdminSave((c, l, id: string) => c.setStaffPin(l, id, pin));
   const remove = useAdminSave((c, l, id: string) => c.removeStaff(l, id));
   const grantable = ROLES.filter((r) => r !== 'OWNER' || can('staff.manage.owners'));
   const pinValid = /^\d{4,6}$/.test(pin);
-  const error = create.error ?? update.error ?? setPinM.error ?? remove.error;
+  const error = create.error ?? link.error ?? update.error ?? setPinM.error ?? remove.error;
   return (
     <form
       className="grid gap-4"
       onSubmit={(e) => {
         e.preventDefault();
-        if (!member)
+        if (linked) link.mutate([linked.id], { onSuccess: () => onDone(linked.id) });
+        else if (!member)
           create.mutate([], {
             onSuccess: (list) => onDone(list.find((m) => m.name === name)?.id ?? null),
           });
@@ -91,15 +99,29 @@ function StaffForm({
     >
       <h2 className="text-xl font-semibold">{member?.name ?? t('admin:staff.new')}</h2>
       {self && <p className="text-[13.5px] text-soft">{t('admin:staff.self')}</p>}
-      <Field label={t('admin:fields.name')}>
-        <input
-          className={input}
-          required
-          disabled={self}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </Field>
+      {!member && candidates.length > 0 && (
+        <Field label={t('admin:staff.from')} hint={t('admin:staff.fromHint')}>
+          <select className={input} value={from} onChange={(e) => setFrom(e.target.value)}>
+            <option value="">{t('admin:staff.fromNone')}</option>
+            {candidates.map((c) => (
+              <option key={c.id} value={c.id}>
+                {`${c.name} (${c.locations.join(', ')})`}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
+      {!linked && (
+        <Field label={t('admin:fields.name')}>
+          <input
+            className={input}
+            required
+            disabled={self}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </Field>
+      )}
       <fieldset className="grid gap-1.5">
         <legend className="mb-1 text-[13.5px] font-medium text-soft">
           {t('admin:staff.rolesHere')}
@@ -123,11 +145,15 @@ function StaffForm({
         )}
       </fieldset>
       {!member && (
-        <Field label={t('admin:staff.pin')} hint={t('admin:staff.pinHint')}>
+        <Field
+          label={t('admin:staff.pin')}
+          hint={linked ? t('admin:staff.pinHereHint') : t('admin:staff.pinHint')}
+        >
           <input
             className={input}
             inputMode="numeric"
             autoComplete="off"
+            required={!!linked}
             pattern="\d{4,6}"
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -141,9 +167,11 @@ function StaffForm({
             className={primary}
             disabled={
               create.isPending ||
+              link.isPending ||
               update.isPending ||
               roles.length === 0 ||
-              (!member && !!pin && !pinValid)
+              (!member && !!pin && !pinValid) ||
+              (!!linked && !pinValid)
             }
           >
             {t('admin:save')}
