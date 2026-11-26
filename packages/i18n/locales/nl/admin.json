@@ -8,7 +8,8 @@
     "webhooks": "Webhooks",
     "staff": "Personeel",
     "dashboard": "Dashboard",
-    "incidents": "Incidenten"
+    "incidents": "Incidenten",
+    "restaurant": "Restaurant"
   },
   "comingSoon": "Dit onderdeel komt in een latere fase.",
   "filter": "Filteren",
@@ -479,5 +480,18 @@
     "save": "{count, plural, one {# gerecht aan het concept toevoegen} other {# gerechten aan het concept toevoegen}}",
     "cancel": "Weggooien",
     "done": "{count, plural, one {# gerecht toegevoegd aan het menuconcept.} other {# gerechten toegevoegd aan het menuconcept.}} Controleer de nieuwe ingrediënten onder Ingrediënten voordat je publiceert."
+  },
+  "restaurant": {
+    "intro": "Hoe het restaurant heet, waar het zit en hoe het eruitziet. Gasten zien de naam op de menukaart.",
+    "name": "Naam",
+    "address": "Adres",
+    "addressHint": "Straat, huisnummer en plaats.",
+    "photo": "Foto",
+    "photoAlt": "Foto van {name}",
+    "photoAdd": "Foto kiezen",
+    "photoChange": "Andere foto",
+    "photoRemove": "Foto weghalen",
+    "photoError": "Deze foto kon niet worden gelezen. Kies een JPEG, PNG of WebP.",
+    "saved": "Opgeslagen."
   }
 }

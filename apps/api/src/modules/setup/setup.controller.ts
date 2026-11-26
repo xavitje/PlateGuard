@@ -3,11 +3,13 @@ import {
   FloorInputZ,
   FloorLayoutZ,
   FloorOrderZ,
+  LocationProfileZ,
   StaffInputZ,
   StaffPinZ,
   TableInputZ,
   type FloorInput,
   type FloorLayout,
+  type LocationProfile,
   type StaffInput,
   type TableInput,
 } from '@plateguard/contracts';
@@ -22,6 +24,7 @@ import {
   type TenantContext,
 } from '../auth/permissions.js';
 import { FloorplanService } from './floorplan.service.js';
+import { ProfileService } from './profile.service.js';
 import { StaffService } from './staff.service.js';
 
 const IdPipe = new ZodPipe(z.uuid());
@@ -146,5 +149,26 @@ export class StaffController {
     @Param('id', IdPipe) id: string,
   ) {
     return this.staff.remove(ctx, user, req.location!, id);
+  }
+}
+
+/** The restaurant's name, address and photo. Only an owner changes them. */
+@Controller('locations/:locationId/admin/profile')
+@RequirePermission('org.locations.manage')
+export class ProfileController {
+  constructor(private readonly profile: ProfileService) {}
+
+  @Get()
+  get(@Tenant() ctx: TenantContext, @Param('locationId') locationId: string) {
+    return this.profile.get(ctx, locationId);
+  }
+
+  @Put()
+  save(
+    @Tenant() ctx: TenantContext,
+    @Param('locationId') locationId: string,
+    @Body(new ZodPipe(LocationProfileZ)) body: LocationProfile,
+  ) {
+    return this.profile.save(ctx, locationId, body);
   }
 }

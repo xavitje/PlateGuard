@@ -2,6 +2,7 @@ import type { Permission } from '@plateguard/domain';
 
 /** The admin sections, in the order they are shown in the sidebar and the strip on a phone. */
 export const ADMIN_SECTIONS: { slug: string; key: string; permission?: Permission }[] = [
+  { slug: 'restaurant', key: 'admin:nav.restaurant', permission: 'org.locations.manage' },
   { slug: 'recipes', key: 'admin:nav.recipes', permission: 'menu.edit' },
   { slug: 'menus', key: 'admin:nav.menus', permission: 'menu.edit' },
   { slug: 'floor-plan', key: 'admin:nav.floorPlan', permission: 'floorplan.edit' },
