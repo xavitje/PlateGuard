@@ -87,3 +87,24 @@ describe('LoginPage', () => {
     expect(placeSlug('   ')).toBe('');
   });
 });
+
+describe('LoginPage for a platform admin', () => {
+  it('goes straight back to the platform while that session lasts', async () => {
+    localStorage.setItem('pg.platform', 'p-token');
+    const router = createMemoryRouter(
+      [
+        { path: '/login', element: <LoginPage /> },
+        { path: '/platform', element: <p>Platform screen</p> },
+      ],
+      { initialEntries: ['/login'] },
+    );
+    render(
+      <I18nProvider locale="en">
+        <ServiceProvider client={createMemoryClient()} signedIn={false}>
+          <RouterProvider router={router} />
+        </ServiceProvider>
+      </I18nProvider>,
+    );
+    expect(await screen.findByText('Platform screen')).toBeTruthy();
+  });
+});

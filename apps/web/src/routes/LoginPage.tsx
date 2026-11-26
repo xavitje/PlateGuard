@@ -1,10 +1,10 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router';
+import { Navigate, useLocation, useNavigate } from 'react-router';
 import { ApiError } from '../api/client';
 import { useClient, useSession } from '../service/ServiceProvider';
-import { deviceLocation, rememberLocation, setPlatformToken } from '../session';
+import { deviceLocation, getPlatformToken, rememberLocation, setPlatformToken } from '../session';
 import { platformApi } from '../api/platform';
 import { HomeRedirect } from '../shell/HomeRedirect';
 
@@ -60,6 +60,8 @@ export function LoginPage() {
   });
 
   if (session.signedIn) return <HomeRedirect />;
+  // Already signed in to the platform on this device: straight back to it.
+  if (getPlatformToken()) return <Navigate to="/platform" replace />;
 
   const choosing = !isEmail && (!slug || unknownPlace);
   const ready = isEmail
