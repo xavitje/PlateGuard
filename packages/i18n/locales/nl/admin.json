@@ -9,7 +9,8 @@
     "staff": "Personeel",
     "dashboard": "Dashboard",
     "incidents": "Incidenten",
-    "restaurant": "Restaurant"
+    "restaurant": "Restaurant",
+    "start": "Aan de slag"
   },
   "comingSoon": "Dit onderdeel komt in een latere fase.",
   "filter": "Filteren",
@@ -493,5 +494,28 @@
     "photoRemove": "Foto weghalen",
     "photoError": "Deze foto kon niet worden gelezen. Kies een JPEG, PNG of WebP.",
     "saved": "Opgeslagen."
+  },
+  "start": {
+    "title": "Aan de slag",
+    "intro": "Van je menukaart naar een gastmenu en een allergenenkaart, in vier stappen.",
+    "done": "Klaar",
+    "step1": "Kaart inlezen",
+    "step1Text": "Upload een foto of PDF van je menukaart.",
+    "step1Done": "{count, plural, one {# gerecht staat in je receptuur.} other {# gerechten staan in je receptuur.}}",
+    "step2": "Allergenen nakijken",
+    "step2Text": "Ingelezen ingrediënten zijn nog niet gecontroleerd. Tot je ze nakijkt ziet de gast 'onbekend', nooit 'veilig'.",
+    "step2Open": "{count, plural, one {Nog # punt om na te kijken.} other {Nog # punten om na te kijken.}}",
+    "step2Go": "Naar receptuur",
+    "step3": "Kaart publiceren",
+    "step3Text": "Gasten en bediening zien alleen de gepubliceerde versie.",
+    "step3Go": "Naar kaarten",
+    "step4": "Delen met gasten",
+    "step4Text": "Zet de link in een QR-code op tafel, en print de allergenenkaart voor bij de kassa.",
+    "guestLink": "Je gastmenu",
+    "copy": "Kopieer link",
+    "copied": "Gekopieerd",
+    "card": "Allergenenkaart (PDF)",
+    "nextTitle": "Later: keuken en kassa",
+    "nextText": "Wil je dat de bediening allergieën per stoel noteert, dat de keuken een allergieticket krijgt en de kok het bord scant? Dat voeg je toe wanneer je zover bent, ook met een koppeling naar je kassa."
   }
 }

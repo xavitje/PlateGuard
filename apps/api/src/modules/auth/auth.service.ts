@@ -12,6 +12,7 @@ import type {
   MeResponse,
   PinLogin,
   SignInLocationResponse,
+  Signup,
 } from '@plateguard/contracts';
 import { allowedLocationIds, can, PERMISSIONS, type Principal } from '@plateguard/domain';
 import { firstNameKey } from './first-name.js';
@@ -115,4 +116,34 @@ export class AuthService {
     const session = issueToken({ sub: principal.userId, loc: location.id });
     return { ...session, me: await this.me(principal, location.id) };
   }
+
+  /**
+   * The free start: makes the restaurant and signs the owner in on it. The guest menu address
+   * comes from the restaurant name; a taken one gets a short number behind it.
+   */
+  async signup(input: Signup): Promise<LoginResponse> {
+    if (await this.auth.emailTaken(input.email))
+      throw new ConflictException({ code: 'EMAIL_TAKEN' });
+    const base = slugify(input.restaurant);
+    let slug = base;
+    for (let n = 2; await this.auth.slugTaken(slug); n++) slug = `${base}-${n}`;
+    const { userId, locationId } = await this.auth.createRestaurant({ ...input, slug });
+    const principal = await this.auth.findPrincipal(userId);
+    if (!principal) throw new ForbiddenException({ code: 'FORBIDDEN' });
+    const session = issueToken({ sub: userId, loc: locationId });
+    return { ...session, me: await this.me(principal, locationId) };
+  }
+}
+
+/** "Café 't Hoekje" -> "cafe-t-hoekje": the guest menu address. */
+export function slugify(name: string): string {
+  const slug = name
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60)
+    .replace(/-+$/, '');
+  return slug || 'restaurant';
 }

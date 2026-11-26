@@ -162,6 +162,18 @@ export const PinLoginZ = z.strictObject({
 });
 export type PinLogin = z.infer<typeof PinLoginZ>;
 
+/**
+ * POST /auth/signup: the free start. A restaurant owner creates the restaurant and signs in
+ * as its owner, with first name and PIN like everyone else. The email is the owner's contact.
+ */
+export const SignupZ = z.strictObject({
+  restaurant: z.string().trim().min(2).max(120),
+  name: z.string().trim().min(1).max(80),
+  email: z.string().trim().toLowerCase().max(200).pipe(z.email()),
+  pin: z.string().regex(/^\d{4,6}$/),
+});
+export type Signup = z.infer<typeof SignupZ>;
+
 export interface LoginResponse {
   token: string;
   expiresAt: string;

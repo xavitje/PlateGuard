@@ -1,0 +1,71 @@
+{
+  "nav": {
+    "how": "How it works",
+    "plans": "Plans",
+    "signIn": "Sign in",
+    "start": "Start free"
+  },
+  "hero": {
+    "title": "Your menu in, an allergen menu out",
+    "lead": "Upload a photo or PDF of your menu. PlateGuard reads the dishes and ingredients, you check them, and you have a guest menu where guests tick their allergies plus an allergen card as a PDF. Free to start.",
+    "start": "Start free",
+    "sample": "See a sample menu",
+    "note": "No POS link needed. No credit card.",
+    "cardTitle": "Guest avoids gluten and milk",
+    "cardSub": "Guest menu, Brasserie De Haven",
+    "dish1": "Tomato soup",
+    "dish2": "Steak, jus and fries",
+    "dish2Why": "Without the jus: the waiter knows what to change",
+    "dish3": "Mushroom risotto",
+    "dish4": "Daily special"
+  },
+  "how": {
+    "title": "Start with what you already have",
+    "lead": "No retyping recipes. Your menu is the start.",
+    "step1": "Upload your menu",
+    "step1Text": "A photo or PDF of your menu. PlateGuard picks out the dishes, parts and ingredients, with the allergens in them.",
+    "step2": "Check it",
+    "step2Text": "You or your chef confirm the allergens per ingredient. Until then the guest sees 'unknown', never 'safe'.",
+    "step3": "Share it",
+    "step3Text": "A QR code on the table to your guest menu, and the allergen card as a PDF at the till. Every version dated."
+  },
+  "why": {
+    "title": "Protection, without extra work for the floor",
+    "nvwa": "Ready for an inspection",
+    "nvwaText": "You must be able to show which allergens are in your dishes. The allergen card is that overview, per published version, ready to print.",
+    "cost": "One incident costs more",
+    "costText": "An allergic reaction costs a guest their evening and you your name, a claim or a fine. One incident costs more than a year of PlateGuard.",
+    "calm": "Calm during service",
+    "calmText": "For guests without an allergy nothing changes. Only at an allergy table does PlateGuard ask the waiter for anything, and it says per dish what to do."
+  },
+  "plans": {
+    "title": "Start free, grow when you want",
+    "free": "Free",
+    "freePrice": "€0",
+    "freeText": "Guest menu with an allergen filter, the allergen card as a PDF, and reading your menu from a photo or PDF. No POS link.",
+    "kitchen": "Kitchen",
+    "kitchenText": "Free plus allergies per seat, an allergy ticket in the kitchen, the cook scans the plate and everything is logged.",
+    "full": "Complete",
+    "fullText": "Kitchen plus a link with your POS, a kitchen display, incidents and a dashboard per location.",
+    "onRequest": "Price on request",
+    "cta": "Start free"
+  },
+  "footer": {
+    "disclaimer": "PlateGuard supports your allergen process. It does not take over the venue's responsibility.",
+    "eu": "Hosted in the EU"
+  },
+  "signup": {
+    "title": "Start free",
+    "lead": "Create your restaurant. Then read in your menu.",
+    "restaurant": "Restaurant name",
+    "name": "Your first name",
+    "email": "Email address",
+    "pin": "Choose a PIN",
+    "pinHint": "4 to 6 digits. You sign in with your first name and this PIN, like your staff will.",
+    "submit": "Create restaurant",
+    "emailTaken": "There is already an account with this email address. Sign in with your first name and PIN.",
+    "error": "That did not work. Please try again.",
+    "haveAccount": "Already have an account?",
+    "terms": "Free for as long as you like: guest menu and allergen card. Add the kitchen and POS link later."
+  }
+}

@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Req } from '@nestjs/common';
-import { PinLoginZ, type PinLogin } from '@plateguard/contracts';
+import { PinLoginZ, SignupZ, type PinLogin, type Signup } from '@plateguard/contracts';
 import type { Principal } from '@plateguard/domain';
 import { ZodPipe } from '../../common/zod.pipe.js';
 import { AuthService } from './auth.service.js';
@@ -24,5 +24,12 @@ export class AuthController {
   @HttpCode(200)
   pin(@Body(new ZodPipe(PinLoginZ)) body: PinLogin) {
     return this.auth.loginWithPin(body);
+  }
+
+  /** The free start: a new restaurant with its owner, signed in. Public. */
+  @Post('auth/signup')
+  @HttpCode(201)
+  signup(@Body(new ZodPipe(SignupZ)) body: Signup) {
+    return this.auth.signup(body);
   }
 }

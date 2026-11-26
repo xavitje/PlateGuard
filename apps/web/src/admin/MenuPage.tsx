@@ -1,8 +1,7 @@
 import type { MenuDraftResponse } from '@plateguard/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useClient, useLocationId } from '../service/ServiceProvider';
-import { useAdmin, useAdminSave, useCan } from './hooks';
+import { useAdmin, useAdminSave, useAllergenCard, useCan } from './hooks';
 import { button, primary, SaveError, Toggle } from './ui';
 import { PageHeader } from '../shell/TabsLayout';
 
@@ -23,23 +22,7 @@ export function MenuPage() {
       ),
   );
   const publish = useAdminSave((c, l) => c.publishMenu(l));
-  const client = useClient();
-  const loc = useLocationId();
-  const [cardError, setCardError] = useState(false);
-  /** Opens the PDF in a new tab. The tab opens at once, so the browser does not block it. */
-  const openCard = async (versionId: string, locale: string) => {
-    const tab = window.open('', '_blank');
-    setCardError(false);
-    try {
-      const blob = await client.admin.allergenCard(loc!, versionId, locale);
-      const url = URL.createObjectURL(blob);
-      if (tab) tab.location.href = url;
-      else window.location.assign(url);
-    } catch {
-      tab?.close();
-      setCardError(true);
-    }
-  };
+  const { open: openCard, error: cardError } = useAllergenCard();
   const [confirming, setConfirming] = useState(false);
   if (!draft) return <p className="text-soft">{t('common:loading')}</p>;
 

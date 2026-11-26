@@ -1,5 +1,6 @@
 import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Permission } from '@plateguard/domain';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AdminClient } from '../api/client';
 import { useClient, useLocationId, useMe } from '../service/ServiceProvider';
@@ -71,4 +72,28 @@ export function useAdminSave<A extends unknown[], R>(
         qc.invalidateQueries({ queryKey: ['menu', loc] }),
       ]),
   });
+}
+
+/**
+ * Opens the allergen card PDF of a menu version in a new tab. The tab opens at once, so the
+ * browser does not block it; the PDF follows when it is made.
+ */
+export function useAllergenCard() {
+  const client = useClient();
+  const loc = useLocationId();
+  const [error, setError] = useState(false);
+  const open = async (versionId: string, locale: string) => {
+    const tab = window.open('', '_blank');
+    setError(false);
+    try {
+      const blob = await client.admin.allergenCard(loc!, versionId, locale);
+      const url = URL.createObjectURL(blob);
+      if (tab) tab.location.href = url;
+      else window.location.assign(url);
+    } catch {
+      tab?.close();
+      setError(true);
+    }
+  };
+  return { open, error };
 }
