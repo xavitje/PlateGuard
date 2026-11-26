@@ -5,6 +5,8 @@ export interface SessionClaims {
   sub: string;
   loc: string;
   exp: number;
+  /** A platform admin who opened this restaurant as its owner (their platform_admin id). */
+  adm?: string;
 }
 
 /** One shift. After that the device asks for the PIN again. */
@@ -24,8 +26,9 @@ const mac = (data: string, key: string) => createHmac('sha256', key).update(data
 export function issueToken(
   claims: Omit<SessionClaims, 'exp'>,
   now = Date.now(),
+  seconds = SESSION_SECONDS,
 ): { token: string; expiresAt: string } {
-  return sign({ ...claims }, SESSION_SECONDS, now);
+  return sign({ ...claims }, seconds, now);
 }
 
 /** The claims of a valid, unexpired shift token; null for anything else, a platform token too. */
@@ -33,6 +36,7 @@ export function readToken(token: string, now = Date.now()): SessionClaims | null
   const claims = verify(token, now);
   if (!claims || claims.aud !== undefined) return null;
   if (typeof claims.sub !== 'string' || typeof claims.loc !== 'string') return null;
+  if (claims.adm !== undefined && typeof claims.adm !== 'string') return null;
   return claims as unknown as SessionClaims;
 }
 

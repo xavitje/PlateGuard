@@ -27,6 +27,8 @@ export interface AuthedRequest {
   tenant?: TenantContext;
   /** The location a PIN session is bound to. Absent for the development header. */
   sessionLocation?: string;
+  /** Email of the platform admin who opened this restaurant as its owner. */
+  platformAdmin?: string;
 }
 
 /** The tenant of a /locations/:locationId route, as set by SessionGuard. */

@@ -200,9 +200,11 @@ model User {
   locale       String  @default("en")
   passwordHash String? @map("password_hash")
 
-  roles      RoleAssignment[]
-  pins       StaffPin[]
-  alertReads AlertRead[]
+  roles         RoleAssignment[]
+  pins          StaffPin[]
+  alertReads    AlertRead[]
+  /// Set when this is the stand-in a platform admin works as inside a restaurant.
+  platformAdmin PlatformAdmin?
 
   @@map("app_user")
 }
@@ -267,6 +269,11 @@ model PlatformAdmin {
   lockedUntil  DateTime? @map("locked_until")
   lastLoginAt  DateTime? @map("last_login_at")
   createdAt    DateTime  @default(now()) @map("created_at")
+  /// The app_user this admin acts as when opening a restaurant as its owner: no roles, no PIN,
+  /// made on the first open. What they do there is recorded under this user.
+  userId       String?   @unique @map("user_id") @db.Uuid
+
+  user User? @relation(fields: [userId], references: [id])
 
   @@map("platform_admin")
 }

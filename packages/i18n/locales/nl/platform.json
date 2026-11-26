@@ -55,5 +55,9 @@
   },
   "plates30": "{count, plural, one {# bord} other {# borden}} in de laatste 30 dagen",
   "lastActivity": "Laatste bord: {date}",
-  "noActivity": "Nog geen borden"
+  "noActivity": "Nog geen borden",
+  "open": "Openen als eigenaar",
+  "openHint": "Werk twee uur in dit restaurant als eigenaar, zonder hun pincode. Dit komt in het auditlog van het restaurant.",
+  "viewing": "Je bekijkt {name} als platformbeheerder.",
+  "backToPlatform": "Terug naar platform"
 }

@@ -40,6 +40,15 @@ export class SessionGuard implements CanActivate {
     if (userId) {
       const principal = await this.auth.findPrincipal(userId);
       if (!principal) throw new UnauthorizedException({ code: 'AUTH_REQUIRED' });
+      if (claims?.adm) {
+        // A platform admin acting as owner of this one restaurant, for as long as the token runs.
+        const opened = await this.auth.openedByPlatform(claims.adm, userId, claims.loc);
+        if (!opened) throw new UnauthorizedException({ code: 'AUTH_REQUIRED' });
+        principal.grants = [
+          { organizationId: opened.organizationId, locationId: null, role: 'OWNER' },
+        ];
+        req.platformAdmin = opened.email;
+      }
       req.principal = principal;
     }
 

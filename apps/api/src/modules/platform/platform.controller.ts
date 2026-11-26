@@ -25,7 +25,7 @@ import { CurrentPlatformAdmin, PlatformGuard } from './platform.guard.js';
 import { PlatformService } from './platform.service.js';
 import { RestaurantsService } from './restaurants.service.js';
 
-type Admin = { email: string };
+type Admin = { id: string; email: string };
 const uuid = new ParseUUIDPipe();
 
 /** Platform administration: running PlateGuard itself, apart from every restaurant. */
@@ -78,6 +78,13 @@ export class PlatformRestaurantsController {
     @Body(new ZodPipe(PlatformPlanZ)) body: z.infer<typeof PlatformPlanZ>,
   ) {
     return this.restaurants.setPlan(admin.email, id, body.plan);
+  }
+
+  /** Opens the restaurant as its owner, for this admin, for two hours. */
+  @Post('locations/:id/open')
+  @HttpCode(200)
+  open(@CurrentPlatformAdmin() admin: Admin, @Param('id', uuid) id: string) {
+    return this.restaurants.open(admin, id);
   }
 
   @Get('locations/:id/staff')

@@ -28,6 +28,23 @@ export class PlatformRepository {
     return verifyPin(password, hash);
   }
 
+  /**
+   * The app_user this admin acts as inside a restaurant, made on first use. It has no roles and
+   * no PIN, so it opens nothing by itself: only a platform-opened token grants it a restaurant.
+   */
+  async actingUser(adminId: string): Promise<string> {
+    return this.prisma.system().$transaction(async (tx) => {
+      const admin = await tx.platformAdmin.findUniqueOrThrow({
+        where: { id: adminId },
+        select: { userId: true },
+      });
+      if (admin.userId) return admin.userId;
+      const user = await tx.user.create({ data: { name: 'PlateGuard', locale: 'nl' } });
+      await tx.platformAdmin.update({ where: { id: adminId }, data: { userId: user.id } });
+      return user.id;
+    });
+  }
+
   failed(id: string, failedTries: number, lockedUntil: Date | null) {
     return this.prisma.system().platformAdmin.update({
       where: { id },

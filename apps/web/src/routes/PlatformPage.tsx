@@ -76,7 +76,7 @@ export function PlatformPage() {
   );
 }
 
-function PlatformLogin({ onSignedIn }: { onSignedIn: (token: string) => void }) {
+export function PlatformLogin({ onSignedIn }: { onSignedIn: (token: string) => void }) {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

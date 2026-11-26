@@ -45,6 +45,8 @@ export const SeatParamZ = z.coerce.number().int().min(1).max(99);
 // Responses. Plain types: the server builds them, the app reads them.
 
 export interface MeResponse {
+  /** Set when a platform admin opened this restaurant as its owner: their email. */
+  platformAdmin?: string;
   user: { id: string; name: string; locale: string };
   locations: {
     id: string;

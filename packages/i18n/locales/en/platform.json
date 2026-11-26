@@ -55,5 +55,9 @@
   },
   "plates30": "{count, plural, one {# plate} other {# plates}} in the last 30 days",
   "lastActivity": "Last plate: {date}",
-  "noActivity": "No plates yet"
+  "noActivity": "No plates yet",
+  "open": "Open as owner",
+  "openHint": "Work in this restaurant as its owner for two hours, without their PIN. This is recorded in its audit trail.",
+  "viewing": "You are viewing {name} as platform admin.",
+  "backToPlatform": "Back to platform"
 }

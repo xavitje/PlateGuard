@@ -5,10 +5,11 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { PrismaService } from '../src/common/prisma.service.js';
 import { AuthRepository } from '../src/modules/auth/auth.repository.js';
 import { AuthService, MAX_PIN_TRIES } from '../src/modules/auth/auth.service.js';
-import { issuePlatformToken, issueToken } from '../src/modules/auth/token.js';
+import { issuePlatformToken, issueToken, readToken } from '../src/modules/auth/token.js';
+import { SessionGuard } from '../src/modules/auth/session.guard.js';
 import { PlatformGuard } from '../src/modules/platform/platform.guard.js';
 import { lastWeeks, PlatformRepository } from '../src/modules/platform/platform.repository.js';
-import { RestaurantsService } from '../src/modules/platform/restaurants.service.js';
+import { OPEN_SECONDS, RestaurantsService } from '../src/modules/platform/restaurants.service.js';
 import { StaffRepository } from '../src/modules/setup/staff.repository.js';
 
 process.env.JWT_SECRET ??= 'test-secret-at-least-16';
@@ -58,6 +59,7 @@ describe.skipIf(!process.env.DATABASE_URL)('restaurants on request', () => {
     new PlatformRepository(prisma),
     authRepo,
     new StaffRepository(prisma),
+    auth,
   );
   const tag = randomUUID().slice(0, 8);
   const admin = 'rafi@example.com';
@@ -135,6 +137,60 @@ describe.skipIf(!process.env.DATABASE_URL)('restaurants on request', () => {
     expect(after.weeks.at(-1)!.week).toBe(lastWeeks(new Date(), 1)[0]);
     const row = (await platform.list()).find((r) => r.name === `Stats ${tag}`);
     expect(row).toMatchObject({ plates30: 0, lastActivity: null });
+  });
+
+  it('opens a restaurant as its owner, for that admin, that restaurant and a while only', async () => {
+    const admin = await prisma.system().platformAdmin.create({
+      data: { email: `open-${tag}@example.com`, passwordHash: 'x', totpSecret: 'x' },
+    });
+    const [here, there] = await Promise.all(
+      ['Open', 'Other'].map((n, i) =>
+        platform.create(admin.email, {
+          restaurant: `${n} ${tag}`,
+          name: 'Kim',
+          email: `kim${i}-${tag}@example.com`,
+          pin: '4711',
+          plan: 'free',
+        }),
+      ),
+    ).then((lists) =>
+      ['Open', 'Other'].map(
+        (n) => lists.flat().find((r) => r.name === `${n} ${tag}`)!.locations[0]!.id,
+      ),
+    );
+    const before = Date.now();
+    const res = await platform.open(admin, here!);
+    const claims = readToken(res.token)!;
+    expect(claims).toMatchObject({ loc: here, adm: admin.id });
+    expect(claims.exp * 1000).toBeLessThanOrEqual(before + OPEN_SECONDS * 1000 + 1000);
+    expect(res.me).toMatchObject({ platformAdmin: admin.email, user: { name: 'PlateGuard' } });
+    expect(res.me.locations.map((l) => l.id)).toEqual([here]);
+    expect(res.me.locations[0]!.permissions).toContain('staff.manage.owners');
+    // The stand-in is no member: it is not in the staff list and has no PIN.
+    expect((await platform.staffOf(here!)).some((m) => m.id === claims.sub)).toBe(false);
+
+    const guard = new SessionGuard(authRepo);
+    const call = (locationId: string) => {
+      const req = {
+        headers: { authorization: `Bearer ${res.token}` },
+        params: { locationId },
+      } as Record<string, unknown>;
+      const ctx = {
+        switchToHttp: () => ({ getRequest: () => req }),
+      } as unknown as ExecutionContext;
+      return guard.canActivate(ctx).then(() => req);
+    };
+    const req = await call(here!);
+    expect(req).toMatchObject({ platformAdmin: admin.email, tenant: { locationIds: [here] } });
+    await expect(call(there!)).rejects.toMatchObject({ status: 403 });
+
+    const events = await prisma.system().auditEvent.findMany({
+      where: { locationId: here, type: 'platform.restaurant.opened' },
+    });
+    expect(events).toHaveLength(1);
+    // A removed admin's open restaurant closes at once.
+    await prisma.system().platformAdmin.delete({ where: { id: admin.id } });
+    await expect(call(here!)).rejects.toMatchObject({ status: 401 });
   });
 
   it('refuses an unknown restaurant, location or person', async () => {

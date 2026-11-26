@@ -1,7 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createMemoryRouter, RouterProvider } from 'react-router';
+import { createMemoryClient } from '../api/memory-client';
 import { I18nProvider } from '../i18n';
+import { ServiceProvider } from '../service/ServiceProvider';
 import { PlatformPage } from './PlatformPage';
 
 afterEach(() => {
@@ -55,15 +57,32 @@ describe('PlatformPage', () => {
       }
       if (url === '/api/platform/restaurants') return json(200, restaurants);
       if (url.endsWith('/staff')) return json(200, []);
+      if (url === '/api/platform/locations/loc-1/open')
+        return json(200, {
+          token: 'owner-token',
+          expiresAt: '',
+          me: {
+            platformAdmin: 'rafi@example.com',
+            user: { id: 'u', name: 'PlateGuard', locale: 'en' },
+            locations: [],
+          },
+        });
       if (url === '/api/platform/stats') return json(200, stats);
       return json(404, {});
     });
     vi.stubGlobal('fetch', fetch);
+    const router = createMemoryRouter(
+      [
+        { path: '/platform', element: <PlatformPage /> },
+        { path: '/admin', element: <p>Restaurant admin</p> },
+      ],
+      { initialEntries: ['/platform'] },
+    );
     render(
       <I18nProvider locale="en">
-        <QueryClientProvider client={new QueryClient()}>
-          <PlatformPage />
-        </QueryClientProvider>
+        <ServiceProvider client={createMemoryClient()} signedIn={false}>
+          <RouterProvider router={router} />
+        </ServiceProvider>
       </I18nProvider>,
     );
     fireEvent.change(await screen.findByLabelText('Email'), {
@@ -107,7 +126,15 @@ describe('PlatformPage', () => {
     const meCall = fetch.mock.calls.find(([u]) => u === '/api/platform/me');
     expect(new Headers(meCall?.[1]?.headers).get('authorization')).toBe('Bearer p-token');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+    // Open the restaurant as its owner: a shift session there, then its own admin screen.
+    fireEvent.click(await screen.findByRole('button', { name: /Bistro Noord/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Open as owner' }));
+    expect(await screen.findByText('Restaurant admin')).toBeTruthy();
+    expect(localStorage.getItem('pg.session')).toBe('owner-token');
+    expect(localStorage.getItem('pg.platform')).toBe('p-token');
+    await router.navigate('/platform');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
     expect(await screen.findByLabelText('Email')).toBeTruthy();
     expect(localStorage.getItem('pg.platform')).toBeNull();
   });

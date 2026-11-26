@@ -1,4 +1,5 @@
 import type {
+  LoginResponse,
   Plan,
   PlatformLogin,
   PlatformLoginResponse,
@@ -41,6 +42,8 @@ export const platformApi = {
     call<PlatformRestaurant[]>('/restaurants', 'POST', body),
   setPlan: (id: string, plan: Plan) =>
     call<PlatformRestaurant[]>(`/restaurants/${encodeURIComponent(id)}/plan`, 'PUT', { plan }),
+  open: (locationId: string) =>
+    call<LoginResponse>(`/locations/${encodeURIComponent(locationId)}/open`, 'POST', {}),
   staff: (locationId: string) => call<StaffMember[]>(staffPath(locationId)),
   addStaff: (locationId: string, body: StaffDraft) =>
     call<StaffMember[]>(staffPath(locationId), 'POST', body),
