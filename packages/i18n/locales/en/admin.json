@@ -8,7 +8,8 @@
     "webhooks": "Webhooks",
     "staff": "Staff",
     "dashboard": "Dashboard",
-    "incidents": "Incidents"
+    "incidents": "Incidents",
+    "restaurant": "Restaurant"
   },
   "comingSoon": "This section is built in a later phase.",
   "filter": "Filter",
@@ -479,5 +480,18 @@
     "save": "{count, plural, one {Add # dish to the draft} other {Add # dishes to the draft}}",
     "cancel": "Discard",
     "done": "{count, plural, one {# dish added to the menu draft.} other {# dishes added to the menu draft.}} Check the new ingredients under Ingredients before you publish."
+  },
+  "restaurant": {
+    "intro": "What the restaurant is called, where it is and what it looks like. Guests see the name on the menu.",
+    "name": "Name",
+    "address": "Address",
+    "addressHint": "Street, number and town.",
+    "photo": "Photo",
+    "photoAlt": "Photo of {name}",
+    "photoAdd": "Choose a photo",
+    "photoChange": "Another photo",
+    "photoRemove": "Remove photo",
+    "photoError": "This photo could not be read. Choose a JPEG, PNG or WebP.",
+    "saved": "Saved."
   }
 }

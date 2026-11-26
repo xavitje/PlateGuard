@@ -13,6 +13,7 @@ type Reads =
   | 'floors'
   | 'staff'
   | 'settings'
+  | 'profile'
   | 'printers'
   | 'pos';
 

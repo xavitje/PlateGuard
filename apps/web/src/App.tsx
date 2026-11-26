@@ -5,6 +5,7 @@ import { MenuPage } from './admin/MenuPage';
 import { RecipesPage } from './admin/RecipesPage';
 import { IncidentsPage } from './admin/IncidentsPage';
 import { IntegrationsPage } from './admin/IntegrationsPage';
+import { RestaurantPage } from './admin/RestaurantPage';
 import { StaffPage } from './admin/StaffPage';
 import { AdminLayout, AdminSection } from './routes/AdminPage';
 import { AlertsPage } from './routes/AlertsPage';
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [
           { index: true, element: <Navigate to="recipes" replace /> },
+          { path: 'restaurant', element: <RestaurantPage /> },
           { path: 'recipes', element: <RecipesPage /> },
           { path: 'menus', element: <MenuPage /> },
           { path: 'floor-plan', element: <FloorPlanPage /> },
