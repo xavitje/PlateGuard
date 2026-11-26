@@ -11,7 +11,7 @@ import { useKitchen, useKitchenAction, useSession } from '../service/ServiceProv
 const REASONS = ['unsafe', 'missing', 'wrong'] as const;
 
 /**
- * Kitchen display: full screen, always dark, no tabs. Each allergy plate is a ticket with every
+ * Kitchen display: full screen, no tabs, in the light or dark the user chose in Profile. Each allergy plate is a ticket with every
  * risk point; the cook ticks them all before the plate may go, or sends it back to the waiter.
  * With the pass check on, a runner checks the plate again before it is served.
  */
@@ -33,24 +33,24 @@ export function KitchenPage() {
   return (
     <div
       data-theme="kitchen"
-      className="min-h-dvh bg-[#0b0c0f] px-2 pt-[max(env(safe-area-inset-top),8px)] pb-[max(env(safe-area-inset-bottom),8px)] text-[#f2f3f5] sm:px-4 sm:pt-[max(env(safe-area-inset-top),16px)] sm:pb-[max(env(safe-area-inset-bottom),16px)]"
+      className="min-h-dvh bg-mist px-2 pt-[max(env(safe-area-inset-top),8px)] pb-[max(env(safe-area-inset-bottom),8px)] text-ink sm:px-4 sm:pt-[max(env(safe-area-inset-top),16px)] sm:pb-[max(env(safe-area-inset-bottom),16px)]"
     >
-      <div className="mx-auto grid max-w-6xl gap-3 rounded-[22px] bg-[#111317] p-3 sm:gap-4 sm:p-[18px] md:grid-cols-[minmax(0,1fr)_minmax(0,1.45fr)]">
+      <div className="mx-auto grid max-w-6xl gap-3 rounded-[22px] bg-bg p-3 sm:gap-4 sm:p-[18px] md:grid-cols-[minmax(0,1fr)_minmax(0,1.45fr)]">
         <header className="flex flex-wrap items-center justify-between gap-2 md:col-span-2">
           <h1 className="text-[22px] font-semibold tracking-[-0.02em]">{t('kitchen:title')}</h1>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-[#1d2026] px-3 py-1.5 text-[13px] text-[#9aa1ad]">
+            <span className="rounded-full bg-card px-3 py-1.5 text-[13px] text-soft">
               {t('kitchen:queue', { count: data?.queue.length ?? 0 })}
             </span>
             {data?.passCheck && (
-              <span className="rounded-full bg-[#1d2026] px-3 py-1.5 text-[13px] text-[#9aa1ad]">
+              <span className="rounded-full bg-card px-3 py-1.5 text-[13px] text-soft">
                 {t('kitchen:passCheckOn')}
               </span>
             )}
             <button
               type="button"
               onClick={exit}
-              className="inline-flex min-h-10 items-center rounded-full bg-[#1d2026] px-3.5 text-[13px] text-[#9aa1ad]"
+              className="inline-flex min-h-10 items-center rounded-full bg-card px-3.5 text-[13px] text-soft"
             >
               {t('kitchen:exit')}
             </button>
@@ -58,21 +58,19 @@ export function KitchenPage() {
         </header>
 
         {kitchen.isError && (
-          <p role="alert" className="text-[#ff8f92] md:col-span-2">
+          <p role="alert" className="text-[var(--pg-out-stop)] md:col-span-2">
             {t('common:loadError')}
           </p>
         )}
-        {kitchen.isPending && <p className="text-[#9aa1ad] md:col-span-2">{t('common:loading')}</p>}
+        {kitchen.isPending && <p className="text-soft md:col-span-2">{t('common:loading')}</p>}
 
         {data && (
           <nav aria-label={t('kitchen:title')} className="grid min-w-0 content-start gap-2">
-            {data.queue.length === 0 && <p className="text-[#9aa1ad]">{t('kitchen:empty')}</p>}
+            {data.queue.length === 0 && <p className="text-soft">{t('kitchen:empty')}</p>}
             <TicketList tickets={data.queue} selected={ticket?.plateId} onSelect={setSelected} />
             {data.ready.length > 0 && (
               <>
-                <h2 className="mt-3 text-[13px] font-semibold text-[#9aa1ad]">
-                  {t('kitchen:atPass')}
-                </h2>
+                <h2 className="mt-3 text-[13px] font-semibold text-soft">{t('kitchen:atPass')}</h2>
                 <TicketList
                   tickets={data.ready}
                   selected={ticket?.plateId}
@@ -113,14 +111,16 @@ function TicketList({
           <button
             onClick={() => onSelect(tk.plateId)}
             aria-current={tk.plateId === selected}
-            className={`press grid w-full gap-0.5 rounded-2xl bg-[#1a1d23] px-3.5 py-3 text-left ${
-              tk.plateId === selected ? 'bg-[#22283a] shadow-[inset_0_0_0_2px_var(--pg-brand)]' : ''
+            className={`press grid w-full gap-0.5 rounded-2xl bg-card px-3.5 py-3 text-left ${
+              tk.plateId === selected
+                ? 'bg-brand-soft shadow-[inset_0_0_0_2px_var(--pg-brand)]'
+                : ''
             }`}
           >
             <b className="text-[19px] font-semibold tracking-[-0.02em]">
               {t('tables:table', { label: tk.table })} · {t('tables:seat.label', { seat: tk.seat })}
             </b>
-            <small className="text-[#9aa1ad]">
+            <small className="text-soft">
               {tk.dishName}
               {tk.block && ` · ${t('kitchen:mustReject')}`}
               {tk.status === 'CHECKED' && ` · ${t('kitchen:status.CHECKED')}`}
@@ -197,16 +197,16 @@ function TicketCard({
   const reject = (r: string) =>
     action.mutate({ kind: 'reject', plateId: ticket.plateId, reason: r });
   const big = 'press min-h-16 rounded-2xl px-4 text-[19px] font-semibold';
-  const grey = `${big} bg-[#2a2e36] disabled:opacity-50`;
+  const grey = `${big} bg-line disabled:opacity-50`;
 
   return (
     <section
       aria-label={ticket.dishName}
-      className="grid min-w-0 content-start gap-3 rounded-[18px] bg-[#1a1d23] p-3.5 sm:p-[18px]"
+      className="grid min-w-0 content-start gap-3 rounded-[18px] bg-card p-3.5 sm:p-[18px]"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[15px] text-[#9aa1ad]">
+          <p className="text-[15px] text-soft">
             {t('tables:table', { label: ticket.table })} ·{' '}
             {t('tables:seat.label', { seat: ticket.seat })}
           </p>
@@ -221,7 +221,9 @@ function TicketCard({
           <span
             key={a.allergen ?? a.ingredient?.id ?? a.custom}
             className={`rounded-full px-3 py-1 text-sm font-semibold ${
-              a.severity === 'SEVERE' ? 'bg-[rgba(229,72,77,0.18)] text-[#ff8f92]' : 'bg-[#2a2e36]'
+              a.severity === 'SEVERE'
+                ? 'bg-[var(--pg-out-stop-bg)] text-[var(--pg-out-stop)]'
+                : 'bg-line'
             }`}
           >
             {name(a)} · {t(`common:severity.${a.severity}`)}
@@ -230,32 +232,32 @@ function TicketCard({
       </div>
 
       {ticket.waiterNote && (
-        <p className="rounded-xl bg-[#2a2e36] px-3.5 py-3 text-[17px]">
+        <p className="rounded-xl bg-line px-3.5 py-3 text-[17px]">
           {t('kitchen:waiterNote', { note: ticket.waiterNote })}
         </p>
       )}
 
       {ticket.override && (
-        <p className="rounded-xl bg-[#1f2b22] px-3.5 py-3 text-[17px]">
+        <p className="rounded-xl bg-[var(--pg-ok-bg)] px-3.5 py-3 text-[17px]">
           {t('kitchen:override.approved', { reason: ticket.override.reason })}
         </p>
       )}
 
       {ticket.block && (
-        <p role="alert" className="rounded-xl bg-[rgba(229,72,77,0.18)] px-3.5 py-3 text-[17px]">
+        <p role="alert" className="rounded-xl bg-[var(--pg-out-stop-bg)] px-3.5 py-3 text-[17px]">
           {t(`kitchen:blocked.${ticket.block}`)}
         </p>
       )}
 
       {toCheck && ticket.checklist.length > 0 && (
         <fieldset className="grid gap-2">
-          <legend className="mb-1 text-[13px] text-[#9aa1ad]">{t('kitchen:tickAll')}</legend>
+          <legend className="mb-1 text-[13px] text-soft">{t('kitchen:tickAll')}</legend>
           {/* Quick for a cook who checked the plate: still one deliberate tap on "checked" after. */}
           {left > 0 && !ticket.block && (
             <button
               type="button"
               onClick={() => setTicked(new Set(ticket.checklist.map((i) => i.id)))}
-              className="press min-h-12 justify-self-start rounded-xl bg-[#2a2e36] px-4 text-[16px] font-semibold"
+              className="press min-h-12 justify-self-start rounded-xl bg-line px-4 text-[16px] font-semibold"
             >
               {t('kitchen:checkAll', { count: left })}
             </button>
@@ -264,7 +266,7 @@ function TicketCard({
             <label
               key={item.id}
               className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-xl px-3.5 py-3 text-[17px] leading-snug ${
-                ticked.has(item.id) ? 'bg-[#1f2b22]' : 'bg-[#111317]'
+                ticked.has(item.id) ? 'bg-[var(--pg-ok-bg)]' : 'bg-bg'
               }`}
             >
               <input
@@ -282,7 +284,7 @@ function TicketCard({
       )}
 
       {action.isError && (
-        <p role="alert" className="text-[#ff8f92]">
+        <p role="alert" className="text-[var(--pg-out-stop)]">
           {t('kitchen:actionError')}
         </p>
       )}
@@ -290,7 +292,7 @@ function TicketCard({
       {approving && ticket.overridable ? (
         <form
           aria-label={t('kitchen:override.title')}
-          className="grid gap-2.5 rounded-xl border border-[#e5484d]/50 p-3"
+          className="grid gap-2.5 rounded-xl border border-red/50 p-3"
           onSubmit={(e) => {
             e.preventDefault();
             if (consent && why.trim())
@@ -309,7 +311,7 @@ function TicketCard({
               {t('kitchen:override.severe', { names: severe.map((a) => name(a)).join(', ') })}
             </p>
           )}
-          <label className="flex min-h-12 items-center gap-3 rounded-xl bg-[#111317] px-3.5 text-[17px]">
+          <label className="flex min-h-12 items-center gap-3 rounded-xl bg-bg px-3.5 text-[17px]">
             <input
               type="checkbox"
               className="size-6 accent-[var(--pg-brand)]"
@@ -318,19 +320,19 @@ function TicketCard({
             />
             {t('kitchen:override.consent')}
           </label>
-          <label className="grid gap-1.5 text-[15px] text-[#9aa1ad]">
+          <label className="grid gap-1.5 text-[15px] text-soft">
             {t('kitchen:override.reason')}
             <textarea
               rows={2}
               maxLength={300}
               value={why}
               onChange={(e) => setWhy(e.target.value)}
-              className="rounded-xl bg-[#111317] px-3.5 py-2.5 text-[17px] text-white"
+              className="rounded-xl bg-bg px-3.5 py-2.5 text-[17px] text-ink"
             />
           </label>
           <div className="flex flex-wrap gap-2 [&>*]:flex-1">
             <button
-              className={`${big} bg-[#e5484d] text-white disabled:opacity-40`}
+              className={`${big} bg-red text-white disabled:opacity-40`}
               disabled={!consent || !why.trim() || action.isPending}
             >
               {t('kitchen:override.send')}
@@ -358,7 +360,7 @@ function TicketCard({
               <button
                 key={r}
                 type="button"
-                className="press rounded-full bg-[#2a2e36] px-3.5 py-2 font-semibold"
+                className="press rounded-full bg-line px-3.5 py-2 font-semibold"
                 onClick={() => reject(t(`kitchen:reasons.${r}`))}
               >
                 {t(`kitchen:reasons.${r}`)}
@@ -372,7 +374,7 @@ function TicketCard({
               value={reason}
               maxLength={300}
               onChange={(e) => setReason(e.target.value)}
-              className="min-h-12 rounded-xl bg-[#111317] px-3.5 text-[17px]"
+              className="min-h-12 rounded-xl bg-bg px-3.5 text-[17px]"
             />
             <button className={`${grey} min-h-12`} disabled={!reason.trim() || action.isPending}>
               {t('kitchen:rejectSend')}
@@ -390,7 +392,7 @@ function TicketCard({
         <div className="flex flex-wrap gap-2 [&>*]:flex-1">
           {toCheck && !ticket.block && can('plate.check') && (
             <button
-              className={`${big} bg-brand text-white disabled:cursor-not-allowed disabled:bg-[#2a2e36] disabled:text-[#9aa1ad]`}
+              className={`${big} bg-brand text-white disabled:cursor-not-allowed disabled:bg-line disabled:text-soft`}
               disabled={left > 0 || action.isPending}
               onClick={() =>
                 action.mutate({ kind: 'check', plateId: ticket.plateId, checked: [...ticked] })

@@ -54,14 +54,15 @@
 :root[data-theme='light'] {
   color-scheme: light;
 }
-:root[data-theme='dark'],
-[data-theme='kitchen'] {
+:root[data-theme='dark'] {
   color-scheme: dark;
 }
 
-/* The kitchen display is always dark, with bigger targets. */
+/* The kitchen display follows the app's light or dark choice, with deeper layers and bigger targets. */
 [data-theme='kitchen'] {
-  --pg-bg: #111317;
-  --pg-card: #1a1d23;
+  --pg-mist: light-dark(#eef0f3, #0b0c0f);
+  --pg-bg: light-dark(#ffffff, #111317);
+  --pg-card: light-dark(#f4f5f7, #1a1d23);
+  --pg-ok-bg: light-dark(#e3f1e6, #1f2b22);
   --pg-target-min: var(--pg-target-kitchen);
 }
