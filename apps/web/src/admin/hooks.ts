@@ -15,6 +15,7 @@ type Reads =
   | 'staff'
   | 'settings'
   | 'profile'
+  | 'locations'
   | 'printers'
   | 'pos';
 

@@ -292,3 +292,25 @@ export const LocationProfileZ = z.strictObject({
     .regex(/^(data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*)?$/),
 });
 export type LocationProfile = z.infer<typeof LocationProfileZ>;
+
+/** A new location of the same restaurant. copyMenuFrom: a location whose dishes and menu start as the draft here. */
+export const NewLocationZ = LocationProfileZ.extend({
+  copyMenuFrom: z.uuid().nullable().default(null),
+});
+export type NewLocation = z.input<typeof NewLocationZ>;
+
+export interface OrgLocation {
+  id: string;
+  name: string;
+  address: string;
+  photo: string;
+  /** The guest menu address, and the sign-in screen of its devices: /login?location=<slug>. */
+  slug: string;
+}
+
+export interface OrgLocationsResponse {
+  plan: string;
+  /** null = no limit on this plan. */
+  maxLocations: number | null;
+  locations: OrgLocation[];
+}

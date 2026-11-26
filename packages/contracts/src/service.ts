@@ -231,6 +231,11 @@ export const PLANS = ['free', 'kitchen', 'full'] as const;
 export const PlanZ = z.enum(PLANS);
 export type Plan = z.infer<typeof PlanZ>;
 
+/** How many locations a plan allows; null = no limit. An unknown plan counts as paid. */
+export function maxLocations(plan: string): number | null {
+  return plan === 'free' ? 1 : null;
+}
+
 /** PUT /platform/restaurants/:id/plan */
 export const PlatformPlanZ = z.strictObject({ plan: PlanZ });
 

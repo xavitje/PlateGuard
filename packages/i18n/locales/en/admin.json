@@ -41,7 +41,8 @@
     "PIN_TAKEN": "Someone else here with the same first name already has this PIN. Choose another one.",
     "MENU_IMPORT_NOT_CONFIGURED": "Menu import is not set up yet: the server has no AI key.",
     "MENU_IMPORT_FAILED": "The menu could not be read. Try again, or with a sharper photo.",
-    "EMAIL_TAKEN": "This email already belongs to an account. Use another one."
+    "EMAIL_TAKEN": "This email already belongs to an account. Use another one.",
+    "PLAN_LOCATION_LIMIT": "Your plan has no room for another location. More locations come with a paid plan."
   },
   "fields": {
     "name": "Name",
@@ -528,7 +529,19 @@
     "photoChange": "Another photo",
     "photoRemove": "Remove photo",
     "photoError": "This photo could not be read. Choose a JPEG, PNG or WebP.",
-    "saved": "Saved."
+    "saved": "Saved.",
+    "locations": "Locations",
+    "locationsIntro": "Each location has its own menu, floor plan, team and sign-in link for its tablets. Recipes and ingredients are shared across all locations.",
+    "here": "You are here",
+    "signInLink": "Sign-in link for tablets:",
+    "edit": "Edit",
+    "close": "Close",
+    "add": "Add location",
+    "addTitle": "New location",
+    "copyMenu": "Copy the menu of",
+    "copyMenuNone": "Don't copy, start empty",
+    "copyMenuHint": "The dishes and the menu arrive as a draft at the new location. Guests see nothing until you publish there.",
+    "limit": "{count, plural, one {Your plan has # location.} other {Your plan has # locations.}} More locations come with a paid plan: get in touch with us."
   },
   "start": {
     "title": "Get started",

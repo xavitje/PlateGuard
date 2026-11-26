@@ -149,6 +149,26 @@ describe('Restaurant profile admin', () => {
     });
     expect((await client.me()).locations[0]!.name).toBe('Brasserie De Haven');
   });
+
+  it('adds a second location with the menu of this one, then renames it', async () => {
+    renderPage(<RestaurantPage />);
+    const list = await screen.findByRole('region', { name: 'Locations' });
+    expect(within(list).getByText('You are here')).toBeTruthy();
+    fireEvent.click(within(list).getByRole('button', { name: 'Add location' }));
+    const names = within(list).getAllByLabelText('Name');
+    fireEvent.change(names[0]!, { target: { value: 'De Haven Zuid' } });
+    fireEvent.change(within(list).getByLabelText(/^Copy the menu of/), {
+      target: { value: 'demo' },
+    });
+    fireEvent.click(within(list).getByRole('button', { name: 'Add location' }));
+    expect(await within(list).findByText('De Haven Zuid')).toBeTruthy();
+    expect(within(list).getByText(/login\?location=demo-/)).toBeTruthy();
+
+    fireEvent.click(within(list).getByRole('button', { name: 'Edit' }));
+    fireEvent.change(within(list).getByLabelText('Name'), { target: { value: 'Zuid' } });
+    fireEvent.click(within(list).getByRole('button', { name: 'Save' }));
+    expect(await within(list).findByText('Zuid')).toBeTruthy();
+  });
 });
 
 describe('LocationProfileZ', () => {

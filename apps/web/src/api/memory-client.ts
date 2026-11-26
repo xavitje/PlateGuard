@@ -1,6 +1,8 @@
 import type {
   AlertResponse,
   KitchenTicketResponse,
+  OrgLocation,
+  OrgLocationsResponse,
   PlateStatusName,
   SeatResponse,
   TableResponse,
@@ -61,6 +63,13 @@ export function createMemoryClient(
   let nextId = 1;
   let passCheck = false;
   let profile = { name: ME.locations[0]!.name, address: '', photo: '' };
+  // The demo restaurant is on a paid plan, so adding a location can be tried.
+  let others: OrgLocation[] = [];
+  const locations = (): OrgLocationsResponse => ({
+    plan: 'full',
+    maxLocations: null,
+    locations: [{ id: LOCATION, slug: 'demo', ...profile }, ...others],
+  });
   const OPEN: PlateStatusName[] = ['ASSESSED', 'IN_KITCHEN', 'CHECKED', 'PASS_CHECKED'];
   const statusOf = (o: { status?: PlateStatusName }) => o.status ?? 'ASSESSED';
 
@@ -209,6 +218,16 @@ export function createMemoryClient(
         profile = body;
         ME.locations[0]!.name = body.name;
         return body;
+      },
+      locations: async () => locations(),
+      createLocation: async (_, { copyMenuFrom: _c, ...body }) => {
+        others = [...others, { id: `loc-${nextId++}`, slug: `demo-${nextId}`, ...body }];
+        return locations();
+      },
+      saveLocation: async (_, id, body) => {
+        if (id === LOCATION) profile = body;
+        else others = others.map((l) => (l.id === id ? { ...l, ...body } : l));
+        return locations();
       },
       ...printerAdmin,
       ...createMemoryPos(dishes),

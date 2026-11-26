@@ -3,6 +3,8 @@ import type {
   GuestMenuResponse,
   KitchenResponse,
   LocationProfile,
+  NewLocation,
+  OrgLocationsResponse,
   LocationSettings,
   AdminFloor,
   FloorDraft,
@@ -97,6 +99,10 @@ export interface AdminClient {
   /** The restaurant's name, address and photo. Owner only. */
   profile(location: string): Promise<LocationProfile>;
   saveProfile(location: string, body: LocationProfile): Promise<LocationProfile>;
+  /** Every location of the restaurant, with the plan's limit. Owner only. */
+  locations(location: string): Promise<OrgLocationsResponse>;
+  createLocation(location: string, body: NewLocation): Promise<OrgLocationsResponse>;
+  saveLocation(location: string, id: string, body: LocationProfile): Promise<OrgLocationsResponse>;
   /** Kitchen printers that fetch allergy tickets themselves (Star CloudPRNT). */
   printers(location: string): Promise<PrintersResponse>;
   /** Answers with the address to enter in the printer: shown once. */
@@ -264,6 +270,9 @@ export function createHttpClient(
       saveSettings: (l, body) => call(adm(l, 'settings'), { method: 'PUT', body }),
       profile: (l) => call(adm(l, 'profile')),
       saveProfile: (l, body) => call(adm(l, 'profile'), { method: 'PUT', body }),
+      locations: (l) => call(adm(l, 'locations')),
+      createLocation: (l, body) => call(adm(l, 'locations'), { method: 'POST', body }),
+      saveLocation: (l, id, body) => call(adm(l, `locations/${id}`), { method: 'PUT', body }),
       printers: (l) => call(adm(l, 'printers')),
       addPrinter: (l, body) => call(adm(l, 'printers'), { method: 'POST', body }),
       newPrinterKey: (l, id) => call(adm(l, `printers/${id}/key`), { method: 'POST' }),

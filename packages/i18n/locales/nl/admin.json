@@ -41,7 +41,8 @@
     "PIN_TAKEN": "Iemand anders hier met dezelfde voornaam heeft deze pincode al. Kies een andere.",
     "MENU_IMPORT_NOT_CONFIGURED": "Menu importeren is nog niet ingesteld: de server heeft geen AI-sleutel.",
     "MENU_IMPORT_FAILED": "De menukaart kon niet worden gelezen. Probeer het opnieuw, of met een scherpere foto.",
-    "EMAIL_TAKEN": "Dit e-mailadres hoort al bij een account. Gebruik een ander."
+    "EMAIL_TAKEN": "Dit e-mailadres hoort al bij een account. Gebruik een ander.",
+    "PLAN_LOCATION_LIMIT": "Je plan heeft geen ruimte voor nog een locatie. Meer locaties kan met een betaald plan."
   },
   "fields": {
     "name": "Naam",
@@ -528,7 +529,19 @@
     "photoChange": "Andere foto",
     "photoRemove": "Foto weghalen",
     "photoError": "Deze foto kon niet worden gelezen. Kies een JPEG, PNG of WebP.",
-    "saved": "Opgeslagen."
+    "saved": "Opgeslagen.",
+    "locations": "Locaties",
+    "locationsIntro": "Elke locatie heeft een eigen menu, plattegrond, team en inloglink voor de tablets. Recepten en ingrediënten deel je over alle locaties.",
+    "here": "Hier ben je nu",
+    "signInLink": "Inloglink voor tablets:",
+    "edit": "Bewerken",
+    "close": "Sluiten",
+    "add": "Locatie toevoegen",
+    "addTitle": "Nieuwe locatie",
+    "copyMenu": "Menu overnemen van",
+    "copyMenuNone": "Niet overnemen, leeg beginnen",
+    "copyMenuHint": "De gerechten en het menu komen als concept op de nieuwe locatie. Gasten zien pas iets als je daar publiceert.",
+    "limit": "{count, plural, one {Je plan heeft # locatie.} other {Je plan heeft # locaties.}} Meer locaties kan met een betaald plan: neem contact met ons op."
   },
   "start": {
     "title": "Aan de slag",

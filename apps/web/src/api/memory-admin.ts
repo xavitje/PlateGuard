@@ -29,6 +29,9 @@ export function createMemoryAdmin(
   | 'saveSettings'
   | 'profile'
   | 'saveProfile'
+  | 'locations'
+  | 'createLocation'
+  | 'saveLocation'
   | keyof PrinterAdmin
   | keyof PosAdmin
   | keyof IncidentAdmin
