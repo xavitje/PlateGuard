@@ -11,7 +11,7 @@ export class AuthController {
 
   @Get('me')
   me(@CurrentPrincipal() principal: Principal, @Req() req: AuthedRequest) {
-    return this.auth.me(principal, req.sessionLocation);
+    return this.auth.me(principal, req.sessionLocation, req.platformAdmin);
   }
 
   /** The sign-in screen of a location's devices. Public: the location only, no names. */

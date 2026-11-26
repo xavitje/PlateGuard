@@ -1,4 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import type { LoginResponse } from '@plateguard/contracts';
 import type {
   Plan,
   PlatformRestaurant,
@@ -8,9 +9,13 @@ import type {
   StaffMember,
 } from '@plateguard/contracts';
 import { AuthRepository } from '../auth/auth.repository.js';
-import { slugify } from '../auth/auth.service.js';
+import { AuthService, slugify } from '../auth/auth.service.js';
+import { issueToken } from '../auth/token.js';
 import { StaffRepository } from '../setup/staff.repository.js';
 import { PlatformRepository } from './platform.repository.js';
+
+/** How long a restaurant stays open for a platform admin before they open it again. */
+export const OPEN_SECONDS = 2 * 60 * 60;
 
 /**
  * What the platform admin does for restaurants: make one on request, set its plan, and add
@@ -23,7 +28,34 @@ export class RestaurantsService {
     private readonly repo: PlatformRepository,
     private readonly auth: AuthRepository,
     private readonly staff: StaffRepository,
+    private readonly authService: AuthService,
   ) {}
+
+  /**
+   * Opens a restaurant as its owner: a shift session on that location, bound to this admin and
+   * shorter than a shift. No PIN of the owner is needed; the opening lands in the audit trail.
+   */
+  async open(admin: { id: string; email: string }, locationId: string): Promise<LoginResponse> {
+    const { location } = await this.tenant(locationId);
+    const userId = await this.repo.actingUser(admin.id);
+    await this.repo.audit(location.organizationId, location.id, admin.email, {
+      type: 'platform.restaurant.opened',
+      entity: 'location',
+      entityId: location.id,
+    });
+    const session = issueToken(
+      { sub: userId, loc: location.id, adm: admin.id },
+      Date.now(),
+      OPEN_SECONDS,
+    );
+    const principal = {
+      userId,
+      grants: [
+        { organizationId: location.organizationId, locationId: null, role: 'OWNER' as const },
+      ],
+    };
+    return { ...session, me: await this.authService.me(principal, location.id, admin.email) };
+  }
 
   list(): Promise<PlatformRestaurant[]> {
     return this.repo.restaurants();

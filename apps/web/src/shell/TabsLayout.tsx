@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode, SVGProps } from 'react';
-import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router';
+import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
   AdminIcon,
@@ -67,6 +67,7 @@ export function TabsLayout() {
           inAdmin ? 'max-w-[1240px]' : 'max-w-3xl lg:max-w-[880px]'
         }`}
       >
+        {me?.platformAdmin && <PlatformBanner name={me.locations[0]?.name ?? ''} />}
         <Outlet />
       </main>
       <nav
@@ -254,4 +255,29 @@ export function PageHeader({
 
 export function PageTitle({ children }: { children: string }) {
   return <PageHeader title={children} />;
+}
+
+/** While a platform admin works in a restaurant as its owner: say so, and the way back. */
+function PlatformBanner({ name }: { name: string }) {
+  const { t } = useTranslation();
+  const { signOut } = useSession();
+  const navigate = useNavigate();
+  return (
+    <div
+      role="status"
+      className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-[12px] bg-brand-soft px-4 py-2.5 text-[14px] text-brand-ink"
+    >
+      <span>{t('platform:viewing', { name })}</span>
+      <button
+        type="button"
+        className="press min-h-10 rounded-[10px] bg-card px-3 font-semibold"
+        onClick={() => {
+          navigate('/platform');
+          signOut();
+        }}
+      >
+        {t('platform:backToPlatform')}
+      </button>
+    </div>
+  );
 }

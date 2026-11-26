@@ -1,10 +1,11 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { ApiError } from '../api/client';
 import { useClient, useSession } from '../service/ServiceProvider';
-import { deviceLocation, rememberLocation } from '../session';
+import { deviceLocation, rememberLocation, setPlatformToken } from '../session';
+import { PlatformLogin } from './PlatformPage';
 import { HomeRedirect } from '../shell/HomeRedirect';
 
 /**
@@ -12,7 +13,8 @@ import { HomeRedirect } from '../shell/HomeRedirect';
  * and opens where their role works. The session is bound to this location and lasts one shift.
  * A PIN locks after five wrong tries; a manager sets a new one. A new device first asks which
  * restaurant it serves (its address, or the sign-in link from Staff) and keeps it, so a PIN is
- * only ever compared with the PINs of that one restaurant.
+ * only ever compared with the PINs of that one restaurant. The people who run PlateGuard sign
+ * in here too, with email, password and code, and land on the platform screen.
  */
 export function LoginPage() {
   const { t } = useTranslation();
@@ -22,6 +24,8 @@ export function LoginPage() {
   const [slug, setSlug] = useState(() => deviceLocation(search));
   const [typedPlace, setPlace] = useState('');
   const [name, setName] = useState('');
+  const [platform, setPlatform] = useState(false);
+  const navigate = useNavigate();
   const [pin, setPin] = useState('');
   const place = useQuery({
     queryKey: ['sign-in-location', slug],
@@ -69,113 +73,131 @@ export function LoginPage() {
   return (
     <div className="mx-auto min-h-dvh max-w-md bg-mist px-4 pt-[max(env(safe-area-inset-top),24px)] pb-[max(env(safe-area-inset-bottom),24px)]">
       <h1 className="mx-1 mb-1 text-[32px] font-bold tracking-[-0.035em]">{t('auth:title')}</h1>
-      {known && (
-        <p className="mx-1 mb-5 flex items-baseline gap-2 text-sm text-soft">
-          {known.location.name}
-          <button
-            type="button"
-            onClick={() => {
-              setSlug(null);
-              setPlace('');
-              login.reset();
-            }}
-            className="font-semibold text-brand underline-offset-2 hover:underline"
-          >
-            {t('auth:otherRestaurant')}
-          </button>
-        </p>
-      )}
-
-      {(!slug || unknownPlace) && (
-        <form onSubmit={choosePlace} className="mt-4 grid gap-3">
-          <label className="grid gap-1.5">
-            <span className="mx-1.5 text-[13px] font-semibold text-soft">
-              {t('auth:restaurant')}
-            </span>
-            <input
-              type="text"
-              autoComplete="off"
-              autoCapitalize="none"
-              spellCheck={false}
-              autoFocus
-              maxLength={300}
-              placeholder={t('auth:restaurantPlaceholder')}
-              value={typedPlace}
-              onChange={(e) => setPlace(e.target.value)}
-              className={field}
-            />
-          </label>
-          <p
-            className={`mx-1.5 text-sm ${unknownPlace ? 'text-red' : 'text-soft'}`}
-            role={unknownPlace ? 'alert' : undefined}
-          >
-            {unknownPlace ? t('auth:restaurantUnknown') : t('auth:restaurantHint')}
-          </p>
-          <button
-            type="submit"
-            disabled={!placeSlug(typedPlace)}
-            className="press mt-1 min-h-14 rounded-2xl bg-brand text-[17px] font-semibold text-white disabled:opacity-50"
-          >
-            {t('auth:next')}
-          </button>
-        </form>
-      )}
-
-      {place.isError && !unknownPlace && (
-        <p role="alert" className="mx-1 text-sm text-red">
-          {t('common:loadError')}
-        </p>
-      )}
-      {known && !known.hasStaff && (
-        <p className="mx-1.5 mb-4 text-sm text-soft">{t('auth:noStaff')}</p>
-      )}
-
-      {known && (
-        <form onSubmit={submit} className="grid gap-3">
-          <label className="grid gap-1.5">
-            <span className="mx-1.5 text-[13px] font-semibold text-soft">
-              {t('auth:firstName')}
-            </span>
-            <input
-              type="text"
-              autoComplete="off"
-              autoCapitalize="words"
-              spellCheck={false}
-              autoFocus
-              maxLength={80}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className={field}
-            />
-          </label>
-          <label className="grid gap-1.5">
-            <span className="mx-1.5 text-[13px] font-semibold text-soft">{t('auth:pin')}</span>
-            <input
-              type="password"
-              inputMode="numeric"
-              autoComplete="off"
-              pattern="\d{4,6}"
-              maxLength={6}
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-              className={`${field} text-center text-2xl tracking-[0.5em]`}
-            />
-          </label>
-          {message && (
-            <p role="alert" className="mx-1.5 text-sm text-red">
-              {message}
+      {platform ? (
+        <PlatformLogin
+          onSignedIn={(token) => {
+            setPlatformToken(token);
+            navigate('/platform');
+          }}
+        />
+      ) : (
+        <>
+          {known && (
+            <p className="mx-1 mb-5 flex items-baseline gap-2 text-sm text-soft">
+              {known.location.name}
+              <button
+                type="button"
+                onClick={() => {
+                  setSlug(null);
+                  setPlace('');
+                  login.reset();
+                }}
+                className="font-semibold text-brand underline-offset-2 hover:underline"
+              >
+                {t('auth:otherRestaurant')}
+              </button>
             </p>
           )}
-          <button
-            type="submit"
-            disabled={!ready || login.isPending}
-            className="press mt-1 min-h-14 rounded-2xl bg-brand text-[17px] font-semibold text-white disabled:opacity-50"
-          >
-            {t('auth:signIn')}
-          </button>
-        </form>
+
+          {(!slug || unknownPlace) && (
+            <form onSubmit={choosePlace} className="mt-4 grid gap-3">
+              <label className="grid gap-1.5">
+                <span className="mx-1.5 text-[13px] font-semibold text-soft">
+                  {t('auth:restaurant')}
+                </span>
+                <input
+                  type="text"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  autoFocus
+                  maxLength={300}
+                  placeholder={t('auth:restaurantPlaceholder')}
+                  value={typedPlace}
+                  onChange={(e) => setPlace(e.target.value)}
+                  className={field}
+                />
+              </label>
+              <p
+                className={`mx-1.5 text-sm ${unknownPlace ? 'text-red' : 'text-soft'}`}
+                role={unknownPlace ? 'alert' : undefined}
+              >
+                {unknownPlace ? t('auth:restaurantUnknown') : t('auth:restaurantHint')}
+              </p>
+              <button
+                type="submit"
+                disabled={!placeSlug(typedPlace)}
+                className="press mt-1 min-h-14 rounded-2xl bg-brand text-[17px] font-semibold text-white disabled:opacity-50"
+              >
+                {t('auth:next')}
+              </button>
+            </form>
+          )}
+
+          {place.isError && !unknownPlace && (
+            <p role="alert" className="mx-1 text-sm text-red">
+              {t('common:loadError')}
+            </p>
+          )}
+          {known && !known.hasStaff && (
+            <p className="mx-1.5 mb-4 text-sm text-soft">{t('auth:noStaff')}</p>
+          )}
+
+          {known && (
+            <form onSubmit={submit} className="grid gap-3">
+              <label className="grid gap-1.5">
+                <span className="mx-1.5 text-[13px] font-semibold text-soft">
+                  {t('auth:firstName')}
+                </span>
+                <input
+                  type="text"
+                  autoComplete="off"
+                  autoCapitalize="words"
+                  spellCheck={false}
+                  autoFocus
+                  maxLength={80}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={field}
+                />
+              </label>
+              <label className="grid gap-1.5">
+                <span className="mx-1.5 text-[13px] font-semibold text-soft">{t('auth:pin')}</span>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  pattern="\d{4,6}"
+                  maxLength={6}
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                  className={`${field} text-center text-2xl tracking-[0.5em]`}
+                />
+              </label>
+              {message && (
+                <p role="alert" className="mx-1.5 text-sm text-red">
+                  {message}
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={!ready || login.isPending}
+                className="press mt-1 min-h-14 rounded-2xl bg-brand text-[17px] font-semibold text-white disabled:opacity-50"
+              >
+                {t('auth:signIn')}
+              </button>
+            </form>
+          )}
+          <p className="mx-1.5 mt-6 text-[12.5px] text-soft">{t('auth:shiftNote')}</p>
+        </>
       )}
-      <p className="mx-1.5 mt-6 text-[12.5px] text-soft">{t('auth:shiftNote')}</p>
+      <button
+        type="button"
+        onClick={() => setPlatform(!platform)}
+        className="mx-1.5 mt-4 text-[13px] font-semibold text-brand underline-offset-2 hover:underline"
+      >
+        {platform ? t('auth:staffLink') : t('auth:platformLink')}
+      </button>
     </div>
   );
 }

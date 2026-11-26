@@ -30,9 +30,15 @@ export class AuthService {
    * The signed-in user and the locations they may work in. A PIN session is bound to the
    * location it was opened on; the development header sees every location of the user.
    */
-  async me(principal: Principal, sessionLocation?: string): Promise<MeResponse> {
-    const full = await this.auth.findPrincipal(principal.userId);
-    if (!full) throw new UnauthorizedException({ code: 'AUTH_REQUIRED' });
+  async me(
+    principal: Principal,
+    sessionLocation?: string,
+    platformAdmin?: string,
+  ): Promise<MeResponse> {
+    const stored = await this.auth.findPrincipal(principal.userId);
+    if (!stored) throw new UnauthorizedException({ code: 'AUTH_REQUIRED' });
+    // The grants as the session holds them: a platform admin's come from the token.
+    const full = { ...stored, grants: principal.grants };
     const orgIds = [...new Set(full.grants.map((g) => g.organizationId))];
     const all = await this.auth.locationsOf(orgIds);
     const locations = all.filter(
@@ -41,6 +47,7 @@ export class AuthService {
         allowedLocationIds(full, l.organizationId, [l.id]).includes(l.id),
     );
     return {
+      ...(platformAdmin ? { platformAdmin } : {}),
       user: { id: full.userId, name: full.name, locale: full.locale },
       locations: locations.map((l) => ({
         ...l,

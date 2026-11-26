@@ -38,6 +38,27 @@ export class AuthRepository {
     };
   }
 
+  /**
+   * For a token of a platform admin acting as owner: the admin's email and the restaurant, as
+   * long as the admin still exists and still acts as this user.
+   */
+  async openedByPlatform(
+    adminId: string,
+    userId: string,
+    locationId: string,
+  ): Promise<{ email: string; organizationId: string } | null> {
+    const [admin, location] = await Promise.all([
+      this.prisma.system().platformAdmin.findFirst({
+        where: { id: adminId, userId },
+        select: { email: true },
+      }),
+      this.findLocation(locationId),
+    ]);
+    return admin && location
+      ? { email: admin.email, organizationId: location.organizationId }
+      : null;
+  }
+
   findLocation(id: string): Promise<LocationRow | null> {
     return this.prisma.system().location.findUnique({
       where: { id },

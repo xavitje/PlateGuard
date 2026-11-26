@@ -3,7 +3,9 @@ import { ROLES, type Role } from '@plateguard/domain';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Field, input, MasterDetail, primary, SaveError, button } from '../admin/ui';
+import { useNavigate } from 'react-router';
+import { useSession } from '../service/ServiceProvider';
+import { Field, input, MasterDetail, primary, primarySoft, SaveError, button } from '../admin/ui';
 import { platformApi } from '../api/platform';
 
 const RESTAURANTS = ['platform', 'restaurants'];
@@ -209,10 +211,31 @@ function LocationPeople({ location }: { location: PlatformRestaurant['locations'
     },
   });
   const link = `${window.location.origin}/login?location=${location.slug}`;
+  const session = useSession();
+  const navigate = useNavigate();
+  const open = useMutation({
+    mutationFn: () => platformApi.open(location.id),
+    onSuccess: (res) => {
+      session.signIn(res);
+      navigate('/admin');
+    },
+  });
   return (
     <section className="grid gap-3 border-t border-line pt-4">
-      <div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <h4 className="text-[16px] font-semibold">{location.name}</h4>
+        <button
+          type="button"
+          className={primarySoft}
+          disabled={open.isPending}
+          onClick={() => open.mutate()}
+        >
+          {t('platform:open')}
+        </button>
+      </div>
+      <p className="-mt-2 text-[12.5px] text-soft">{t('platform:openHint')}</p>
+      <SaveError error={open.error} />
+      <div>
         <p className="text-[13px] text-soft">
           {t('platform:signInLink')}:{' '}
           <span className="font-mono break-all text-ink select-all">{link}</span>
