@@ -102,6 +102,24 @@ describe.skipIf(!process.env.DATABASE_URL)('platform login', () => {
     expect((await platform.login({ email, password, code: code() }, now)).me).toEqual({ email });
   });
 
+  it('resets a forgotten password with the code, under the same lockout', async () => {
+    now += 60_000;
+    const next = 'a brand new password';
+    await expect(
+      platform.resetPassword({ email, code: '000000', password: next }, now),
+    ).rejects.toMatchObject({ status: 401 });
+    const res = await platform.resetPassword({ email, code: code(), password: next }, now);
+    expect(res.me).toEqual({ email });
+    now += 60_000;
+    await expect(platform.login({ email, password, code: code() }, now)).rejects.toMatchObject({
+      status: 401,
+    });
+    now += 60_000;
+    expect((await platform.login({ email, password: next, code: code() }, now)).me).toEqual({
+      email,
+    });
+  });
+
   it('is out of reach of every restaurant query', async () => {
     const ctx = { organizationId: randomUUID(), locationIds: [randomUUID()] };
     await expect(

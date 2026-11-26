@@ -273,10 +273,8 @@ export function PlatformBanner() {
       <button
         type="button"
         className="press min-h-10 rounded-[10px] bg-card px-3 font-semibold"
-        onClick={() => {
-          navigate('/platform');
-          signOut();
-        }}
+        // Leave first: signing out while still inside the restaurant would bounce to /login.
+        onClick={() => void Promise.resolve(navigate('/platform')).then(signOut)}
       >
         {t('platform:backToPlatform')}
       </button>

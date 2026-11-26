@@ -47,12 +47,14 @@ describe('LoginPage', () => {
     expect(screen.queryByRole('button', { name: 'Demo Waiter' })).toBeNull();
     expect(screen.queryByLabelText('PIN')).toBeNull();
     await chooseRestaurant();
-    fireEvent.change(await screen.findByLabelText('First name'), { target: { value: 'Someone' } });
+    fireEvent.change(await screen.findByLabelText('First name or email'), {
+      target: { value: 'Someone' },
+    });
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText(/Nobody with this first name/)).toBeTruthy();
 
-    fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'demo' } });
+    fireEvent.change(screen.getByLabelText('First name or email'), { target: { value: 'demo' } });
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '0000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText('Wrong PIN. 4 tries left before it locks.')).toBeTruthy();
@@ -70,7 +72,9 @@ describe('LoginPage', () => {
   ] as const)('one sign-in: a %s starts on their own screen', async (role, screenText) => {
     renderApp(role);
     await chooseRestaurant();
-    fireEvent.change(await screen.findByLabelText('First name'), { target: { value: 'Demo' } });
+    fireEvent.change(await screen.findByLabelText('First name or email'), {
+      target: { value: 'Demo' },
+    });
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText(screenText)).toBeTruthy();

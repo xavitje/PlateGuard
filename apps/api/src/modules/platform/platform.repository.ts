@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { PlatformRestaurant, PlatformStats, PlatformWeek } from '@plateguard/contracts';
-import { audit, verifyPin } from '@plateguard/db';
+import { audit, hashPassword, verifyPin } from '@plateguard/db';
 import { PrismaService } from '../../common/prisma.service.js';
 
 /**
@@ -50,6 +50,11 @@ export class PlatformRepository {
       where: { id },
       data: { failedTries, lockedUntil },
     });
+  }
+
+  async setPassword(email: string, password: string) {
+    const passwordHash = await hashPassword(password);
+    await this.prisma.system().platformAdmin.update({ where: { email }, data: { passwordHash } });
   }
 
   signedIn(id: string, totpLastStep: number) {

@@ -11,6 +11,8 @@ import {
 } from '@nestjs/common';
 import {
   PlatformLoginZ,
+  PlatformResetZ,
+  type PlatformReset,
   PlatformNewRestaurantZ,
   PlatformPlanZ,
   StaffInputZ,
@@ -37,6 +39,12 @@ export class PlatformController {
   @HttpCode(200)
   login(@Body(new ZodPipe(PlatformLoginZ)) body: PlatformLogin) {
     return this.platform.login(body);
+  }
+
+  @Post('reset-password')
+  @HttpCode(200)
+  resetPassword(@Body(new ZodPipe(PlatformResetZ)) body: PlatformReset) {
+    return this.platform.resetPassword(body);
   }
 
   @Get('me')
