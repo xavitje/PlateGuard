@@ -280,3 +280,15 @@ export interface ImportedDish {
 export interface MenuImportProposal {
   dishes: ImportedDish[];
 }
+
+/** The restaurant as guests and staff see it: name, address and one photo. */
+export const LocationProfileZ = z.strictObject({
+  name: Name,
+  address: z.string().trim().max(200),
+  /** A JPEG, PNG or WebP data URL, or empty for no photo. Made small in the browser first. */
+  photo: z
+    .string()
+    .max(1_500_000)
+    .regex(/^(data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*)?$/),
+});
+export type LocationProfile = z.infer<typeof LocationProfileZ>;

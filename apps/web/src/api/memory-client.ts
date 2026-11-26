@@ -60,6 +60,7 @@ export function createMemoryClient(
   const state: DemoService = structuredClone(seed);
   let nextId = 1;
   let passCheck = false;
+  let profile = { name: ME.locations[0]!.name, address: '', photo: '' };
   const OPEN: PlateStatusName[] = ['ASSESSED', 'IN_KITCHEN', 'CHECKED', 'PASS_CHECKED'];
   const statusOf = (o: { status?: PlateStatusName }) => o.status ?? 'ASSESSED';
 
@@ -202,6 +203,12 @@ export function createMemoryClient(
       settings: async () => ({ passCheck }),
       saveSettings: async (_, body) => {
         passCheck = body.passCheck;
+      },
+      profile: async () => profile,
+      saveProfile: async (_, body) => {
+        profile = body;
+        ME.locations[0]!.name = body.name;
+        return body;
       },
       ...printerAdmin,
       ...createMemoryPos(dishes),

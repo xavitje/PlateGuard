@@ -2,6 +2,7 @@ import type { Choice } from '@plateguard/domain';
 import type {
   GuestMenuResponse,
   KitchenResponse,
+  LocationProfile,
   LocationSettings,
   AdminFloor,
   FloorDraft,
@@ -91,6 +92,9 @@ export interface AdminClient {
   removeStaff(location: string, id: string): Promise<StaffMember[]>;
   settings(location: string): Promise<LocationSettings>;
   saveSettings(location: string, body: LocationSettings): Promise<void>;
+  /** The restaurant's name, address and photo. Owner only. */
+  profile(location: string): Promise<LocationProfile>;
+  saveProfile(location: string, body: LocationProfile): Promise<LocationProfile>;
   /** Kitchen printers that fetch allergy tickets themselves (Star CloudPRNT). */
   printers(location: string): Promise<PrintersResponse>;
   /** Answers with the address to enter in the printer: shown once. */
@@ -250,6 +254,8 @@ export function createHttpClient(
       removeStaff: (l, id) => call(adm(l, `staff/${id}`), { method: 'DELETE' }),
       settings: (l) => call(adm(l, 'settings')),
       saveSettings: (l, body) => call(adm(l, 'settings'), { method: 'PUT', body }),
+      profile: (l) => call(adm(l, 'profile')),
+      saveProfile: (l, body) => call(adm(l, 'profile'), { method: 'PUT', body }),
       printers: (l) => call(adm(l, 'printers')),
       addPrinter: (l, body) => call(adm(l, 'printers'), { method: 'POST', body }),
       newPrinterKey: (l, id) => call(adm(l, `printers/${id}/key`), { method: 'POST' }),

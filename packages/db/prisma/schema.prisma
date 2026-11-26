@@ -161,6 +161,11 @@ model Location {
   id             String       @id @default(uuid()) @db.Uuid
   organizationId String       @map("organization_id") @db.Uuid
   name           String
+  /// Street and town, as the owner writes it.
+  address        String?
+  /// A small JPEG as a data URL, made smaller in the browser before upload.
+  /// shortcut: kept in the database, fine for one photo per location; move to Vercel Blob for more.
+  photo          String?
   /// Public guest menu URL.
   slug           String       @unique
   type           LocationType @default(RESTAURANT)

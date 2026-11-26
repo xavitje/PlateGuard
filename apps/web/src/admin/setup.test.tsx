@@ -4,7 +4,9 @@ import { I18nProvider } from '../i18n';
 import { createMemoryClient } from '../api/memory-client';
 import { ServiceProvider } from '../service/ServiceProvider';
 import { FloorPlanPage } from './FloorPlanPage';
+import { RestaurantPage } from './RestaurantPage';
 import { StaffPage } from './StaffPage';
+import { LocationProfileZ } from '@plateguard/contracts';
 
 function renderPage(page: React.ReactNode) {
   return render(
@@ -122,5 +124,46 @@ describe('Staff admin', () => {
     fireEvent.click(screen.getByRole('button', { name: /Demo Waiter/ }));
     expect(screen.getByText('This is you. Someone else changes your roles.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
+  });
+});
+
+describe('Restaurant profile admin', () => {
+  it('renames the restaurant and gives it an address; the session shows the new name', async () => {
+    const client = createMemoryClient();
+    render(
+      <I18nProvider locale="en">
+        <ServiceProvider client={client} signedIn>
+          <RestaurantPage />
+        </ServiceProvider>
+      </I18nProvider>,
+    );
+    const name = await screen.findByLabelText('Name');
+    fireEvent.change(name, { target: { value: 'Brasserie De Haven' } });
+    fireEvent.change(screen.getByLabelText(/^Address/), { target: { value: 'Kade 1, Harlingen' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('Saved.')).toBeTruthy();
+    expect(await client.admin.profile('demo')).toEqual({
+      name: 'Brasserie De Haven',
+      address: 'Kade 1, Harlingen',
+      photo: '',
+    });
+    expect((await client.me()).locations[0]!.name).toBe('Brasserie De Haven');
+  });
+});
+
+describe('LocationProfileZ', () => {
+  it('takes an image data URL or nothing as the photo, and nothing else', () => {
+    const ok = { name: 'De Haven', address: '' };
+    expect(LocationProfileZ.safeParse({ ...ok, photo: '' }).success).toBe(true);
+    expect(
+      LocationProfileZ.safeParse({ ...ok, photo: 'data:image/jpeg;base64,/9j/4A==' }).success,
+    ).toBe(true);
+    expect(LocationProfileZ.safeParse({ ...ok, photo: 'https://evil.example/x.jpg' }).success).toBe(
+      false,
+    );
+    expect(LocationProfileZ.safeParse({ ...ok, photo: 'data:text/html;base64,PGI+' }).success).toBe(
+      false,
+    );
+    expect(LocationProfileZ.safeParse({ ...ok, name: ' ', photo: '' }).success).toBe(false);
   });
 });
