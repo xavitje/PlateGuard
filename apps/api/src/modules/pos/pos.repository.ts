@@ -3,8 +3,6 @@ import { audit, type Prisma } from '@plateguard/db';
 import { PrismaService } from '../../common/prisma.service.js';
 import type { TenantContext } from '../auth/permissions.js';
 
-export const POS_PROVIDER = 'square';
-
 export interface PosRow {
   id: string;
   status: string;
@@ -74,7 +72,7 @@ export class PosRepository {
         type: 'integration.connected',
         entity: 'integration_connection',
         entityId: row.id,
-        payload: { provider: input.provider, squareLocationId: input.config.squareLocationId },
+        payload: { provider: input.provider },
       });
       return row.id;
     });

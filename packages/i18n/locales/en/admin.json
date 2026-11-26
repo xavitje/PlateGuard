@@ -221,17 +221,13 @@
     "once": "This address is shown once. Lost it? Ask for a new address: the old one stops working."
   },
   "pos": {
-    "title": "Till (Square test account)",
-    "how": "Orders rung up in the till become plates on the seats in PlateGuard, judged against the allergies the waiter recorded, and go to the kitchen. For now with a free Square Developer test account (sandbox). Put the table in the order (\"Tafel 12\") and the seat in each line's note (\"stoel 2\").",
+    "title": "Till",
+    "how": "Orders rung up in the till become plates on the seats in PlateGuard, judged against the guest's allergies, and an allergy ticket goes to the kitchen next to the till's own ticket. Allergies come from the waiter in PlateGuard, or straight from the till: a button such as \"Allergy: milk\" or a note such as \"no nuts\". Put the seat in the till too (\"Seat 2\"), as a button or in the line's note.",
     "noSecretKey": "The server has no key to store the till's secrets encrypted yet. Add the environment variable INTEGRATION_SECRET_KEY in Vercel (a long random text) and deploy again.",
-    "connectStep1": "In the Square Developer Dashboard, open your application, switch to Sandbox and copy the Sandbox Access token under Credentials.",
-    "connectStep2": "Under Locations, copy the ID of the test location. Paste both here: the token is stored encrypted and never shown again.",
     "accessToken": "Sandbox access token",
-    "locationId": "Location ID",
     "connect": "Connect",
     "connecting": "Checking with Square…",
     "sandbox": "Test account",
-    "connectedTo": "Square location {id}",
     "disconnect": "Disconnect",
     "confirmDisconnect": "Disconnect for good",
     "webhookTitle": "Webhook: orders arrive by themselves",
@@ -249,7 +245,7 @@
     "itemsHow": "Each item in Square stands for one dish. The test account starts empty: put the published menu in it with one press.",
     "push": "Put the menu in Square",
     "pushing": "Putting the menu in Square…",
-    "noItems": "No items in Square yet.",
+    "noItems": "No items from the till yet.",
     "dishFor": "Dish for {name}",
     "notLinked": "Not linked",
     "testTitle": "Test order",
@@ -342,7 +338,29 @@
     "buttonNever": "Never an allergy",
     "note": "Note on the line",
     "notePlaceholder": "e.g. no nuts",
-    "webhookElsewhere": "The webhook and the log of what came in are under Webhooks."
+    "webhookElsewhere": "The webhook and the log of what came in are under Webhooks.",
+    "provider": "Which till",
+    "providers": {
+      "square": "Square (test account)",
+      "lightspeed-k": "Lightspeed Restaurant (K-Series)",
+      "mplus": "MplusKASSA"
+    },
+    "connectHow": {
+      "square": "In the Square Developer Dashboard, open your application, switch to Sandbox and copy the Sandbox access token under Credentials, and the test location's ID under Locations. The token is stored encrypted and never shown again.",
+      "lightspeed-k": "Lightspeed sends no messages by itself: PlateGuard fetches the open checks. Paste an access token of the Lightspeed API (scope orders-api) and the business location ID. Until PlateGuard is a Lightspeed partner, use the demo account Lightspeed gives you.",
+      "mplus": "MplusKASSA sends every order to PlateGuard by itself. Connect here first; then set up the webhook in Mplus with the address PlateGuard shows you."
+    },
+    "locationIds": {
+      "square": "Location ID",
+      "lightspeed-k": "Business location ID"
+    },
+    "liveAccount": "This is the live restaurant account, not the demo account",
+    "itemsHowLive": "Each item in the till stands for one dish. Items appear here once they have been rung up.",
+    "noWebhooks": "This till sends no messages by itself. PlateGuard fetches its open checks: use \"Fetch open orders\" below.",
+    "mplusStep1": "In MplusKASSA, open Beheer > Instellingen > Webhooks and add a subscription.",
+    "mplusStep2": "Paste the URL below as the endpoint URL, give a subscription ID, and tick at least addSessionLine, updateSessionLine and completeSession.",
+    "mplusStep3": "Make up a secret key (Base64), enter it in Mplus and paste the same key here.",
+    "mplusSecret": "Secret key"
   },
   "incidents": {
     "title": "Incidents",

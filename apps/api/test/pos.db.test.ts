@@ -8,6 +8,7 @@ import 'reflect-metadata';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaService } from '../src/common/prisma.service.js';
+import { MplusAdapter, mplusSignature } from '../src/integrations/adapters/mplus/mplus.adapter.js';
 import { SquarePosAdapter } from '../src/integrations/adapters/square/square-pos.adapter.js';
 import { squareSignature } from '../src/integrations/adapters/square/square-webhook.js';
 import { ConnectionsRepository } from '../src/integrations/core/connections.repository.js';
@@ -32,7 +33,9 @@ describe.skipIf(!hasDb)('Square test link', () => {
   const menu = new MenuRepository(prisma);
   const service = new ServiceService(repo, menu);
   const square = fakeSquare();
-  const registry = new AdapterRegistry().register(new SquarePosAdapter(square.http));
+  const registry = new AdapterRegistry()
+    .register(new SquarePosAdapter(square.http))
+    .register(new MplusAdapter());
   const connections = new ConnectionsRepository(prisma);
   const inbox = new InboxRepository(prisma);
   const dispatcher = new InboxDispatcher();
@@ -107,13 +110,18 @@ describe.skipIf(!hasDb)('Square test link', () => {
   it('refuses a wrong token, and stores a right one only encrypted', async () => {
     expect(
       await code(
-        pos.connect(ctx, loc, { accessToken: 'x'.repeat(30), squareLocationId: 'LOC1' }, user),
+        pos.connect(
+          ctx,
+          loc,
+          { provider: 'square', accessToken: 'x'.repeat(30), squareLocationId: 'LOC1' },
+          user,
+        ),
       ),
     ).toBe('POS_CONNECT_FAILED');
     const { connection } = await pos.connect(
       ctx,
       loc,
-      { accessToken: square.token, squareLocationId: square.locationId },
+      { provider: 'square', accessToken: square.token, squareLocationId: square.locationId },
       user,
     );
     expect(connection).toMatchObject({ locationName: 'Sandbox Bistro', sandbox: true });
@@ -122,7 +130,12 @@ describe.skipIf(!hasDb)('Square test link', () => {
     expect(JSON.stringify(row.config)).not.toContain(square.token);
     expect(
       await code(
-        pos.connect(ctx, loc, { accessToken: square.token, squareLocationId: 'LOC1' }, user),
+        pos.connect(
+          ctx,
+          loc,
+          { provider: 'square', accessToken: square.token, squareLocationId: 'LOC1' },
+          user,
+        ),
       ),
     ).toBe('POS_ALREADY_CONNECTED');
   });
@@ -391,5 +404,45 @@ describe.skipIf(!hasDb)('Square test link', () => {
       'integration.disconnected',
     ])
       expect(types).toContain(t);
+  });
+
+  it('MplusKASSA: a signed session event becomes a plate, with the allergy from the till', async () => {
+    await pos.connect(ctx, loc, { provider: 'mplus' }, user);
+    const { connection } = await pos.status(ctx, loc);
+    expect(connection).toMatchObject({ provider: 'mplus', webhooks: true });
+    const secret = Buffer.from('mplus-test-secret').toString('base64');
+    await pos.setWebhook(ctx, loc, {
+      url: `https://plateguard.example${connection!.webhookPath}`,
+      signatureKey: secret,
+    });
+    await pos.map(ctx, loc, { externalItemId: '1001', dishId: soup });
+    const body = Buffer.from(
+      JSON.stringify({
+        session: {
+          sessionId: 'S-1',
+          table: { number: 7 },
+          lines: [
+            {
+              lineId: 'L1',
+              articleNumber: 1001,
+              text: 'Broodsoep',
+              quantity: 1,
+              preparationMethods: [{ text: 'Stoel 4' }, { text: 'Allergie: gluten' }],
+            },
+          ],
+        },
+      }),
+    );
+    const headers = {
+      'x-mplus-signature': mplusSignature(secret, body),
+      'x-plateguard-event': 'addSessionLine',
+    };
+    expect(await hooks.receive('mplus', connection!.id, { headers, body })).toEqual({
+      stored: 1,
+      duplicates: 0,
+    });
+    const seat4 = (await service.table(ctx, loc, '7')).bySeat.find((s) => s.seat === 4)!;
+    expect(seat4.allergies).toEqual([{ allergen: 'GLUTEN', severity: 'SEVERE' }]);
+    expect(seat4.orders.at(-1)!.outcome).toBe('DO_NOT_SERVE');
   });
 });

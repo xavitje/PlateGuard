@@ -29,7 +29,11 @@ describe('Webhooks admin', () => {
 
   it('shows the webhook address and every message, with the allergy the till gave', async () => {
     const client = createMemoryClient();
-    await client.admin.connectPos('demo', { accessToken: 'x'.repeat(24), squareLocationId: 'L1' });
+    await client.admin.connectPos('demo', {
+      provider: 'square',
+      accessToken: 'x'.repeat(24),
+      squareLocationId: 'L1',
+    });
     const [dish] = await client.admin.dishes('demo');
     await client.admin.posTestOrder('demo', {
       table: '1',
@@ -39,5 +43,17 @@ describe('Webhooks admin', () => {
     expect(await screen.findByLabelText('Webhook URL')).toBeTruthy();
     expect(await screen.findByText('Test order')).toBeTruthy();
     expect(screen.getByText('allergy from the till: notenallergie')).toBeTruthy();
+  });
+
+  it('says a till without webhooks is fetched instead', async () => {
+    const client = createMemoryClient();
+    await client.admin.connectPos('demo', {
+      provider: 'lightspeed-k',
+      accessToken: 'x'.repeat(24),
+      businessLocationId: '4242',
+      environment: 'demo',
+    });
+    renderPage(client);
+    expect(await screen.findByText(/This till sends no messages by itself/)).toBeTruthy();
   });
 });

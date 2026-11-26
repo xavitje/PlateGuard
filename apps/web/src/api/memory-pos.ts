@@ -56,12 +56,18 @@ export function createMemoryPos(dishes: ResolvedDish[]): PosAdmin {
     connectPos: async (_, body) => {
       connection = {
         id: 'demo-pos',
-        provider: 'square',
+        provider: body.provider,
         status: 'ACTIVE',
-        locationName: 'Sandbox',
-        squareLocationId: body.squareLocationId,
-        sandbox: true,
-        webhookPath: '/hooks/square/demo-pos',
+        locationName: body.provider === 'square' ? 'Sandbox' : '',
+        externalLocationId:
+          body.provider === 'square'
+            ? body.squareLocationId
+            : body.provider === 'lightspeed-k'
+              ? body.businessLocationId
+              : '',
+        sandbox: body.provider === 'square',
+        webhooks: body.provider !== 'lightspeed-k',
+        webhookPath: `/hooks/${body.provider}/demo-pos`,
         webhookUrl: null,
         lastEventAt: null,
       };

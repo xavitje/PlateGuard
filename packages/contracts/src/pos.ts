@@ -1,11 +1,29 @@
 import { z } from 'zod';
 import { AllergenCodeZ } from './common.js';
 
-/** Connecting a Square test account: the sandbox access token and the Square location. */
-export const PosConnectInputZ = z.strictObject({
-  accessToken: z.string().trim().min(20).max(500),
-  squareLocationId: z.string().trim().min(4).max(100),
-});
+/**
+ * Connecting a till. Square: a sandbox access token and the Square location. Lightspeed
+ * K-Series: an access token and the business location (until the OAuth sign-in exists).
+ * MplusKASSA: nothing; Mplus calls PlateGuard, its secret is set with the webhook.
+ */
+export const PosConnectInputZ = z.discriminatedUnion('provider', [
+  z.strictObject({
+    provider: z.literal('square'),
+    accessToken: z.string().trim().min(20).max(500),
+    squareLocationId: z.string().trim().min(4).max(100),
+  }),
+  z.strictObject({
+    provider: z.literal('lightspeed-k'),
+    accessToken: z.string().trim().min(20).max(2000),
+    businessLocationId: z
+      .string()
+      .trim()
+      .regex(/^\d{1,20}$/),
+    environment: z.enum(['demo', 'production']),
+  }),
+  z.strictObject({ provider: z.literal('mplus') }),
+]);
+export type PosProvider = PosConnectInput['provider'];
 export type PosConnectInput = z.infer<typeof PosConnectInputZ>;
 
 /** After making the webhook in Square: its signature key, and the URL exactly as given there. */
@@ -42,10 +60,13 @@ export interface PosConnection {
   id: string;
   provider: string;
   status: 'ACTIVE' | 'ERROR';
-  /** The Square location's name, as Square reports it. */
+  /** The till location's name, as the till reports it. */
   locationName: string;
-  squareLocationId: string;
+  /** The till's own id for the location (Square location, Lightspeed business location). */
+  externalLocationId: string;
   sandbox: boolean;
+  /** False for tills that send no webhooks (Lightspeed): PlateGuard fetches their orders. */
+  webhooks: boolean;
   /** Path of the webhook on this server; the browser adds its own origin. */
   webhookPath: string;
   /** The URL the webhook was saved with, or null before it was set up. */

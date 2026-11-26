@@ -1,4 +1,10 @@
-import type { PosConnection, PosEvent, PosSyncResult } from '@plateguard/contracts';
+import type {
+  PosConnectInput,
+  PosConnection,
+  PosEvent,
+  PosProvider,
+  PosSyncResult,
+} from '@plateguard/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -60,11 +66,22 @@ function PosError({ error }: { error: unknown }) {
 
 function Connect({ secretsReady }: { secretsReady: boolean }) {
   const { t } = useTranslation();
+  const [provider, setProvider] = useState<PosProvider>('square');
   const [accessToken, setToken] = useState('');
-  const [squareLocationId, setLocation] = useState('');
-  const connect = useAdminSave((c, l, body: { accessToken: string; squareLocationId: string }) =>
-    c.connectPos(l, body),
-  );
+  const [locationId, setLocation] = useState('');
+  const [live, setLive] = useState(false);
+  const connect = useAdminSave((c, l, body: PosConnectInput) => c.connectPos(l, body));
+  const body = (): PosConnectInput =>
+    provider === 'square'
+      ? { provider, accessToken: accessToken.trim(), squareLocationId: locationId.trim() }
+      : provider === 'lightspeed-k'
+        ? {
+            provider,
+            accessToken: accessToken.trim(),
+            businessLocationId: locationId.trim(),
+            environment: live ? 'production' : 'demo',
+          }
+        : { provider };
   return (
     <div className="grid gap-3">
       {!secretsReady && (
@@ -72,43 +89,59 @@ function Connect({ secretsReady }: { secretsReady: boolean }) {
           {t('admin:pos.noSecretKey')}
         </p>
       )}
-      <ol className="grid list-decimal gap-1 pl-5 text-[14px]">
-        <li>{t('admin:pos.connectStep1')}</li>
-        <li>{t('admin:pos.connectStep2')}</li>
-      </ol>
+      <Field label={t('admin:pos.provider')}>
+        <select
+          className={`${input} w-auto`}
+          value={provider}
+          onChange={(e) => setProvider(e.target.value as PosProvider)}
+        >
+          {(['square', 'lightspeed-k', 'mplus'] as const).map((p) => (
+            <option key={p} value={p}>
+              {t(`admin:pos.providers.${p}`)}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <p className="text-[14px]">{t(`admin:pos.connectHow.${provider}`)}</p>
       <form
         className="grid gap-3 sm:grid-cols-2"
         onSubmit={(e) => {
           e.preventDefault();
-          connect.mutate(
-            [{ accessToken: accessToken.trim(), squareLocationId: squareLocationId.trim() }],
-            {
-              onSuccess: () => setToken(''),
-            },
-          );
+          connect.mutate([body()], { onSuccess: () => setToken('') });
         }}
       >
-        <Field label={t('admin:pos.accessToken')}>
-          <input
-            className={input}
-            type="password"
-            autoComplete="off"
-            required
-            minLength={20}
-            value={accessToken}
-            onChange={(e) => setToken(e.target.value)}
-          />
-        </Field>
-        <Field label={t('admin:pos.locationId')}>
-          <input
-            className={input}
-            autoComplete="off"
-            required
-            minLength={4}
-            value={squareLocationId}
-            onChange={(e) => setLocation(e.target.value)}
-          />
-        </Field>
+        {provider !== 'mplus' && (
+          <>
+            <Field label={t('admin:pos.accessToken')}>
+              <input
+                className={input}
+                type="password"
+                autoComplete="off"
+                required
+                minLength={20}
+                value={accessToken}
+                onChange={(e) => setToken(e.target.value)}
+              />
+            </Field>
+            <Field label={t(`admin:pos.locationIds.${provider}`)}>
+              <input
+                className={input}
+                autoComplete="off"
+                required
+                minLength={provider === 'square' ? 4 : 1}
+                pattern={provider === 'lightspeed-k' ? '\\d{1,20}' : undefined}
+                value={locationId}
+                onChange={(e) => setLocation(e.target.value)}
+              />
+            </Field>
+          </>
+        )}
+        {provider === 'lightspeed-k' && (
+          <label className="flex items-center gap-2 text-[14px] sm:col-span-2">
+            <input type="checkbox" checked={live} onChange={(e) => setLive(e.target.checked)} />
+            {t('admin:pos.liveAccount')}
+          </label>
+        )}
         <div className="sm:col-span-2">
           <button className={primary} disabled={connect.isPending || !secretsReady}>
             {connect.isPending ? t('admin:pos.connecting') : t('admin:pos.connect')}
@@ -129,16 +162,19 @@ function Connected({ connection: c }: { connection: PosConnection }) {
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-line p-3">
         <div>
           <p className="font-medium">
-            {c.locationName || c.squareLocationId}
+            {c.locationName || t(`admin:pos.providers.${c.provider}`, { defaultValue: c.provider })}
             {c.sandbox && (
               <span className="ml-2 rounded-full bg-amber/15 px-2 py-0.5 text-[12px] font-semibold">
                 {t('admin:pos.sandbox')}
               </span>
             )}
           </p>
-          <p className="text-[13px] text-soft">
-            {t('admin:pos.connectedTo', { id: c.squareLocationId })}
-          </p>
+          {c.locationName && (
+            <p className="text-[13px] text-soft">
+              {t(`admin:pos.providers.${c.provider}`, { defaultValue: c.provider })}
+              {c.externalLocationId && ` · ${c.externalLocationId}`}
+            </p>
+          )}
         </div>
         {confirm ? (
           <button
@@ -161,9 +197,9 @@ function Connected({ connection: c }: { connection: PosConnection }) {
           {t('admin:nav.webhooks')}
         </Link>
       </p>
-      <Items />
+      <Items sandbox={c.provider === 'square'} />
       <AllergyButtons />
-      <TestOrder />
+      {c.provider === 'square' && <TestOrder />}
     </div>
   );
 }
@@ -177,6 +213,14 @@ export function Webhook({ connection: c }: { connection: PosConnection }) {
     cl.posWebhook(l, body),
   );
   const ready = c.webhookUrl !== null;
+  if (!c.webhooks)
+    return (
+      <div className={step}>
+        <h3 className="font-semibold">{t('admin:pos.webhookTitle')}</h3>
+        <p className="text-[14px]">{t('admin:pos.noWebhooks')}</p>
+      </div>
+    );
+  const mplus = c.provider === 'mplus';
   return (
     <div className={step}>
       <h3 className="font-semibold">{t('admin:pos.webhookTitle')}</h3>
@@ -193,9 +237,9 @@ export function Webhook({ connection: c }: { connection: PosConnection }) {
         </p>
       ) : (
         <ol className="grid list-decimal gap-1 pl-5 text-[14px]">
-          <li>{t('admin:pos.webhookStep1')}</li>
-          <li>{t('admin:pos.webhookStep2')}</li>
-          <li>{t('admin:pos.webhookStep3')}</li>
+          <li>{t(mplus ? 'admin:pos.mplusStep1' : 'admin:pos.webhookStep1')}</li>
+          <li>{t(mplus ? 'admin:pos.mplusStep2' : 'admin:pos.webhookStep2')}</li>
+          <li>{t(mplus ? 'admin:pos.mplusStep3' : 'admin:pos.webhookStep3')}</li>
         </ol>
       )}
       <div className="flex flex-wrap items-center gap-2">
@@ -233,7 +277,7 @@ export function Webhook({ connection: c }: { connection: PosConnection }) {
           });
         }}
       >
-        <Field label={t('admin:pos.signatureKey')}>
+        <Field label={t(mplus ? 'admin:pos.mplusSecret' : 'admin:pos.signatureKey')}>
           <input
             className={input}
             type="password"
@@ -267,7 +311,7 @@ function usePosRead<T>(
   });
 }
 
-function Items() {
+function Items({ sandbox }: { sandbox: boolean }) {
   const { t } = useTranslation();
   const client = useClient();
   const items = usePosRead('posItems', (l) => client.admin.posItems(l));
@@ -280,8 +324,10 @@ function Items() {
   return (
     <div className={step}>
       <h3 className="font-semibold">{t('admin:pos.itemsTitle')}</h3>
-      <p className="text-[14px] text-soft">{t('admin:pos.itemsHow')}</p>
-      <div>
+      <p className="text-[14px] text-soft">
+        {t(sandbox ? 'admin:pos.itemsHow' : 'admin:pos.itemsHowLive')}
+      </p>
+      <div hidden={!sandbox}>
         <button
           type="button"
           className={button}
