@@ -40,7 +40,8 @@
     "INCIDENT_NOT_FOUND": "Dit incident bestaat niet meer.",
     "PIN_TAKEN": "Iemand anders hier met dezelfde voornaam heeft deze pincode al. Kies een andere.",
     "MENU_IMPORT_NOT_CONFIGURED": "Menu importeren is nog niet ingesteld: de server heeft geen AI-sleutel.",
-    "MENU_IMPORT_FAILED": "De menukaart kon niet worden gelezen. Probeer het opnieuw, of met een scherpere foto."
+    "MENU_IMPORT_FAILED": "De menukaart kon niet worden gelezen. Probeer het opnieuw, of met een scherpere foto.",
+    "EMAIL_TAKEN": "Dit e-mailadres hoort al bij een account. Gebruik een ander."
   },
   "fields": {
     "name": "Naam",

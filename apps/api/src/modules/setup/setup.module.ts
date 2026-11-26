@@ -17,5 +17,6 @@ import { StaffService } from './staff.service.js';
     ProfileRepository,
     ProfileService,
   ],
+  exports: [StaffRepository],
 })
 export class SetupModule {}

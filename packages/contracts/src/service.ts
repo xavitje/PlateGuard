@@ -208,3 +208,29 @@ export interface PlatformLoginResponse {
   expiresAt: string;
   me: PlatformMe;
 }
+
+/**
+ * The plans a restaurant (organization) can be on. For now only a label: nothing is limited by
+ * plan yet. shortcut: a fixed list, add a plan here when it exists.
+ */
+export const PLANS = ['free', 'pro'] as const;
+export const PlanZ = z.enum(PLANS);
+export type Plan = z.infer<typeof PlanZ>;
+
+/** PUT /platform/restaurants/:id/plan */
+export const PlatformPlanZ = z.strictObject({ plan: PlanZ });
+
+/** POST /platform/restaurants: a restaurant made on request, same fields as the free start. */
+export const PlatformNewRestaurantZ = SignupZ.extend({ plan: PlanZ.default('free') });
+export type PlatformNewRestaurant = z.input<typeof PlatformNewRestaurantZ>;
+
+/** GET /platform/restaurants: one row per restaurant (organization). Names and counts, no guest data. */
+export interface PlatformRestaurant {
+  id: string;
+  name: string;
+  plan: string;
+  createdAt: string;
+  /** Email of the first owner, the restaurant's contact. */
+  ownerEmail: string | null;
+  locations: { id: string; name: string; slug: string; staff: number }[];
+}

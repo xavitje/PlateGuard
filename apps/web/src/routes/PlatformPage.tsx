@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { button } from '../admin/ui';
 import { ApiError } from '../api/client';
 import { platformApi } from '../api/platform';
+import { PlatformRestaurants } from './PlatformRestaurants';
 import { getPlatformToken, setPlatformToken } from '../session';
 
 const field =
@@ -31,10 +33,27 @@ export function PlatformPage() {
   };
   const expired = me.error instanceof ApiError && me.error.status === 401;
 
+  const signedIn = !!token && !expired && !!me.data;
+
   return (
-    <div className="mx-auto min-h-dvh max-w-md bg-mist px-4 pt-[max(env(safe-area-inset-top),24px)] pb-[max(env(safe-area-inset-bottom),24px)]">
-      <h1 className="mx-1 mb-1 text-[32px] font-bold tracking-[-0.035em]">{t('platform:title')}</h1>
-      <p className="mx-1 mb-5 text-sm text-soft">{t('platform:intro')}</p>
+    <div
+      className={`mx-auto min-h-dvh bg-mist px-4 pt-[max(env(safe-area-inset-top),24px)] pb-[max(env(safe-area-inset-bottom),24px)] ${signedIn ? 'max-w-6xl' : 'max-w-md'}`}
+    >
+      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="mx-1 mb-1 text-[32px] font-bold tracking-[-0.035em]">
+            {t('platform:title')}
+          </h1>
+          <p className="mx-1 text-sm text-soft">
+            {signedIn ? t('platform:signedInAs', { email: me.data.email }) : t('platform:intro')}
+          </p>
+        </div>
+        {signedIn && (
+          <button type="button" onClick={signOut} className={button}>
+            {t('platform:signOut')}
+          </button>
+        )}
+      </header>
       {!token || expired ? (
         <PlatformLogin
           onSignedIn={(next) => {
@@ -42,14 +61,8 @@ export function PlatformPage() {
             setToken(next);
           }}
         />
-      ) : me.data ? (
-        <div className="grid gap-3">
-          <p className="mx-1">{t('platform:signedInAs', { email: me.data.email })}</p>
-          <p className="mx-1 text-sm text-soft">{t('platform:comingNext')}</p>
-          <button type="button" onClick={signOut} className={primary}>
-            {t('platform:signOut')}
-          </button>
-        </div>
+      ) : signedIn ? (
+        <PlatformRestaurants />
       ) : me.isError ? (
         <p role="alert" className="mx-1 text-sm text-red">
           {t('common:loadError')}
