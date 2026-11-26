@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Navigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { button } from '../admin/ui';
@@ -7,6 +7,7 @@ import { ApiError } from '../api/client';
 import { platformApi } from '../api/platform';
 import { PlatformRestaurants } from './PlatformRestaurants';
 import { PlatformStats } from './PlatformStats';
+import { useSession } from '../service/ServiceProvider';
 import { getPlatformToken, setPlatformToken } from '../session';
 
 /**
@@ -29,6 +30,13 @@ export function PlatformPage() {
     queries.removeQueries({ queryKey: ['platform'] });
   };
   const expired = me.error instanceof ApiError && me.error.status === 401;
+  // Back from a restaurant opened as its owner: that session ends here, on the platform.
+  const { signedIn: inRestaurant, signOut: leaveRestaurant } = useSession();
+  const arrivedFromRestaurant = useRef(inRestaurant);
+  useEffect(() => {
+    if (arrivedFromRestaurant.current) leaveRestaurant();
+    arrivedFromRestaurant.current = false;
+  }, [leaveRestaurant]);
 
   const signedIn = !!token && !expired && !!me.data;
 
