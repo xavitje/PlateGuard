@@ -78,26 +78,28 @@ export class AuthService {
       (p) => firstNameKey(p.user.name) === key,
     );
     if (candidates.length === 0) throw new UnauthorizedException({ code: 'NAME_UNKNOWN' });
-    const open = candidates.filter((c) => c.failedTries < MAX_PIN_TRIES);
+    // Each try is counted before the PIN is compared, so parallel guesses cannot share one count.
+    const tries = await Promise.all(
+      candidates.map((c) => this.auth.reserveTry(c.userId, c.locationId, MAX_PIN_TRIES)),
+    );
+    const open = candidates.filter((_, i) => tries[i] !== null);
     if (open.length === 0) throw new HttpException({ code: 'PIN_LOCKED' }, HttpStatus.LOCKED);
 
     const checks = await Promise.all(open.map((c) => this.auth.pinMatches(input.pin, c.pinHash)));
     const found = open.filter((_, i) => checks[i]);
     if (found.length === 0) {
-      const tries = await Promise.all(
-        open.map(async (c) => {
-          await this.auth.setFailedTries(c.userId, c.locationId, c.failedTries + 1);
-          return c.failedTries + 1;
-        }),
-      );
-      const left = MAX_PIN_TRIES - Math.max(...tries);
+      const left = MAX_PIN_TRIES - Math.max(...tries.filter((t) => t !== null));
       if (left <= 0) throw new HttpException({ code: 'PIN_LOCKED' }, HttpStatus.LOCKED);
       throw new UnauthorizedException({ code: 'PIN_INVALID', details: { triesLeft: left } });
     }
     // Two people with the same first name and PIN: setting a PIN prevents this per location.
     if (found.length > 1) throw new ConflictException({ code: 'LOGIN_AMBIGUOUS' });
     const row = found[0]!;
-    if (row.failedTries > 0) await this.auth.setFailedTries(row.userId, row.locationId, 0);
+    await Promise.all([
+      this.auth.setFailedTries(row.userId, row.locationId, 0),
+      // The right PIN was typed, so it was no wrong try for the others with this first name.
+      ...open.filter((c) => c !== row).map((c) => this.auth.releaseTry(c.userId, c.locationId)),
+    ]);
 
     const principal = await this.auth.findPrincipal(row.userId);
     const location = await this.auth.findLocation(row.locationId);

@@ -173,4 +173,51 @@ describe.skipIf(!process.env.DATABASE_URL)('PIN login', () => {
       auth.loginWithPin({ locationId: loc, name: 'Sam', pin: '1234' }),
     ).rejects.toMatchObject({ status: 423 });
   });
+
+  it('counts every one of many parallel guesses, so they cannot share one try', async () => {
+    const lex = (await db.user.create({ data: { name: 'Lex' } })).id;
+    await db.roleAssignment.create({
+      data: { userId: lex, organizationId: org, locationId: loc, role: 'WAITER' },
+    });
+    await db.staffPin.create({
+      data: { userId: lex, locationId: loc, pinHash: await hashPin('4321') },
+    });
+    const guesses = Array.from({ length: 20 }, (_, i) => String(1000 + i));
+    const results = await Promise.allSettled(
+      guesses.map((pin) => auth.loginWithPin({ locationId: loc, name: 'Lex', pin })),
+    );
+    const status = results.map((r) => (r.status === 'rejected' ? r.reason.status : 200));
+    expect(status.filter((s) => s === 401)).toHaveLength(MAX_PIN_TRIES - 1);
+    expect(status.filter((s) => s === 423)).toHaveLength(20 - (MAX_PIN_TRIES - 1));
+    await expect(
+      auth.loginWithPin({ locationId: loc, name: 'Lex', pin: '4321' }),
+    ).rejects.toMatchObject({ status: 423 });
+    const row = await db.staffPin.findUniqueOrThrow({
+      where: { userId_locationId: { userId: lex, locationId: loc } },
+    });
+    expect(row.failedTries).toBe(MAX_PIN_TRIES);
+  });
+
+  it('does not count the right PIN as a wrong try for someone with the same first name', async () => {
+    const [a, b] = await Promise.all([
+      db.user.create({ data: { name: 'Noa Smit' } }),
+      db.user.create({ data: { name: 'Noa Bos' } }),
+    ]);
+    for (const [u, pin] of [
+      [a.id, '1111'],
+      [b.id, '2222'],
+    ] as const) {
+      await db.roleAssignment.create({
+        data: { userId: u, organizationId: org, locationId: other, role: 'WAITER' },
+      });
+      await db.staffPin.create({
+        data: { userId: u, locationId: other, pinHash: await hashPin(pin) },
+      });
+    }
+    await auth.loginWithPin({ locationId: other, name: 'Noa', pin: '1111' });
+    const rows = await db.staffPin.findMany({
+      where: { locationId: other, userId: { in: [a.id, b.id] } },
+    });
+    expect(rows.map((r) => r.failedTries)).toEqual([0, 0]);
+  });
 });

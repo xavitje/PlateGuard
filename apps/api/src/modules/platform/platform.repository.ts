@@ -45,6 +45,19 @@ export class PlatformRepository {
     });
   }
 
+  /**
+   * Counts a sign-in try before anything is checked, in one statement, so parallel tries each
+   * count. Returns the tries including this one, or null while the account is locked.
+   */
+  async reserveTry(id: string, max: number, now: Date): Promise<number | null> {
+    const rows = await this.prisma.system().$queryRaw<{ failed_tries: number }[]>`
+      UPDATE platform_admin SET failed_tries = failed_tries + 1
+      WHERE id = ${id}::uuid AND failed_tries < ${max}
+        AND (locked_until IS NULL OR locked_until <= ${now})
+      RETURNING failed_tries`;
+    return rows[0]?.failed_tries ?? null;
+  }
+
   failed(id: string, failedTries: number, lockedUntil: Date | null) {
     return this.prisma.system().platformAdmin.update({
       where: { id },

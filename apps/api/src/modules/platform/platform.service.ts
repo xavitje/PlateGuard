@@ -46,18 +46,16 @@ export class PlatformService {
     const admin = await this.repo.findByEmail(email);
     const passwordOk = await passwordMatches(admin?.passwordHash ?? DUMMY_HASH);
     if (!admin) throw new UnauthorizedException({ code: 'LOGIN_INVALID' });
-    if (admin.lockedUntil && admin.lockedUntil.getTime() > now)
-      throw new HttpException({ code: 'LOGIN_LOCKED' }, HttpStatus.LOCKED);
+    const tries = await this.repo.reserveTry(admin.id, MAX_PLATFORM_TRIES, new Date(now));
+    if (tries === null) throw new HttpException({ code: 'LOGIN_LOCKED' }, HttpStatus.LOCKED);
 
     const step = matchTotp(admin.totpSecret, code, now);
     const codeOk = step !== null && step > (admin.totpLastStep ?? -1);
     if (!passwordOk || !codeOk) {
-      const tries = admin.failedTries + 1;
       if (tries >= MAX_PLATFORM_TRIES) {
         await this.repo.failed(admin.id, 0, new Date(now + LOCK_MINUTES * 60_000));
         throw new HttpException({ code: 'LOGIN_LOCKED' }, HttpStatus.LOCKED);
       }
-      await this.repo.failed(admin.id, tries, null);
       throw new UnauthorizedException({ code: 'LOGIN_INVALID' });
     }
     await this.repo.signedIn(admin.id, step);

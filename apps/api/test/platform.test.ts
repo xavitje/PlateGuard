@@ -102,6 +102,28 @@ describe.skipIf(!process.env.DATABASE_URL)('platform login', () => {
     expect((await platform.login({ email, password, code: code() }, now)).me).toEqual({ email });
   });
 
+  it('counts every one of many parallel tries, so they cannot share one count', async () => {
+    const other = `admin-${randomUUID().slice(0, 8)}@example.com`;
+    await prisma.system().platformAdmin.create({
+      data: { email: other, passwordHash: await hashPassword(password), totpSecret: secret },
+    });
+    try {
+      const results = await Promise.allSettled(
+        Array.from({ length: 12 }, () =>
+          platform.login({ email: other, password: 'wrong password!', code: code() }, now),
+        ),
+      );
+      const status = results.map((r) => (r.status === 'rejected' ? r.reason.status : 200));
+      expect(status.filter((s) => s === 401)).toHaveLength(MAX_PLATFORM_TRIES - 1);
+      expect(status.filter((s) => s === 423)).toHaveLength(12 - (MAX_PLATFORM_TRIES - 1));
+      await expect(
+        platform.login({ email: other, password, code: code() }, now),
+      ).rejects.toMatchObject({ status: 423 });
+    } finally {
+      await prisma.system().platformAdmin.delete({ where: { email: other } });
+    }
+  });
+
   it('resets a forgotten password with the code, under the same lockout', async () => {
     now += 60_000;
     const next = 'a brand new password';
