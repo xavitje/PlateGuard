@@ -15,6 +15,7 @@ function renderApp(path: string, client: ServiceClient = createMemoryClient()) {
       { path: '/kitchen', element: <KitchenPage /> },
       { path: '/alerts', element: <AlertsPage /> },
       { path: '/tables/:label', element: <TableDetailPage /> },
+      { path: '/profile', element: <p>Profile screen</p> },
     ],
     { initialEntries: [path] },
   );
@@ -33,6 +34,13 @@ const ticket = (name: RegExp) => screen.getByRole('button', { name });
 afterEach(cleanup);
 
 describe('KitchenPage', () => {
+  it('exit kitchen mode goes to Profile, even when the kitchen was the first page', async () => {
+    const router = renderApp('/kitchen');
+    fireEvent.click(await screen.findByRole('button', { name: 'Exit kitchen mode' }));
+    await screen.findByText('Profile screen');
+    expect(router.state.location.pathname).toBe('/profile');
+  });
+
   it('a plate that must not go out can only be sent back, and the waiter sees why', async () => {
     const router = renderApp('/kitchen');
     expect(await screen.findByText('2 allergy plates')).toBeTruthy();

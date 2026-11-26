@@ -2,7 +2,7 @@ import type { KitchenTicketResponse } from '@plateguard/contracts';
 import type { AllergySubject, ChecklistItem } from '@plateguard/domain';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate, useLocation, useNavigate } from 'react-router';
+import { Navigate, useNavigate } from 'react-router';
 import { useCan } from '../admin/hooks';
 import { ALLERGEN_NAMES } from '../allergens';
 import { OutcomeBadge } from '../components/OutcomeBadge';
@@ -21,9 +21,9 @@ export function KitchenPage() {
   const kitchen = useKitchen();
   const [selected, setSelected] = useState<string | null>(null);
   const navigate = useNavigate();
-  const location = useLocation();
-  // Back to where you came from in the app; opened directly (a kitchen tablet), to your home.
-  const exit = () => (location.key === 'default' ? navigate('/') : navigate(-1));
+  // Always to Profile, never history back: a cook lands here straight from login, so "back"
+  // leaves the app, and "/" sends them right back here. Profile has sign out, language and tabs.
+  const exit = () => navigate('/profile');
   if (!signedIn) return <Navigate to="/login" replace />;
 
   const data = kitchen.data;
