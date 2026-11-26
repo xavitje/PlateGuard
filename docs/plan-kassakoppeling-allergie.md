@@ -1,6 +1,6 @@
 # Plan: PlateGuard tussen kassa en keuken
 
-*November 2026. Eerste kassa: Lightspeed Restaurant K-Series. Daarna MplusKASSA.*
+_November 2026. Eerste kassa: Lightspeed Restaurant K-Series. Daarna MplusKASSA._
 
 ## Het idee in één alinea
 
@@ -16,14 +16,14 @@ koppelbare kassa.
 
 De repo heeft de bouwstenen al; dit plan voegt er alleen aan toe.
 
-| Bouwsteen | Waar | Wat het doet |
-|---|---|---|
-| Eén webhook-ingang voor elke kassa | `integrations/hooks.*` | Controleert de handtekening, slaat ruw op, antwoordt snel |
-| Inbox met dubbelbescherming | `integrations/core/inbox.repository.ts` | Hetzelfde bericht twee keer = één keer verwerkt |
-| Adapter per merk | `integrations/core/ports.ts` | `PosAdapter` met `pullOrders`, `getOrder`, `parseWebhook`, `annotateOrder` |
-| Kassaregel wordt bord | `modules/pos/pos.service.ts` (`ingest`) | Koppelt kassa-artikel aan gerecht, plaatst het bord op tafel en stoel, beoordeelt het |
-| Allergiebon | `modules/print` (CloudPRNT) | Print de bon op de keukenprinter |
-| Werkend voorbeeld | `adapters/square` | Square-sandbox, met tafel/stoel uit notities |
+| Bouwsteen                          | Waar                                    | Wat het doet                                                                          |
+| ---------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------- |
+| Eén webhook-ingang voor elke kassa | `integrations/hooks.*`                  | Controleert de handtekening, slaat ruw op, antwoordt snel                             |
+| Inbox met dubbelbescherming        | `integrations/core/inbox.repository.ts` | Hetzelfde bericht twee keer = één keer verwerkt                                       |
+| Adapter per merk                   | `integrations/core/ports.ts`            | `PosAdapter` met `pullOrders`, `getOrder`, `parseWebhook`, `annotateOrder`            |
+| Kassaregel wordt bord              | `modules/pos/pos.service.ts` (`ingest`) | Koppelt kassa-artikel aan gerecht, plaatst het bord op tafel en stoel, beoordeelt het |
+| Allergiebon                        | `modules/print` (CloudPRNT)             | Print de bon op de keukenprinter                                                      |
+| Werkend voorbeeld                  | `adapters/square`                       | Square-sandbox, met tafel/stoel uit notities                                          |
 
 **Het verschil met nu:** vandaag zet de ober de allergie per stoel in PlateGuard, en komen alleen
 de gerechten uit de kassa. In het nieuwe model komt **ook de allergie uit de kassa**. Het
@@ -34,9 +34,9 @@ contract heeft daar al een veld voor (`CanonicalOrder.seatAllergies`, capability
 
 ### Laag 1: een allergieknop in de kassa (betrouwbaarst)
 
-In Lightspeed K-Series heten dit *productie-instructies*: vaste keuzes zonder prijs, die de ober
+In Lightspeed K-Series heten dit _productie-instructies_: vaste keuzes zonder prijs, die de ober
 bij een gerecht aantikt. Lightspeed noemt allergenen zelf als voorbeeld ("Shellfish", "Eggs",
-"Peanuts"). In de API heten productie-instructies *modifiers*.
+"Peanuts"). In de API heten productie-instructies _modifiers_.
 
 Wat de zaak doet (eenmalig, ongeveer 10 minuten, wij leveren een stappenlijst):
 
@@ -114,8 +114,8 @@ van ervoor. Dat is ook veiliger: valt PlateGuard uit, dan loopt de keuken gewoon
   `order.annotate` bestaat al; voor Lightspeed loopt dat via `POST /o/op/1/order/local` met het
   bestaande rekeningnummer. Dit moet in de demo-omgeving bevestigd worden.
 
-De keukenregel wordt dus: *"Staat er Allergie op de bon? Dan maak je het pas als de
-PlateGuard-bon er ligt."* Eén regel, makkelijk te trainen, en de knop zelf is de herinnering.
+De keukenregel wordt dus: _"Staat er Allergie op de bon? Dan maak je het pas als de
+PlateGuard-bon er ligt."_ Eén regel, makkelijk te trainen, en de knop zelf is de herinnering.
 
 ### Stoelen zonder stoelnummer
 
@@ -163,7 +163,7 @@ Een nieuwe map `adapters/lightspeed-k/`, op dezelfde manier als Square:
   externe id per regel doet dat al).
 - Een korte poll-taak per actieve locatie, alleen tijdens openingstijden. Op Vercel kan dat niet
   in de request zelf, dus een cron (elke minuut) plus "nu verversen" vanuit het keukenscherm.
-  *Dit is de grootste open vraag qua hosting; als stap 4 van fase 0 "ja" is, vervalt hij.*
+  _Dit is de grootste open vraag qua hosting; als stap 4 van fase 0 "ja" is, vervalt hij._
 - `annotateOrder`: notitie terug op de rekening, als fase 0 stap 3 dat toelaat.
 - Koppelscherm: het bestaande kassascherm in Beheer, met een extra blok "Allergieknoppen".
 
